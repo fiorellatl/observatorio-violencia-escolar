@@ -41,6 +41,11 @@ PROHIBIDAS = {
 
 ANIOS_PANDEMIA = {"2020", "2021"}
 ANIO_TRANSVERSAL = "2024"          # unico anio con reportes + matricula + pension
+# Piso de matricula para calcular una tasa por 1,000. Por debajo, un solo
+# reporte mueve la tasa decenas de puntos y el numero deja de significar nada:
+# la fuente trae codigos modulares con 1-4 alumnos registrados que producen
+# tasas de 1,000 a 4,500 por mil. No son colegios violentos: son denominadores rotos.
+MATRICULA_MINIMA = 100
 VIOLENCIA = {"Psicológica": "psicologica", "Física": "fisica", "Sexual": "sexual"}
 BULLYING = {"Acoso escolar": "bullying", "Ciber acoso": "ciberacoso"}
 
@@ -158,10 +163,9 @@ def main():
         m = mat.get(cm)
 
         tasa = None
-        if m and m.get("talumno"):
+        if m and (m.get("talumno") or 0) >= MATRICULA_MINIMA:
             r24 = anios.get(ANIO_TRANSVERSAL, {}).get("total", 0)
-            if m["talumno"] > 0:
-                tasa = round(r24 / m["talumno"] * 1000, 2)
+            tasa = round(r24 / m["talumno"] * 1000, 2)
 
         indice.append({
             "s": slug, "n": e["nombre"], "cm": cm, "d": e["distrito"],
@@ -199,6 +203,7 @@ def main():
         "anio_min": min(nacional), "anio_max": max(nacional),
         "anio_transversal": ANIO_TRANSVERSAL,
         "anios_pandemia": sorted(ANIOS_PANDEMIA),
+        "matricula_minima": MATRICULA_MINIMA,
         "anio_parcial": max(nacional),
         "fuentes": {
             "reportes": {"nombre": "SíseVe – MINEDU", "anio": f"{min(nacional)}–{max(nacional)}",
@@ -230,7 +235,10 @@ def main():
                      encoding="utf-8")
         print(f"  -> {p.name:22} {p.stat().st_size/1e6:6.2f} MB")
 
-    print(f"\ncorte transversal {ANIO_TRANSVERSAL}: {len(cross):,} colegios con tasa")
+    print(f"\ncorte transversal {ANIO_TRANSVERSAL}: {len(cross):,} colegios con tasa "
+          f"(matricula >= {MATRICULA_MINIMA})")
+    sin_rep = sum(1 for c in cross if c["reportes"] == 0)
+    print(f"  de ellos, {sin_rep:,} sin ningun reporte ese anio")
 
 
 if __name__ == "__main__":

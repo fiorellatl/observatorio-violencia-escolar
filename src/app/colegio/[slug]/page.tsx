@@ -149,7 +149,11 @@ export default async function ColegioPage({
             value={s.tasa_2024 != null ? dec(s.tasa_2024, 1) : null}
             fuente="SíseVe / ESCALE"
             anio={t}
-            ausente="Requiere matrícula"
+            ausente={
+              s.matricula == null
+                ? "Requiere matrícula"
+                : `Matrícula menor a ${nf(meta.matricula_minima)}: la tasa no sería fiable`
+            }
             nota={s.tasa_2024 != null ? "Permite comparar colegios de distinto tamaño" : undefined}
           />
           <MetricCard

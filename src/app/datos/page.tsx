@@ -54,6 +54,7 @@ export default function DatosPage() {
     parcial: n.anio === meta.anio_parcial,
   }));
 
+  const sinReportes = cross.filter((c) => c.reportes === 0).length;
   const comparables = nacional.filter((n) => !n.pandemia && n.anio !== meta.anio_parcial);
   const pico = comparables.reduce((a, b) => (b.total > a.total ? b : a), comparables[0]);
 
@@ -169,9 +170,22 @@ export default function DatosPage() {
               n={`${nf(cross.length)} colegios`}
               anio={t}
               variables="Matrícula, reportes"
-              cobertura="Donde hay matrícula integrada"
+              cobertura={`Matrícula ≥ ${nf(meta.matricula_minima)}`}
             />
-            <div className="mt-4">
+            <div className="mt-4 space-y-3">
+              <MethodologyNote>
+                <strong className="font-semibold text-ink">
+                  {nf(sinReportes)} de estos {nf(cross.length)} colegios
+                </strong>{" "}
+                no registraron ningún reporte en {t}. Es la situación más común y por
+                eso aparecen sobre la línea del cero: no los excluimos, porque dejarlos
+                fuera haría parecer que todo colegio tiene reportes.
+              </MethodologyNote>
+              <MethodologyNote tono="aviso">
+                Solo incluimos colegios con al menos {nf(meta.matricula_minima)}{" "}
+                estudiantes. Por debajo, un único reporte dispara la tasa decenas de
+                puntos y el número deja de significar algo.
+              </MethodologyNote>
               <MethodologyNote>
                 Una asociación estadística entre dos variables no significa que una
                 cause la otra. El tamaño, la ubicación, la gestión y la propensión a

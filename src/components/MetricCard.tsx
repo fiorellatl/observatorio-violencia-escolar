@@ -22,7 +22,8 @@ export function MetricCard({
   nota?: string;
   ausente?: string;
 }) {
-  const vacio = ausente != null || value == null || value === "—";
+  // `ausente` es el texto de respaldo, no una bandera: si hay valor, se muestra.
+  const vacio = value == null || value === "—";
 
   return (
     <div className="flex flex-col rounded-lg border border-rule bg-surface p-4">

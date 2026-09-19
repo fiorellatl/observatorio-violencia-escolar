@@ -73,6 +73,16 @@ export default function MetodologiaPage() {
           el denominador, en lugar de presentar una cifra que invita a una comparación
           injusta.
         </p>
+        <p>
+          Solo calculamos la tasa cuando el colegio tiene al menos{" "}
+          <strong className="font-semibold text-ink">
+            {nf(meta.matricula_minima)} estudiantes
+          </strong>
+          . Por debajo de ese umbral un único reporte dispara la tasa decenas de puntos:
+          en la fuente hay códigos modulares con dos o tres alumnos registrados que
+          producirían tasas de miles por cada 1,000. No son colegios violentos, son
+          denominadores rotos.
+        </p>
       </Seccion>
 
       <Seccion titulo={`¿Por qué ${meta.anios_pandemia.join(" y ")} se tratan distinto?`}>

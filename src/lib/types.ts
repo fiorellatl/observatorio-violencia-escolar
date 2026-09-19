@@ -78,6 +78,8 @@ export interface Meta {
   anios_pandemia: string[];
   /** Último año, incompleto (corte a agosto). */
   anio_parcial: string;
+  /** Matrícula mínima para calcular una tasa por 1,000 sin que el número mienta. */
+  matricula_minima: number;
   fuentes: Record<string, SourceRef>;
 }
 
