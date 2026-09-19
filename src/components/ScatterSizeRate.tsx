@@ -20,7 +20,10 @@ import type { CrossRow } from "@/lib/types";
  * magnitud: en escala lineal el 90 % de los puntos se apelmaza contra el eje.
  */
 export function ScatterSizeRate({ data, alto = 360 }: { data: CrossRow[]; alto?: number }) {
-  const puntos = data.filter((d) => d.matricula > 0 && d.tasa > 0);
+  // Se incluyen los colegios con tasa 0: son la mayoría y quedan sobre el eje.
+  // Filtrarlos sería seleccionar sobre el resultado y haría parecer que todo
+  // colegio tiene reportes.
+  const puntos = data.filter((d) => d.matricula > 0);
 
   return (
     <div style={{ height: alto }} className="w-full">
