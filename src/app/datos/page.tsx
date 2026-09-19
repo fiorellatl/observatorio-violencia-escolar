@@ -111,8 +111,8 @@ export default function DatosPage() {
 
         <div className="mt-4 space-y-3">
           <MethodologyNote tono="aviso">
-            {meta.anios_pandemia.join(" y ")} aparecen huecos: los colegios estuvieron
-            cerrados y la caída refleja la ausencia del canal de reporte.{" "}
+            La franja sombreada marca {meta.anios_pandemia.join(" y ")}: los colegios
+            estuvieron cerrados y la caída refleja la ausencia del canal de reporte.{" "}
             {meta.anio_parcial} va rayado porque cubre solo hasta agosto.
           </MethodologyNote>
           <MethodologyNote>

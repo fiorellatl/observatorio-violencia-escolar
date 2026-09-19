@@ -119,10 +119,9 @@ export default function Home() {
 
             <div className="mt-4">
               <MethodologyNote tono="aviso" href="/metodologia">
-                Las barras huecas de {meta.anios_pandemia.join(" y ")} corresponden al
-                cierre de colegios durante la pandemia. Presentan una fuerte
-                alteración en los registros y no se usan como período normal de
-                comparación.
+                La franja sombreada marca {meta.anios_pandemia.join(" y ")}: los
+                colegios estuvieron cerrados por la pandemia y casi no hubo canal de
+                reporte. Esos dos años no se usan como período normal de comparación.
               </MethodologyNote>
             </div>
           </figure>
@@ -137,7 +136,7 @@ export default function Home() {
             className="group rounded-xl border border-rule bg-surface p-6 transition-colors hover:border-accent"
           >
             <p className="font-mono text-[0.7rem] uppercase tracking-[0.15em] text-ink-3">
-              Entrada 1
+              Si buscas un colegio
             </p>
             <h3 className="mt-2 font-display text-display-m font-medium text-ink">
               Explora un colegio
@@ -157,7 +156,7 @@ export default function Home() {
             className="group rounded-xl border border-rule bg-surface p-6 transition-colors hover:border-accent"
           >
             <p className="font-mono text-[0.7rem] uppercase tracking-[0.15em] text-ink-3">
-              Entrada 2
+              Si buscas patrones
             </p>
             <h3 className="mt-2 font-display text-display-m font-medium text-ink">
               Explora los datos

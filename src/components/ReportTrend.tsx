@@ -4,6 +4,7 @@ import {
   Bar,
   BarChart,
   Cell,
+  ReferenceArea,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -21,12 +22,19 @@ export interface TrendPoint {
 /**
  * Reportes por año.
  *
- * 2020 y 2021 se pintan huecos, no de color: los colegios estuvieron cerrados y
- * la caída no significa menos violencia. El último año va rayado porque es
- * parcial. La diferencia es de forma, no solo de color, para que se lea también
- * en escala de grises.
+ * 2020 y 2021 van bajo una franja sombreada y rotulada: los colegios estuvieron
+ * cerrados y la caída no significa menos violencia. El último año va rayado
+ * porque es parcial. Las tres diferencias son de forma además de color, para que
+ * se lean también en escala de grises.
  */
 export function ReportTrend({ data, alto = 230 }: { data: TrendPoint[]; alto?: number }) {
+  // Los años de pandemia caen tan bajo que una barra hueca de 6 px no se ve, y
+  // son justo los que hay que señalar. Se sombrea la franja completa: lo que
+  // debe leerse es el hueco, no la barra.
+  const pandemia = data.filter((d) => d.pandemia).map((d) => d.anio);
+  const desde = pandemia[0];
+  const hasta = pandemia[pandemia.length - 1];
+
   return (
     <div style={{ height: alto }} className="w-full">
       <svg width="0" height="0" className="absolute">
@@ -73,14 +81,39 @@ export function ReportTrend({ data, alto = 230 }: { data: TrendPoint[]; alto?: n
               return l;
             }}
           />
+          {desde ? (
+            <ReferenceArea
+              x1={desde}
+              x2={hasta}
+              fill="var(--ink-3)"
+              fillOpacity={0.09}
+              stroke="var(--ink-3)"
+              strokeOpacity={0.3}
+              strokeDasharray="3 3"
+              label={{
+                value: "colegios cerrados",
+                position: "insideTop",
+                offset: 10,
+                style: {
+                  fill: "var(--ink-3)",
+                  fontSize: 10.5,
+                  fontFamily: "var(--font-sans)",
+                },
+              }}
+            />
+          ) : null}
           <Bar dataKey="total" radius={[3, 3, 0, 0]} maxBarSize={44}>
             {data.map((d) => (
               <Cell
                 key={d.anio}
-                fill={d.pandemia ? "transparent" : d.parcial ? "url(#rayas)" : "var(--data-1)"}
-                stroke={d.pandemia ? "var(--ink-3)" : "none"}
-                strokeWidth={d.pandemia ? 1.5 : 0}
-                strokeDasharray={d.pandemia ? "3 2" : undefined}
+                fill={
+                  d.pandemia
+                    ? "var(--ink-3)"
+                    : d.parcial
+                      ? "url(#rayas)"
+                      : "var(--data-1)"
+                }
+                fillOpacity={d.pandemia ? 0.55 : 1}
               />
             ))}
           </Bar>

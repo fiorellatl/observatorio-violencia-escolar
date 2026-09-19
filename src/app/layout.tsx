@@ -48,20 +48,22 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="es" className={`${display.variable} ${sans.variable} ${mono.variable}`}>
       <body className="min-h-screen antialiased">
+        {/* En móvil la marca y la navegación no caben en una línea: el nombre
+            se partía en tres y «Los datos» en dos. Se apilan hasta sm. */}
         <header className="border-b border-rule">
-          <div className="mx-auto flex max-w-shell items-center gap-4 px-5 py-4">
-            <Link href="/" className="group flex items-baseline gap-2.5">
-              <span className="h-2.5 w-2.5 shrink-0 rounded-sm bg-accent" aria-hidden />
-              <span className="font-display text-[1.06rem] font-medium leading-none tracking-tight">
+          <div className="mx-auto max-w-shell px-5 py-3.5 sm:flex sm:items-center sm:gap-4 sm:py-4">
+            <Link href="/" className="flex items-baseline gap-2.5">
+              <span className="h-2.5 w-2.5 shrink-0 translate-y-[-1px] rounded-sm bg-accent" aria-hidden />
+              <span className="font-display text-[1.06rem] font-medium leading-tight tracking-tight">
                 Observatorio de Violencia Escolar
               </span>
             </Link>
-            <nav className="ml-auto flex items-center gap-1 text-[0.86rem]">
+            <nav className="-mx-1 mt-2.5 flex items-center gap-1 text-[0.86rem] sm:ml-auto sm:mt-0">
               {NAV.map((n) => (
                 <Link
                   key={n.href}
                   href={n.href}
-                  className="rounded px-2.5 py-1.5 text-ink-2 transition-colors hover:bg-surface hover:text-ink"
+                  className="whitespace-nowrap rounded px-2.5 py-1.5 text-ink-2 transition-colors hover:bg-surface hover:text-ink"
                 >
                   {n.label}
                 </Link>

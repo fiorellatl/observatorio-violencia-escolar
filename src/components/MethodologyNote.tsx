@@ -16,7 +16,7 @@ export function MethodologyNote({
   const borde = tono === "aviso" ? "border-l-warn" : "border-l-rule";
   return (
     <aside
-      className={`border-l-2 ${borde} bg-surface/60 py-2.5 pl-4 pr-3 text-[0.82rem] leading-relaxed text-ink-2`}
+      className={`border-l-2 ${borde} bg-surface py-2.5 pl-4 pr-3 text-[0.82rem] leading-relaxed text-ink-2`}
     >
       {children}
       {href ? (

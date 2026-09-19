@@ -267,7 +267,8 @@ def main():
     # el slug (se recalcula en el cliente con la misma funcion). Se sirve como
     # archivo estatico desde public/ y se descarga solo al primer tecleo.
     compacto = [[e["nombre"], e["distrito"], e["departamento"], cm,
-                 por_colegio[cm] and sum(v["total"] for v in por_colegio[cm].values())]
+                 por_colegio[cm] and sum(v["total"] for v in por_colegio[cm].values()),
+                 e["nivel"] or ""]
                 for cm, e in escuelas.items()]
     compacto.sort(key=lambda r: -r[4])
     pub_web = ROOT / "public" / "data"

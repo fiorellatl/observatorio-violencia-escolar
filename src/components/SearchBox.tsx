@@ -8,7 +8,7 @@ import type { SearchRow } from "@/lib/types";
 /**
  * Buscador tolerante: nombre del colegio, código modular o distrito.
  *
- * El índice (1,3 MB) NO va en el bundle: se descarga la primera vez que alguien
+ * El índice (~1,6 MB) NO va en el bundle: se descarga la primera vez que alguien
  * escribe y el CDN lo cachea. Así la home carga ligera aunque el índice cubra
  * los 22 mil colegios.
  */
@@ -155,6 +155,12 @@ export function SearchBox({
                   <span>
                     {row[1]}, {row[2]}
                   </span>
+                  {row[5] ? (
+                    <>
+                      <span aria-hidden>·</span>
+                      <span>{row[5]}</span>
+                    </>
+                  ) : null}
                   <span aria-hidden>·</span>
                   <span className="tabular font-mono">{row[3]}</span>
                   <span aria-hidden>·</span>

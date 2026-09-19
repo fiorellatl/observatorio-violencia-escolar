@@ -82,5 +82,6 @@ export function getSearchIndex(): SearchRow[] {
     s.departamento,
     s.cm,
     s.total,
+    s.nivel ?? "",
   ]);
 }

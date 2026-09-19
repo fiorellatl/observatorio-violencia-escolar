@@ -51,8 +51,8 @@ export interface ContextField {
   a?: string | null;
 }
 
-/** Fila compacta del índice de búsqueda: [nombre, distrito, región, codMod, total] */
-export type SearchRow = [string, string, string, string, number];
+/** Fila compacta del índice: [nombre, distrito, región, codMod, total, nivel] */
+export type SearchRow = [string, string, string, string, number, string];
 
 export interface NationalYear extends YearCounts {
   anio: string;
