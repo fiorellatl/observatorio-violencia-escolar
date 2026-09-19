@@ -89,11 +89,21 @@ error explicando cómo generarla.
 # 1. Agregados de SíseVe a partir de la base por transparencia
 python scripts/build_public_data.py --fuente ruta/al/Anexo.xlsx
 
-# 2. Matrícula y docentes desde el padrón público de ESCALE (opcional,
-#    habilita las tasas por 1,000 estudiantes)
+# 2. Matrícula y docentes desde el padrón público de ESCALE
+#    (habilita las tasas por 1,000 estudiantes)
 python scripts/bajar_estadistica_escale.py
+
+# 3. Contexto desde la ficha pública de Identicole
+#    (pensión, área urbano/rural, jornada, conectividad, infraestructura)
+python scripts/bajar_identicole.py --lista data/public/cross_2024.json
+
+# 4. Regenerar la capa pública con todo integrado
 python scripts/build_public_data.py --fuente ruta/al/Anexo.xlsx
 ```
+
+Los pasos 2 y 3 son **reanudables**: cachean cada respuesta en `data/raw/` y
+saltan lo ya descargado. Van con pausa deliberada — son servidores del Estado.
+El paso 3 tarda: cada ficha pesa ~370 KB y el ritmo es de unas 30 por minuto.
 
 El paso 2 es reanudable: cachea cada página en `data/raw/escale_est/` y salta las
 ya descargadas.
@@ -125,7 +135,7 @@ No hay secretos ni claves: todas las fuentes son públicas.
 |---|---|---|
 | SíseVe — MINEDU | Reportes 2013–2026 por colegio | Solicitud de acceso a la información pública |
 | ESCALE — Padrón de IIEE | Matrícula, docentes, secciones, nivel, coordenadas | API pública `escale.minedu.gob.pe/padron/rest` |
-| Identicole — MINEDU | Pensiones, área, infraestructura, ECE | Ficha pública por código modular *(auditada, sin integrar)* |
+| Identicole — MINEDU | Pensión, área urbano/rural, jornada, conectividad, infraestructura | Ficha pública por código modular |
 
 ## Decisiones de producto
 
@@ -141,6 +151,9 @@ No hay secretos ni claves: todas las fuentes son públicas.
   se compara con uno de 200 por cifras brutas.
 - **Reportes, no casos.** No deduplicamos: el identificador de la fuente
   distingue reportes, no hechos.
+- **Si un dato no está, se dice.** La interfaz distingue «no aplica» de «aún no
+  consultado» de «no existe públicamente». Saber qué información falta es parte
+  de lo que este sitio quiere mostrar.
 
 ## Licencia
 
