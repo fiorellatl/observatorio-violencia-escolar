@@ -227,7 +227,6 @@ export default function DatosPage() {
                 data={conPension}
                 xKey="pension"
                 xLabel="PENSIÓN MENSUAL EN SOLES (ESCALA LOG)"
-                formatoX={(v) => (v >= 1000 ? `${Math.round(v / 1000)}k` : String(v))}
               />
             </div>
             <FichaTecnica

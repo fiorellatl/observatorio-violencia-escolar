@@ -26,13 +26,11 @@ export function ScatterXY({
   data,
   xKey,
   xLabel,
-  formatoX,
   alto = 360,
 }: {
   data: CrossRow[];
   xKey: ClaveX;
   xLabel: string;
-  formatoX?: (v: number) => string;
   alto?: number;
 }) {
   const puntos = data.filter((d) => {
@@ -40,8 +38,17 @@ export function ScatterXY({
     return typeof x === "number" && x > 0;
   });
 
-  const fmt =
-    formatoX ?? ((v: number) => (v >= 1000 ? `${Math.round(v / 1000)}k` : String(v)));
+  // El formato vive aquí y no llega por props: Next.js no deja pasar funciones
+  // de un Server Component a uno de cliente, y la página entera revienta en
+  // tiempo de ejecución sin que el typecheck lo note.
+  const fmt = (v: number) =>
+    xKey === "pension"
+      ? v >= 1000
+        ? `${(v / 1000).toFixed(1).replace(".", ",")}k`
+        : String(v)
+      : v >= 1000
+        ? `${Math.round(v / 1000)}k`
+        : String(v);
 
   return (
     <div style={{ height: alto }} className="w-full">
