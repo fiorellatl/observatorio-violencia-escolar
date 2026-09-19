@@ -1,0 +1,926 @@
+<title>Lo que el mapa no dice</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+
+<style>
+:root{
+  --ground:#f6f6f3; --panel:#fdfdfb; --ink:#15181b; --ink-2:#565c63; --ink-3:#848a91;
+  --rule:#deded7; --rule-2:#eaeae4; --grid:#e6e6df;
+  --s1:#2a78d6; --s2:#eb6834; --s3:#1baf7a;
+  --you:#8a8f96; --flag:#c0392b;
+  --surface-1:#fdfdfb;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --ground:#121311; --panel:#1a1a19; --ink:#f3f3ee; --ink-2:#b4b3a9; --ink-3:#83827a;
+    --rule:#2e2e2b; --rule-2:#232322; --grid:#2a2a27;
+    --s1:#3987e5; --s2:#d95926; --s3:#199e70;
+    --you:#7d7c74; --flag:#e66767;
+    --surface-1:#1a1a19;
+  }
+}
+:root[data-theme="dark"]{
+  --ground:#121311; --panel:#1a1a19; --ink:#f3f3ee; --ink-2:#b4b3a9; --ink-3:#83827a;
+  --rule:#2e2e2b; --rule-2:#232322; --grid:#2a2a27;
+  --s1:#3987e5; --s2:#d95926; --s3:#199e70;
+  --you:#7d7c74; --flag:#e66767;
+  --surface-1:#1a1a19;
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0; background:var(--ground); color:var(--ink);
+  font-family:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  font-size:16px; line-height:1.62; -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:720px; margin:0 auto; padding-inline:20px}
+.wide{max-width:1040px; margin:0 auto; padding-inline:20px}
+
+h1{
+  font-family:Newsreader,Georgia,serif; font-weight:500;
+  font-size:clamp(2.5rem,7.5vw,4.6rem); line-height:1.02; letter-spacing:-.02em;
+  margin:0 0 22px; text-wrap:balance;
+}
+h2{
+  font-family:Newsreader,Georgia,serif; font-weight:500;
+  font-size:clamp(1.6rem,4vw,2.3rem); line-height:1.16; letter-spacing:-.014em;
+  margin:0 0 18px; max-width:24ch; text-wrap:balance;
+}
+p{margin:0 0 17px; color:var(--ink-2); max-width:62ch}
+p strong{color:var(--ink); font-weight:600}
+.lede{
+  font-family:Newsreader,Georgia,serif; font-size:clamp(1.12rem,2.6vw,1.34rem);
+  line-height:1.5; color:var(--ink-2);
+}
+.lede em{color:var(--ink); font-style:italic}
+.answer{
+  font-family:Newsreader,Georgia,serif; font-size:clamp(1.08rem,2.4vw,1.28rem);
+  line-height:1.44; color:var(--ink); max-width:54ch;
+  border-left:3px solid var(--s2); padding-left:19px; margin:0 0 22px;
+}
+.about{
+  margin-top:38px; padding:26px 0 0; border-top:1px solid var(--rule);
+}
+.abouth{
+  font-family:"IBM Plex Mono",monospace; font-size:11px; font-weight:600;
+  letter-spacing:.15em; text-transform:uppercase; color:var(--s1);
+  margin:0 0 15px; max-width:none;
+}
+.about p{font-size:15.5px; line-height:1.62}
+.facts{
+  display:grid; grid-template-columns:repeat(auto-fit,minmax(142px,1fr));
+  gap:1px; background:var(--rule); border:1px solid var(--rule);
+  margin:24px 0 20px;
+}
+.facts > div{background:var(--panel); padding:15px 16px 14px}
+.facts dt{
+  font-family:"IBM Plex Mono",monospace; font-size:1.32rem; font-weight:600;
+  letter-spacing:-.02em; color:var(--ink); font-variant-numeric:tabular-nums; line-height:1.15;
+}
+.facts dd{margin:7px 0 0; font-size:12px; color:var(--ink-3); line-height:1.4}
+.aboutnote{
+  font-size:13.5px; line-height:1.55; color:var(--ink-3);
+  border-left:2px solid var(--rule); padding-left:15px; margin:0;
+}
+.aboutnote strong{color:var(--ink-2); font-weight:600}
+.limafig{margin:26px 0 0; background:var(--panel); border:1px solid var(--rule); padding:20px 18px 16px}
+.limawrap{display:flex; flex-wrap:wrap; gap:26px; align-items:flex-start}
+#limamap{flex:0 1 300px; max-width:320px; height:auto; overflow:visible}
+#limamap path{stroke:var(--panel); stroke-width:2; transition:opacity .13s; cursor:crosshair}
+#limamap path:hover{opacity:.72}
+.limakey{
+  flex:1 1 240px; display:flex; flex-direction:column; gap:2px;
+  font-size:13px; color:var(--ink-2);
+}
+.limakey span{display:flex; align-items:center; gap:10px; padding:6px 0; border-bottom:1px solid var(--rule-2)}
+.limakey i{width:15px; height:15px; border-radius:3px; flex:none}
+.limakey b{
+  margin-left:auto; font-family:"IBM Plex Mono",monospace; color:var(--ink);
+  font-variant-numeric:tabular-nums; font-weight:600;
+}
+/* rampa secuencial de un solo tono, clara a oscura sobre fondo claro */
+.r0{fill:#dce9f8; background:#dce9f8}
+.r1{fill:#bcd6f1; background:#bcd6f1}
+.r2{fill:#93bce8; background:#93bce8}
+.r3{fill:#669fdc; background:#669fdc}
+.r4{fill:#3f80cc; background:#3f80cc}
+.r5{fill:#2a63aa; background:#2a63aa}
+.r6{fill:#1d4880; background:#1d4880}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]) .r0{fill:#1d3350; background:#1d3350}
+  :root:not([data-theme="light"]) .r1{fill:#26466d; background:#26466d}
+  :root:not([data-theme="light"]) .r2{fill:#315b8c; background:#315b8c}
+  :root:not([data-theme="light"]) .r3{fill:#3d73ab; background:#3d73ab}
+  :root:not([data-theme="light"]) .r4{fill:#4b8ccb; background:#4b8ccb}
+  :root:not([data-theme="light"]) .r5{fill:#5ea6e7; background:#5ea6e7}
+  :root:not([data-theme="light"]) .r6{fill:#7cbcf5; background:#7cbcf5}
+}
+:root[data-theme="dark"] .r0{fill:#1d3350; background:#1d3350}
+:root[data-theme="dark"] .r1{fill:#26466d; background:#26466d}
+:root[data-theme="dark"] .r2{fill:#315b8c; background:#315b8c}
+:root[data-theme="dark"] .r3{fill:#3d73ab; background:#3d73ab}
+:root[data-theme="dark"] .r4{fill:#4b8ccb; background:#4b8ccb}
+:root[data-theme="dark"] .r5{fill:#5ea6e7; background:#5ea6e7}
+:root[data-theme="dark"] .r6{fill:#7cbcf5; background:#7cbcf5}
+
+.finding{margin-top:44px; padding-top:28px; border-top:1px solid var(--rule)}
+.feyebrow{
+  font-family:"IBM Plex Mono",monospace; font-size:11px; font-weight:600;
+  letter-spacing:.15em; text-transform:uppercase; color:var(--s2); margin:0 0 12px;
+}
+.fh{
+  font-family:Newsreader,Georgia,serif; font-weight:500;
+  font-size:clamp(1.5rem,3.6vw,2rem); line-height:1.16; letter-spacing:-.014em;
+  margin:0 0 14px; max-width:22ch;
+}
+.split{display:flex; gap:3px; height:30px; margin:22px 0 12px}
+.sp-a{background:var(--s2); border-radius:3px}
+.sp-b{background:var(--s1); border-radius:3px; opacity:.55}
+.splitkey{
+  display:flex; flex-wrap:wrap; gap:8px 22px; font-size:12.5px;
+  color:var(--ink-2); margin-bottom:20px;
+}
+.splitkey span{display:flex; align-items:center; gap:8px}
+.splitkey b{font-family:"IBM Plex Mono",monospace; color:var(--ink); font-weight:600}
+.splitkey i{width:11px; height:11px; border-radius:2px; flex:none}
+.sw-a{background:var(--s2)}
+.sw-b{background:var(--s1); opacity:.55}
+.qlead{
+  font-family:"IBM Plex Mono",monospace; font-size:11px; font-weight:600;
+  letter-spacing:.15em; text-transform:uppercase; color:var(--ink-3);
+  margin:44px 0 0;
+}
+.qindex{
+  list-style:none; margin:16px 0 0; padding:0;
+  border-top:1px solid var(--rule);
+}
+.qindex li{
+  display:flex; gap:16px; align-items:baseline;
+  padding:14px 0; border-bottom:1px solid var(--rule);
+  font-family:Newsreader,Georgia,serif; font-size:1.1rem; color:var(--ink-2);
+}
+.qindex span{
+  font-family:"IBM Plex Mono",monospace; font-size:11.5px; font-weight:600;
+  letter-spacing:.1em; color:var(--s1); flex:none;
+}
+.kicker{
+  font-family:"IBM Plex Mono",monospace; font-size:11px; font-weight:600;
+  letter-spacing:.15em; text-transform:uppercase; color:var(--ink-3); margin:0 0 22px;
+}
+.mono{font-family:"IBM Plex Mono",monospace; font-variant-numeric:tabular-nums; font-size:.93em}
+.act{
+  font-family:"IBM Plex Mono",monospace; font-size:11px; font-weight:600;
+  letter-spacing:.15em; text-transform:uppercase; color:var(--s1);
+  display:flex; align-items:center; gap:11px; margin:0 0 16px;
+}
+.act::after{content:""; flex:1; height:1px; background:var(--rule)}
+
+header.hero{padding-block:76px 40px}
+section{padding-block:64px}
+.sep{border-top:1px solid var(--rule)}
+
+/* ---------------- ACT 1 : draw it ---------------- */
+.drawbox{
+  background:var(--panel); border:1px solid var(--rule); padding:22px 20px 18px; margin-top:28px;
+}
+.prompt{
+  font-size:15px; color:var(--ink); font-weight:600; margin:0 0 4px;
+}
+.prompt-sub{font-size:13px; color:var(--ink-3); margin:0 0 18px; line-height:1.5}
+.agehead{display:flex; flex-wrap:wrap; align-items:flex-end; gap:20px 34px; margin-bottom:22px}
+.agebig b{
+  font-family:"IBM Plex Mono",monospace; font-size:4.2rem; font-weight:600; line-height:.88;
+  letter-spacing:-.03em; color:var(--s1); font-variant-numeric:tabular-nums;
+}
+.agebig span{font-size:13.5px; color:var(--ink-2); display:inline-block; margin-left:12px; line-height:1.35}
+.ageage{margin-left:auto; text-align:right}
+.ageage b{
+  font-family:"IBM Plex Mono",monospace; font-size:2rem; font-weight:600; line-height:1;
+  letter-spacing:-.02em; color:var(--ink); font-variant-numeric:tabular-nums; display:block;
+}
+.ageage span{font-size:12px; color:var(--ink-3); display:block; margin-top:5px}
+#dots{display:block; width:100%; max-width:330px; height:auto; margin:0 auto}
+#slider{
+  -webkit-appearance:none; appearance:none; width:100%; margin:26px 0 0;
+  height:6px; border-radius:3px; background:var(--rule); cursor:pointer;
+}
+#slider::-webkit-slider-thumb{
+  -webkit-appearance:none; appearance:none; width:26px; height:26px; border-radius:50%;
+  background:var(--s1); border:3px solid var(--surface-1); cursor:grab;
+  box-shadow:0 1px 5px rgba(0,0,0,.28);
+}
+#slider::-moz-range-thumb{
+  width:22px; height:22px; border-radius:50%; background:var(--s1);
+  border:3px solid var(--surface-1); cursor:grab;
+}
+#slider:focus-visible{outline:2px solid var(--s1); outline-offset:4px}
+.sticks{
+  display:flex; justify-content:space-between; margin-top:9px;
+  font-family:"IBM Plex Mono",monospace; font-size:10.5px; color:var(--ink-3); letter-spacing:.04em;
+}
+#a-note{
+  font-family:Newsreader,Georgia,serif; font-size:1.06rem; line-height:1.45;
+  color:var(--ink); margin:22px 0 0; max-width:none; min-height:3.1em;
+}
+.agefoot{
+  display:flex; flex-wrap:wrap; align-items:center; gap:14px 20px;
+  margin-top:16px; padding-top:15px; border-top:1px solid var(--rule-2);
+}
+#minicurve{width:100%; max-width:330px; height:auto; flex:0 1 330px}
+#a-n{font-size:12px; color:var(--ink-3); line-height:1.45; flex:1 1 200px}
+#a-n b{color:var(--ink-2); font-family:"IBM Plex Mono",monospace}
+
+/* ---------------- ACT 2 : scrollytelling ---------------- */
+.scrolly{position:relative; margin-top:34px}
+.graphic{
+  position:sticky; top:14px; height:min(74vh,560px);
+  background:var(--panel); border:1px solid var(--rule);
+  display:flex; flex-direction:column; padding:18px 16px 12px;
+}
+.gtitle{font-size:14.5px; font-weight:600; color:var(--ink); margin:0 0 2px; min-height:20px}
+.gsub{font-size:12.5px; color:var(--ink-3); margin:0 0 8px; line-height:1.4; min-height:17px}
+#morph{flex:1; min-height:0; width:100%}
+.steps{position:relative; margin-top:-30vh}
+.step{min-height:86vh; display:flex; align-items:center; pointer-events:none}
+.step > div{
+  pointer-events:auto; background:var(--panel);
+  border:1px solid var(--rule); border-left:3px solid var(--s1);
+  padding:20px 22px; max-width:400px; margin-left:auto;
+  box-shadow:0 6px 26px rgba(0,0,0,.09);
+}
+.step h3{
+  font-family:Newsreader,Georgia,serif; font-weight:500; font-size:1.28rem;
+  line-height:1.24; margin:0 0 10px; color:var(--ink);
+}
+.step p{font-size:14.5px; margin:0; max-width:none}
+.step.on > div{border-left-color:var(--s2)}
+
+/* ---------------- ACT 3 : explorer ---------------- */
+.explorer{background:var(--panel); border:1px solid var(--rule); margin-top:28px}
+.picker{padding:18px 20px; border-bottom:1px solid var(--rule); position:relative}
+label{
+  display:block; font-family:"IBM Plex Mono",monospace; font-size:10.5px; font-weight:600;
+  letter-spacing:.13em; text-transform:uppercase; color:var(--ink-3); margin-bottom:9px;
+}
+input[type=text]{
+  width:100%; padding:11px 13px; font-size:15px; font-family:inherit;
+  border:1px solid var(--rule); border-radius:5px;
+  background:var(--ground); color:var(--ink);
+}
+input[type=text]:focus{outline:2px solid var(--s1); outline-offset:-1px; border-color:transparent}
+#results{
+  position:absolute; left:20px; right:20px; z-index:20; max-height:270px; overflow-y:auto;
+  background:var(--panel); border:1px solid var(--rule); border-top:0;
+  box-shadow:0 10px 30px rgba(0,0,0,.16);
+}
+#results[hidden]{display:none}
+#results button{
+  display:block; width:100%; text-align:left; background:none; color:var(--ink);
+  border:0; border-bottom:1px solid var(--rule-2); border-radius:0;
+  padding:10px 14px; font-weight:400; font-size:14px;
+}
+#results button:hover, #results button.sel{background:var(--ground)}
+#results button b{font-weight:600}
+#results button span{color:var(--ink-3); font-size:12.5px; float:right; font-family:"IBM Plex Mono",monospace}
+
+.profile{padding:22px 20px 24px}
+.phead{display:flex; flex-wrap:wrap; gap:14px 26px; align-items:flex-end; margin-bottom:22px}
+.pname{font-family:Newsreader,Georgia,serif; font-size:1.75rem; line-height:1.1; margin:0; color:var(--ink)}
+.pdre{font-size:13px; color:var(--ink-3); margin:5px 0 0}
+.ptot{margin-left:auto; text-align:right}
+.ptot b{
+  display:block; font-family:"IBM Plex Mono",monospace; font-size:2rem; font-weight:600;
+  line-height:1; letter-spacing:-.02em; font-variant-numeric:tabular-nums;
+}
+.ptot span{font-size:12px; color:var(--ink-3); display:block; margin-top:6px}
+.grid2{display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:26px}
+.blk h4{
+  font-family:"IBM Plex Mono",monospace; font-size:10.5px; font-weight:600;
+  letter-spacing:.13em; text-transform:uppercase; color:var(--ink-3);
+  margin:0 0 13px; padding-bottom:8px; border-bottom:1px solid var(--rule-2);
+}
+.row{display:flex; align-items:center; gap:11px; margin-bottom:11px; font-size:13.5px}
+.row .rl{flex:0 0 96px; color:var(--ink-2)}
+.track{flex:1; height:19px; background:var(--rule-2); border-radius:3px; position:relative; overflow:hidden}
+.fill{height:100%; border-radius:3px; transition:width .55s cubic-bezier(.4,0,.2,1)}
+.nat{position:absolute; top:-2px; bottom:-2px; width:2px; background:var(--ink-3); opacity:.75}
+.row .rv{
+  flex:0 0 68px; text-align:right; font-family:"IBM Plex Mono",monospace;
+  font-variant-numeric:tabular-nums; font-size:12.5px; color:var(--ink);font-weight:500;
+}
+.natnote{font-size:11.5px; color:var(--ink-3); margin-top:2px; display:flex; align-items:center; gap:7px}
+.natnote i{width:2px; height:11px; background:var(--ink-3); display:inline-block; opacity:.75}
+.spark{margin-top:4px}
+
+figcaption, .cap{
+  font-size:12px; color:var(--ink-3); line-height:1.5; margin-top:14px;
+  padding-top:12px; border-top:1px solid var(--rule-2);
+}
+
+/* svg text roles */
+.ax{font-family:"IBM Plex Mono",monospace; font-size:10.5px; fill:var(--ink-3)}
+.lbl{font-family:"IBM Plex Sans",sans-serif; font-size:11.5px; fill:var(--ink-2)}
+.val{font-family:"IBM Plex Mono",monospace; font-size:10.5px; fill:var(--ink-2); font-weight:500}
+.emph{fill:var(--ink); font-weight:600}
+.note{font-family:"IBM Plex Sans",sans-serif; font-size:11.5px; fill:var(--ink-3); font-style:italic}
+
+#tip{
+  position:fixed; z-index:60; pointer-events:none; opacity:0; transition:opacity .11s;
+  background:var(--ink); color:var(--ground); padding:7px 10px; border-radius:4px;
+  font-family:"IBM Plex Mono",monospace; font-size:11.5px; line-height:1.5;
+  max-width:220px; box-shadow:0 3px 14px rgba(0,0,0,.24);
+}
+#tip b{font-weight:600}
+
+.method{padding-block:50px 78px}
+.method h2{font-family:"IBM Plex Sans",sans-serif; font-size:1.1rem; font-weight:600; max-width:none}
+.method p, .method li{font-size:14px; color:var(--ink-2)}
+.method ul{padding-left:20px; max-width:62ch; margin:0 0 15px}
+.method li{margin-bottom:7px}
+.method code{
+  font-family:"IBM Plex Mono",monospace; font-size:12.5px; background:var(--panel);
+  border:1px solid var(--rule); padding:1px 5px; border-radius:3px; color:var(--ink);
+}
+
+@media (max-width:640px){
+  .graphic{height:min(56vh,420px); top:8px}
+  .step > div{max-width:none; margin-left:0}
+  .steps{margin-top:-20vh}
+  .step{min-height:78vh}
+}
+@media (prefers-reduced-motion:reduce){
+  *{transition-duration:.01ms!important; animation-duration:.01ms!important}
+}
+</style>
+
+<div class="wrap">
+  <header class="hero">
+    <p class="kicker">El bullying en n&uacute;meros &middot; S&iacute;seVe, Minedu Per&uacute;</p>
+    <h1>Lo que el mapa no dice</h1>
+    <p class="lede">Me met&iacute; al portal del Estado peruano, le di clic a un bot&oacute;n y me baj&eacute; <strong>50,633 reportes de violencia escolar</strong>, uno por uno. Ven&iacute;a buscando cifras de bullying. <em>Lo primero que aprend&iacute; fue que casi nada de esto lo es.</em></p>
+  <section class="about">
+    <h2 class="abouth">&iquest;Sab&iacute;an que&hellip;?</h2>
+    <p>&iquest;Sab&iacute;an que el Estado peruano publica, uno por uno, todos los reportes de violencia escolar del pa&iacute;s? Yo no lo sab&iacute;a. Se llama <strong>S&iacute;seVe</strong>, lo hizo el Ministerio de Educaci&oacute;n en 2013, y reporta quien quiera: un alumno, su mam&aacute;, un profesor. El caso le cae al colegio, que est&aacute; obligado a atenderlo bajo supervisi&oacute;n de su UGEL.</p>
+    <p>Su cara p&uacute;blica es un mapa de estad&iacute;sticas agregadas, bastante inofensivo. Pero el mismo portal deja descargar <strong>el listado caso por caso</strong> sin contrase&ntilde;a ni tr&aacute;mite. Yo solo le di clic. De ah&iacute; sale todo lo que sigue.</p>
+    <dl class="facts">
+      <div><dt>66,573</dt><dd>colegios afiliados</dd></div>
+      <div><dt>227</dt><dd>UGEL en el pa&iacute;s</dd></div>
+      <div><dt>50,633</dt><dd>reportes analizados</dd></div>
+      <div><dt>ene 2024 &ndash; ago 2026</dt><dd>&uacute;nico periodo publicado</dd></div>
+    </dl>
+    <p class="aboutnote">S&iacute;seVe registra <strong>presuntos hechos de violencia escolar</strong>, no casos confirmados, y el propio Ministerio advierte que puede existir m&aacute;s de un reporte sobre un mismo caso. El sistema opera desde 2013, pero el portal solo publica abiertamente desde 2024: los a&ntilde;os anteriores existen y no se pueden consultar.</p>
+  </section>
+
+  <section class="finding">
+    <p class="feyebrow">Lo primero que aprend&iacute;</p>
+    <h2 class="fh">El bullying es solo una parte. Hay mucho m&aacute;s.</h2>
+    <p>De los 50,633 reportes, <strong>11,008 son acoso escolar</strong>: uno de cada cinco. Los otros cuatro son golpes con y sin lesiones, castigo f&iacute;sico, trato humillante, tocamientos, ciberacoso, discriminaci&oacute;n. Diecisiete categor&iacute;as m&aacute;s que casi nunca se nombran cuando hablamos de esto.</p>
+    <div class="split" aria-hidden="true">
+      <span class="sp-a" style="flex:11008"></span>
+      <span class="sp-b" style="flex:39625"></span>
+    </div>
+    <div class="splitkey">
+      <span><i class="sw-a"></i> Acoso escolar &middot; <b>11,008</b> &middot; 21,7&nbsp;%</span>
+      <span><i class="sw-b"></i> Las otras 17 categor&iacute;as &middot; <b>39,625</b></span>
+    </div>
+    <p class="aboutnote">Por eso en el resto de la p&aacute;gina no digo &laquo;bullying&raquo; salvo cuando hablo de esa casilla concreta. Vine por el acoso escolar y me encontr&eacute; con todo lo dem&aacute;s.</p>
+  </section>
+
+  <p class="qlead">Entonces me hice tres preguntas:</p>
+  <ol class="qindex">
+    <li><span>01</span> ¿Cuánto tarda el Estado en cerrar un caso?</li>
+    <li><span>02</span> ¿En qué región hay más violencia escolar?</li>
+    <li><span>03</span> ¿Y cómo está la UGEL de mi barrio?</li>
+  </ol>
+  </header>
+</div>
+
+<!-- =================== ACT 1 =================== -->
+<div class="wrap sep">
+<section>
+  <p class="act">Pregunta uno</p>
+  <h2>&iquest;Cu&aacute;nto tarda el Estado en cerrar un caso de violencia escolar?</h2>
+  <p class="answer">Casi dos a&ntilde;os, me sali&oacute;. Y no lo dice en ninguna parte: lo tuve que calcular agrupando los expedientes por su edad.</p>
+  <p>El portal publica el estado de cada reporte &mdash;pendiente, en proceso, finalizado&mdash; pero nunca el tiempo. Aqu&iacute; hay cien expedientes cualesquiera: mueve el control para avanzar desde el d&iacute;a en que se reportaron.</p>
+
+  <div class="drawbox">
+    <div class="agehead">
+      <div class="agebig">
+        <b id="a-pct">0</b>
+        <span>de cada 100 expedientes<br>ya est&aacute;n cerrados</span>
+      </div>
+      <div class="ageage">
+        <b id="a-mo">0</b>
+        <span id="a-molbl">meses desde el reporte</span>
+      </div>
+    </div>
+
+    <svg id="dots" role="img" aria-labelledby="a-pct"></svg>
+
+    <input type="range" id="slider" min="0" max="31" value="0" step="1"
+           aria-label="Meses transcurridos desde el reporte">
+    <div class="sticks"><span>d&iacute;a del reporte</span><span>1 a&ntilde;o</span><span>2 a&ntilde;os y medio</span></div>
+
+    <p id="a-note">Un caso reportado hoy todav&iacute;a no puede estar cerrado. Arrastra el control.</p>
+
+    <div class="agefoot">
+      <svg id="minicurve" role="img" aria-label="Curva completa de cierre a lo largo de 31 meses"></svg>
+      <span id="a-n"></span>
+    </div>
+  </div>
+  <p class="cap">Cada punto vale un expediente. La proporci&oacute;n sale de agrupar los 50,633 reportes por los meses transcurridos entre su registro y el corte del 31 de agosto de 2026, y medir cu&aacute;ntos figuran como &laquo;atenci&oacute;n finalizada&raquo;.</p>
+</section>
+</div>
+
+<!-- =================== ACT 2 =================== -->
+<div class="wide sep">
+<section>
+  <div class="wrap" style="padding-inline:0">
+    <p class="act">Pregunta dos</p>
+    <h2>¿En qué región del Perú hay más violencia escolar?</h2>
+    <p class="answer">Me qued&eacute; sin respuesta. Estos n&uacute;meros no miden violencia: miden denuncia. Y donde denunciar cuesta caro, el conteo baja mientras la gravedad sube.</p>
+    <p>SíseVe publica conteos absolutos por región, y ese solo gesto decide quién es noticia. Lo que sigue son las 26 DRE del país sin cambiar un solo dato: lo único que cambia es la pregunta que les hacemos. Baja despacio.</p>
+  </div>
+
+  <div class="scrolly">
+    <div class="graphic">
+      <p class="gtitle" id="g-title">Reportes por DRE</p>
+      <p class="gsub" id="g-sub">Conteo absoluto, 2024 – ago 2026. Es la vista que publica el portal.</p>
+      <svg id="morph" role="img" aria-label="Las 26 DRE del Perú, primero por volumen de reportes y luego por composición del agresor"></svg>
+    </div>
+
+    <div class="steps">
+      <div class="step" data-step="0"><div>
+        <h3>Así se ve el país cuando solo contamos</h3>
+        <p>Lima Metropolitana reúne 17,030 reportes: más de un tercio del total nacional. Loreto, Puno y Huancavelica quedan aplastados contra el eje. En una nota periodística, esta vista escribe el titular sola.</p>
+      </div></div>
+
+      <div class="step" data-step="1"><div>
+        <h3>Ahora preguntemos quién agrede</h3>
+        <p>Mismas 26 barras, misma base. Solo cambiamos el conteo por la <strong>proporción de reportes que señalan a un adulto de la escuela</strong>. El orden se da vuelta: Loreto pasa de último a primero, con 68 % — contra 28 % de Lima.</p>
+      </div></div>
+
+      <div class="step" data-step="2"><div>
+        <h3>Y las dos preguntas juntas</h3>
+        <p>Cada región es ahora un punto: volumen abajo, composición arriba. La pendiente es nítida — <span class="mono">r = −0,54</span>. Cuanto menos se reporta en una región, mayor la proporción de casos que apuntan al personal de la IE.</p>
+      </div></div>
+
+      <div class="step" data-step="3"><div>
+        <h3>La lectura probable no es la obvia</h3>
+        <p>No es que los docentes amazónicos agredan más. Es la firma del <strong>subregistro</strong>: donde denunciar cuesta caro, solo llega a la plataforma lo más grave y lo más difícil de callar. Loreto no tiene pocos casos — tiene poca denuncia.</p>
+      </div></div>
+    </div>
+  </div>
+  <div class="wrap" style="padding-inline:0">
+    <p class="cap">El mismo patrón, algo más débil, aparece con la violencia sexual: <span class="mono">r = −0,36</span>. Loreto registra 57,9 % de reportes sexuales contra 18,6 % nacional.</p>
+  </div>
+</section>
+</div>
+
+<!-- =================== ACT 3 =================== -->
+<div class="wide sep">
+<section>
+  <div class="wrap" style="padding-inline:0">
+    <p class="act">Pregunta tres</p>
+    <h2>¿Y cómo está la UGEL de mi barrio?</h2>
+    <p class="answer">Esa s&iacute; la pude responder, pero solo hasta la UGEL. Busqu&eacute; colegios uno por uno y no existen: el portal no los publica en ning&uacute;n lado.</p>
+    <p>Busca entre las 225 del país. Cada barra se compara contra el promedio nacional, marcado con una línea vertical, para que se lea de un vistazo si está por encima o por debajo.</p>
+  </div>
+
+  <figure class="limafig">
+    <p class="figtitle">Los 43 distritos de Lima Metropolitana, pintados por su UGEL</p>
+    <p class="figsub">Un mismo color es una misma UGEL: el n&uacute;mero pertenece a la unidad, no al distrito. Pasa el cursor por cualquiera.</p>
+    <div class="limawrap">
+      <svg id="limamap" viewBox="0 0 593.2 1000.0" role="img"
+           aria-label="Mapa de los distritos de Lima coloreados por los reportes de su UGEL"><path class="r4" d="M456.2,903.5 L457.8,939.3 L424.2,1000.0 L405.2,983.5 L428.4,891.0 L456.2,903.5 Z" data-d="Pucusana" data-u="UGEL 01 San Juan de Miraflores" data-n="2521"></path><path class="r4" d="M452.4,874.5 L456.2,903.5 L428.4,891.0 L428.6,872.3 L452.4,874.5 Z" data-d="Santa Maria del Mar" data-u="UGEL 01 San Juan de Miraflores" data-n="2521"></path><path class="r4" d="M544.6,830.8 L528.6,854.0 L452.4,874.5 L428.6,872.3 L419.0,855.9 L485.1,810.8 L533.8,802.5 L544.6,830.8 Z" data-d="San Bartolo" data-u="UGEL 01 San Juan de Miraflores" data-n="2521"></path><path class="r4" d="M533.8,802.5 L485.1,810.8 L419.0,855.9 L391.0,815.1 L483.1,762.0 L547.0,707.4 L567.8,673.4 L593.2,689.5 L576.9,745.1 L533.8,802.5 Z" data-d="Punta Negra" data-u="UGEL 01 San Juan de Miraflores" data-n="2521"></path><path class="r4" d="M292.8,696.5 L262.8,711.6 L225.5,693.6 L228.6,655.7 L250.6,645.7 L292.8,696.5 Z" data-d="Villa el Salvador" data-u="UGEL 01 San Juan de Miraflores" data-n="2521"></path><path class="r4" d="M567.8,673.4 L547.0,707.4 L483.1,762.0 L391.0,815.1 L363.1,779.4 L387.8,748.8 L469.9,717.9 L550.7,637.7 L567.8,673.4 Z" data-d="Punta Hermosa" data-u="UGEL 01 San Juan de Miraflores" data-n="2521"></path><path class="r4" d="M550.7,637.7 L469.9,717.9 L387.8,748.8 L363.1,779.4 L262.8,711.6 L292.8,696.5 L313.5,669.2 L360.3,683.4 L419.0,664.1 L476.2,623.3 L550.7,637.7 Z" data-d="Lurin" data-u="UGEL 01 San Juan de Miraflores" data-n="2521"></path><path class="r5" d="M183.9,614.0 L214.8,626.8 L228.6,655.7 L225.5,693.6 L161.5,665.3 L173.3,615.8 L183.9,614.0 Z" data-d="Chorrillos" data-u="UGEL 07 San Borja" data-n="3233"></path><path class="r5" d="M181.9,588.2 L183.9,614.0 L173.3,615.8 L170.0,597.6 L181.9,588.2 Z" data-d="Barranco" data-u="UGEL 07 San Borja" data-n="3233"></path><path class="r4" d="M293.0,578.7 L323.6,627.0 L313.5,669.2 L292.8,696.5 L250.6,645.7 L261.9,578.5 L293.0,578.7 Z" data-d="Villa Maria del Triunfo" data-u="UGEL 01 San Juan de Miraflores" data-n="2521"></path><path class="r4" d="M254.7,573.6 L261.9,578.5 L250.6,645.7 L228.6,655.7 L214.8,626.8 L254.7,573.6 Z" data-d="San Juan de Miraflores" data-u="UGEL 01 San Juan de Miraflores" data-n="2521"></path><path class="r5" d="M197.9,583.2 L181.9,588.2 L170.0,597.6 L142.5,566.7 L172.2,558.1 L197.9,583.2 Z" data-d="Miraflores" data-u="UGEL 07 San Borja" data-n="3233"></path><path class="r5" d="M189.7,562.8 L207.1,567.1 L197.9,583.2 L172.2,558.1 L189.7,562.8 Z" data-d="Surquillo" data-u="UGEL 07 San Borja" data-n="3233"></path><path class="r6" d="M176.9,545.3 L190.3,543.6 L189.7,562.8 L172.2,558.1 L142.5,566.7 L137.6,563.2 L143.6,546.5 L150.2,539.2 L176.9,545.3 Z" data-d="San Isidro" data-u="UGEL 03 Cercado" data-n="3494"></path><path class="r6" d="M135.1,540.8 L143.6,546.5 L137.6,563.2 L120.0,550.4 L125.8,537.7 L135.1,540.8 Z" data-d="Magdalena del Mar" data-u="UGEL 03 Cercado" data-n="3494"></path><path class="r5" d="M219.5,538.8 L207.1,567.1 L189.7,562.8 L190.3,543.6 L196.2,538.2 L213.7,533.8 L219.5,538.8 Z" data-d="San Borja" data-u="UGEL 07 San Borja" data-n="3233"></path><path class="r6" d="M176.9,545.3 L150.2,539.2 L162.9,533.7 L171.4,532.5 L176.9,545.3 Z" data-d="Lince" data-u="UGEL 03 Cercado" data-n="3494"></path><path class="r5" d="M254.7,573.6 L214.8,626.8 L183.9,614.0 L181.9,588.2 L197.9,583.2 L207.1,567.1 L219.5,538.8 L225.1,531.9 L254.7,573.6 Z" data-d="Santiago de Surco" data-u="UGEL 07 San Borja" data-n="3233"></path><path class="r6" d="M149.1,523.5 L135.1,540.8 L125.8,537.7 L120.0,521.7 L137.1,520.7 L149.1,523.5 Z" data-d="Pueblo Libre" data-u="UGEL 03 Cercado" data-n="3494"></path><path class="r6" d="M162.9,533.7 L150.2,539.2 L143.6,546.5 L135.1,540.8 L149.1,523.5 L153.2,518.2 L162.9,533.7 Z" data-d="Jesus Maria" data-u="UGEL 03 Cercado" data-n="3494"></path><path class="r5" d="M202.8,513.6 L213.7,533.8 L196.2,538.2 L197.3,515.5 L198.7,514.5 L202.8,513.6 Z" data-d="San Luis" data-u="UGEL 07 San Borja" data-n="3233"></path><path class="r6" d="M120.0,521.7 L125.8,537.7 L120.0,550.4 L85.0,533.3 L92.2,516.2 L110.1,514.3 L120.0,521.7 Z" data-d="San Miguel" data-u="UGEL 03 Cercado" data-n="3494"></path><path class="r4" d="M503.8,569.9 L532.8,587.9 L550.7,637.7 L476.2,623.3 L419.0,664.1 L360.3,683.4 L313.5,669.2 L323.6,627.0 L293.0,578.7 L320.7,544.3 L315.4,512.0 L373.6,602.8 L458.0,592.8 L503.8,569.9 Z" data-d="Pachacamac" data-u="UGEL 01 San Juan de Miraflores" data-n="2521"></path><path class="r6" d="M197.3,515.5 L196.2,538.2 L190.3,543.6 L176.9,545.3 L171.4,532.5 L197.3,515.5 Z" data-d="La Victoria" data-u="UGEL 03 Cercado" data-n="3494"></path><path class="r2" d="M315.4,512.0 L320.7,544.3 L293.0,578.7 L261.9,578.5 L254.7,573.6 L225.1,531.9 L315.4,512.0 Z" data-d="La Molina" data-u="UGEL 06 Ate" data-n="2090"></path><path class="r6" d="M153.2,518.2 L149.1,523.5 L137.1,520.7 L153.2,518.2 Z" data-d="Breña" data-u="UGEL 03 Cercado" data-n="3494"></path><path class="r6" d="M198.7,514.5 L197.3,515.5 L171.4,532.5 L162.9,533.7 L153.2,518.2 L137.1,520.7 L120.0,521.7 L110.1,514.3 L109.8,504.1 L116.0,498.9 L114.6,487.7 L155.5,490.3 L187.5,488.7 L190.6,481.8 L198.7,514.5 Z" data-d="Cercado de Lima" data-u="UGEL 03 Cercado" data-n="3494"></path><path class="r0" d="M265.9,472.5 L246.9,480.2 L228.1,511.1 L202.8,513.6 L198.7,514.5 L190.6,481.8 L249.1,472.7 L265.9,472.5 Z" data-d="El Agustino" data-u="UGEL 05 San Juan de Lurigancho" data-n="1515"></path><path class="r2" d="M488.2,448.7 L534.1,505.2 L503.8,569.9 L458.0,592.8 L373.6,602.8 L315.4,512.0 L382.2,499.4 L425.5,473.7 L488.2,448.7 Z" data-d="Cieneguilla" data-u="UGEL 06 Ate" data-n="2090"></path><path class="r3" d="M187.5,488.7 L155.5,490.3 L145.6,460.8 L168.8,445.3 L187.5,488.7 Z" data-d="Rímac" data-u="UGEL 02 Rímac" data-n="2385"></path><path class="r2" d="M425.5,473.7 L382.2,499.4 L315.4,512.0 L225.1,531.9 L219.5,538.8 L213.7,533.8 L202.8,513.6 L228.1,511.1 L246.9,480.2 L265.9,472.5 L369.2,441.3 L425.5,473.7 Z" data-d="Ate" data-u="UGEL 06 Ate" data-n="2090"></path><path class="r2" d="M496.1,441.0 L488.2,448.7 L425.5,473.7 L369.2,441.3 L479.0,408.4 L496.1,441.0 Z" data-d="Chaclacayo" data-u="UGEL 06 Ate" data-n="2090"></path><path class="r3" d="M168.8,445.3 L145.6,460.8 L136.9,458.0 L138.5,424.7 L171.2,407.4 L168.8,445.3 Z" data-d="Independencia" data-u="UGEL 02 Rímac" data-n="2385"></path><path class="r3" d="M136.9,458.0 L145.6,460.8 L155.5,490.3 L114.6,487.7 L103.6,489.5 L109.5,466.3 L67.2,382.5 L101.2,396.2 L113.3,379.5 L136.9,458.0 Z" data-d="San Martin de Porres" data-u="UGEL 02 Rímac" data-n="2385"></path><path class="r3" d="M138.5,424.7 L136.9,458.0 L113.3,379.5 L124.4,362.6 L138.5,424.7 Z" data-d="Los Olivos" data-u="UGEL 02 Rímac" data-n="2385"></path><path class="r1" d="M213.0,340.1 L171.2,407.4 L138.5,424.7 L124.4,362.6 L144.5,332.4 L174.1,353.0 L213.0,340.1 Z" data-d="Comas" data-u="UGEL 04 Comas" data-n="1792"></path><path class="r2" d="M507.2,334.0 L543.8,368.1 L564.9,414.5 L496.1,441.0 L479.0,408.4 L369.2,441.3 L265.9,472.5 L249.1,472.7 L232.2,443.7 L271.6,387.8 L310.6,402.7 L416.4,372.4 L482.4,317.4 L507.2,334.0 Z" data-d="Lurigancho-Chosica" data-u="UGEL 06 Ate" data-n="2090"></path><path class="r0" d="M271.6,387.8 L232.2,443.7 L249.1,472.7 L190.6,481.8 L187.5,488.7 L168.8,445.3 L171.2,407.4 L213.0,340.1 L260.3,301.7 L291.6,331.8 L271.6,387.8 Z" data-d="San Juan de Lurigancho" data-u="UGEL 05 San Juan de Lurigancho" data-n="1515"></path><path class="r1" d="M144.5,332.4 L124.4,362.6 L113.3,379.5 L101.2,396.2 L102.9,316.9 L69.9,259.2 L105.0,241.0 L144.5,332.4 Z" data-d="Puente Piedra" data-u="UGEL 04 Comas" data-n="1792"></path><path class="r1" d="M48.1,257.6 L6.7,267.2 L8.3,225.5 L48.1,257.6 Z" data-d="Santa Rosa" data-u="UGEL 04 Comas" data-n="1792"></path><path class="r1" d="M225.3,115.8 L220.9,157.1 L270.3,189.8 L307.3,162.4 L402.7,190.4 L354.7,235.2 L297.3,233.1 L260.3,301.7 L213.0,340.1 L174.1,353.0 L144.5,332.4 L105.0,241.0 L141.5,222.2 L167.7,173.1 L174.9,111.1 L225.3,115.8 Z" data-d="Carabayllo" data-u="UGEL 04 Comas" data-n="1792"></path><path class="r1" d="M195.5,39.6 L164.3,80.8 L174.9,111.1 L167.7,173.1 L141.5,222.2 L105.0,241.0 L69.9,259.2 L48.1,257.6 L8.3,225.5 L26.3,172.7 L0.0,108.3 L72.2,84.1 L146.8,0.0 L195.5,39.6 Z" data-d="Ancon" data-u="UGEL 04 Comas" data-n="1792"></path></svg>
+      <div class="limakey"><span><i class="r6"></i>03 Cercado<b>3,494</b></span><span><i class="r5"></i>07 San Borja<b>3,233</b></span><span><i class="r4"></i>01 San Juan de Miraflores<b>2,521</b></span><span><i class="r3"></i>02 Rímac<b>2,385</b></span><span><i class="r2"></i>06 Ate<b>2,090</b></span><span><i class="r1"></i>04 Comas<b>1,792</b></span><span><i class="r0"></i>05 San Juan de Lurigancho<b>1,515</b></span></div>
+    </div>
+    <figcaption>San Juan de Lurigancho, el distrito m&aacute;s poblado del Per&uacute;, cae en la UGEL que menos reportes registra de Lima. No puedo decir si eso es menos violencia o menos denuncia: el portal entrega la matr&iacute;cula en cero, as&iacute; que no hay forma de convertir esto en una tasa. Santa Anita queda sin pintar porque falta su pol&iacute;gono en la fuente geogr&aacute;fica.</figcaption>
+  </figure>
+
+  <div class="explorer">
+    <div class="picker">
+      <label for="q">Unidad de Gestión Educativa Local</label>
+      <input type="text" id="q" autocomplete="off" spellcheck="false" placeholder="Escribe un nombre: Surco, Loreto, Cusco, 07…">
+      <div id="results" hidden></div>
+    </div>
+    <div class="profile" id="profile"></div>
+  </div>
+  <div class="wrap" style="padding-inline:0">
+    <p class="cap">«Cierre» agrupa <span class="mono">Atención finalizada</span>. «En proceso» agrupa <span class="mono">Atención en proceso</span> y <span class="mono">Atención finalizada por validar</span>. Recuerda el primer acto: una UGEL con muchos casos recientes tendrá cierre bajo por antigüedad, no necesariamente por gestión.</p>
+  </div>
+</section>
+</div>
+
+<div class="wrap sep">
+<section class="method">
+  <h2>Antes de que alguien cite un número de aquí</h2>
+  <ul>
+    <li><strong>Son reportes, no casos confirmados.</strong> El propio archivo del Minedu advierte que recoge «alertas de violencia escolar» y que «puede existir más de un reporte sobre un mismo caso». Nada en la base permite deduplicar.</li>
+    <li><strong>No es prevalencia.</strong> El campo <span class="mono">NUMERO_MATRICULADO</span> llega en cero, así que ninguna cifra puede convertirse en tasa por cada mil estudiantes. Todo lo de arriba son conteos y composiciones.</li>
+    <li><strong>La fecha es de registro, no del hecho.</strong> El 95,4 % de los reportes cae en día hábil: se mide cuándo se abrió el expediente, no cuándo ocurrió la agresión.</li>
+    <li><strong>La cifra de bullying no la calcul&eacute; yo.</strong> Los 11,008 salen de la propia clasificaci&oacute;n del portal, que marca cada reporte como acoso escolar o no. Esos agregados suman 50,619 y el archivo caso por caso trae 50,633: catorce registros de diferencia, todos de 2026, que es un a&ntilde;o a&uacute;n abierto. No los toqu&eacute;.</li>
+    <li><strong>No hay institución educativa.</strong> Ni en los endpoints, ni en el archivo caso por caso, ni en el código del portal. La UGEL es el piso.</li>
+    <li><strong>De d&oacute;nde saqu&eacute; todo.</strong> De <code>POST /Web/Inicio/DescargarEXCEL</code>, el bot&oacute;n de descarga del propio portal p&uacute;blico, m&aacute;s los endpoints de <code>/TableroControl/</code> para cruzar. No me hizo falta nada m&aacute;s: ni cuenta, ni permiso, ni saltarme ning&uacute;n control. Mis totales cuadran exactos con el tablero oficial en 2024 y 2025.</li>
+  </ul>
+</section>
+</div>
+
+<div id="tip" role="status" aria-live="polite"></div>
+
+<script>
+/* ================= data ================= */
+const MAT=[[0,2371,0],[1,2249,10.2],[2,2246,34.3],[3,1822,42.8],[4,2174,47.4],[5,757,46.8],[6,96,47.9],[7,90,67.8],[8,1596,71.2],[9,2630,79.6],[10,2057,83.3],[11,2789,86.8],[12,1676,88.5],[13,2108,90.6],[14,2303,90.1],[15,1502,91.1],[16,1987,92.8],[17,677,92.8],[18,71,88.7],[19,135,85.9],[20,1568,96.3],[21,2107,98.1],[22,2422,98.4],[23,2592,99.5],[24,1610,99.5],[25,1700,99.5],[26,2216,99.6],[27,2208,99.5],[28,2118,99.7],[29,539,99.6],[30,79,100],[31,138,97.8]];
+
+const DRE=[["Lima Metropolitana",17030,14.8,28.2],["Arequipa",3522,16.2,37.4],["Piura",2997,20.5,31.5],["Áncash",2264,18.7,34.7],["La Libertad",2252,18.1,40.9],["Junín",2136,20.6,49.0],["Lambayeque",1952,16.4,25.2],["Cusco",1927,18.6,41.6],["Callao",1828,15.1,31.2],["Ica",1781,14.2,25.3],["Lima Provincias",1567,19.6,39.4],["Tacna",1527,14.8,36.1],["San Martín",1332,24.9,35.4],["Cajamarca",1260,22.4,41.3],["Huánuco",1238,18.9,31.4],["Ucayali",999,27.2,41.1],["Amazonas",845,47.3,63.0],["Ayacucho",745,22.6,55.8],["Loreto",699,57.9,68.2],["Puno",531,24.3,64.4],["Tumbes",404,20.3,30.4],["Apurímac",395,19.7,62.0],["Moquegua",390,16.9,35.4],["Pasco",388,19.8,44.6],["Huancavelica",376,23.7,63.3],["Madre de Dios",248,33.5,47.6]];
+
+/* [nombre, dre, total, n24, n25, n26, psi, fis, sex, staff, inicial, prim, sec, fin, proc, pend] */
+const UGEL=[["UGEL 03 Cercado","Lima Metropolitana",3494,1314,1375,805,1603,1426,465,824,121,1123,2234,2530,827,137],["UGEL 07 San Borja","Lima Metropolitana",3233,1190,1266,777,1561,1312,360,808,139,1179,1909,2209,769,255],["UGEL 01 San Juan de Miraflores","Lima Metropolitana",2521,998,996,527,1115,1004,402,781,141,755,1615,2005,370,146],["UGEL 02 Rímac","Lima Metropolitana",2385,884,865,636,950,1038,397,701,113,839,1425,2010,277,98],["UGEL 06 Ate","Lima Metropolitana",2090,859,791,440,892,888,310,575,113,659,1317,1572,432,86],["UGEL 04 Comas","Lima Metropolitana",1792,679,667,446,769,718,305,598,115,565,1104,1520,213,59],["UGEL 05 San Juan de Lurigancho","Lima Metropolitana",1515,508,566,441,609,632,274,508,87,437,987,785,646,84],["UGEL Chiclayo","Lambayeque",1500,505,575,420,538,766,196,386,50,535,909,1134,311,55],["UGEL Tacna","Tacna",1443,588,526,329,676,556,211,510,60,530,853,1197,157,89],["UGEL Arequipa Norte","Arequipa",1404,491,587,326,752,479,173,471,75,546,783,694,492,218],["DRE Callao","Callao",1390,549,540,301,579,613,198,419,74,396,908,1076,224,90],["UGEL Arequipa Sur","Arequipa",1200,423,523,254,655,364,181,454,61,380,751,776,286,138],["UGEL Cusco","Cusco",1086,434,402,250,469,454,163,361,71,376,638,962,122,2],["UGEL Santa","Ancash",1078,438,385,255,337,577,164,237,31,281,763,820,216,42],["UGEL Piura","Piura",930,364,345,221,302,443,185,285,37,238,646,582,225,123],["UGEL Huancayo","Junín",887,324,324,239,377,363,147,455,59,314,512,594,199,94],["UGEL Ica","Ica",847,330,322,195,355,386,106,202,28,229,587,781,63,3],["UGEL Coronel Portillo","Ucayali",767,319,283,165,236,351,180,268,17,191,557,716,47,4],["UGEL 03 - Trujillo Nor Oeste","La libertad",588,210,247,131,233,285,70,148,18,223,345,526,48,14],["UGEL Sullana","Piura",558,207,200,151,167,295,96,149,10,198,349,453,104,1],["UGEL Cajamarca","Cajamarca",527,250,197,80,220,246,61,123,19,259,246,498,25,4],["UGEL Chincha","Ica",464,177,180,107,135,257,72,128,28,90,343,429,34,1],["UGEL Ventanilla","Callao",438,166,150,122,170,190,78,152,30,108,300,355,69,14],["UGEL 04 - Trujillo Sur Este","La libertad",436,163,166,107,197,186,53,161,31,125,280,359,66,11],["UGEL 09 Huaura","Lima Provincias",435,156,199,80,158,194,83,147,41,146,248,322,89,24],["UGEL Huamanga","Ayacucho",433,154,151,128,201,160,72,212,30,179,223,372,58,3],["UGEL Huánuco","Huánuco",432,110,184,138,167,222,43,134,23,152,257,346,72,14],["UGEL Huaraz","Ancash",421,160,150,111,166,178,77,174,30,170,220,345,58,18],["UGEL 08 Cañete","Lima Provincias",415,124,173,118,145,191,79,124,21,83,310,279,112,24],["UGEL Talara","Piura",377,108,187,82,112,225,40,77,8,74,292,344,23,10],["UGEL Leoncio Prado","Huánuco",375,108,160,107,110,182,83,95,13,113,249,299,49,27],["UGEL Pisco","Ica",317,122,123,72,100,164,53,70,6,45,265,245,57,15],["UGEL Lambayeque","Lambayeque",306,143,124,39,56,166,84,78,10,71,225,259,40,7],["UGEL La Joya","Arequipa",302,119,153,30,118,114,70,118,24,91,187,242,44,16],["UGEL Paita","Piura",291,141,101,49,69,168,54,78,23,66,202,275,15,1],["UGEL Moyobamba","San Martín",291,120,94,77,74,162,55,98,15,73,202,265,20,6],["UGEL Chanchamayo","Junín",275,136,81,58,88,137,50,95,1,87,187,213,44,18],["UGEL 10 Huaral","Lima Provincias",249,54,105,90,102,104,43,108,28,62,158,182,45,22],["UGEL Tumbes","Tumbes",248,78,116,54,70,124,54,85,6,82,160,101,122,25],["UGEL Maynas","Loreto",239,92,107,40,41,81,117,156,8,54,172,216,8,15],["UGEL Rioja","San Martín",234,74,102,58,47,144,43,66,5,74,155,217,17,0],["UGEL Oxapampa","Pasco",210,60,98,52,91,86,33,75,4,61,145,177,27,6],["UGEL Tambopata","Madre de Dios",207,72,85,50,48,81,78,94,11,50,143,143,55,9],["UGEL Satipo","Junín",206,64,97,45,61,83,62,98,4,53,149,142,56,8],["UGEL Tambogrande","Piura",194,90,53,51,48,110,36,77,12,46,136,143,47,4],["UGEL Caraveli","Arequipa",189,68,77,44,100,69,20,94,15,61,113,142,34,13],["UGEL Ilo","Moquegua",189,72,61,56,75,90,24,57,6,35,148,144,35,10],["UGEL La Convención","Cusco",183,75,71,37,76,81,26,89,4,65,114,107,71,5],["UGEL La Unión","Piura",179,75,71,33,50,76,53,64,8,47,124,144,26,9],["UGEL 02 - La Esperanza","La libertad",179,76,65,38,70,78,31,78,16,64,99,169,9,1],["UGEL Padre Abad","Ucayali",176,97,56,23,43,78,55,99,3,44,127,149,27,0],["UGEL Jaen","Cajamarca",173,72,61,40,42,68,63,74,6,52,115,157,16,0],["UGEL Mariscal Nieto","Moquegua",167,72,70,25,73,66,28,69,17,55,95,139,15,13],["UGEL Puno","Puno",163,61,66,36,65,58,40,93,6,55,102,137,24,2],["UGEL Tocache","San Martín",162,63,62,37,36,88,38,42,5,39,118,142,19,1],["UGEL 15 Huarochirí","Lima Provincias",156,84,47,25,53,75,28,75,3,44,109,136,16,4],["UGEL Chepén","La libertad",152,71,55,26,64,57,31,61,8,21,123,136,15,1],["UGEL 01 - El Porvenir","La libertad",150,53,49,48,61,62,27,54,12,55,83,118,29,3],["UGEL Lamas","San Martín",149,69,48,32,43,68,38,67,13,51,85,132,7,10],["UGEL San Román","Puno",148,72,44,32,65,60,23,87,17,61,69,120,20,8],["UGEL Abancay","Apurímac",146,54,51,41,89,41,16,93,5,62,79,117,20,9],["UGEL Ferreñafe","Lambayeque",146,63,52,31,37,68,41,27,4,20,122,113,18,15],["UGEL Alto Amazonas - Yurimaguas","Loreto",146,66,46,34,23,42,81,88,4,18,124,108,31,7],["UGEL Ambo","Huánuco",142,37,51,54,48,67,27,37,2,30,110,100,29,13],["UGEL Jauja","Junín",142,36,52,54,68,44,30,70,8,35,98,76,44,22],["UGEL San Martín","San Martín",140,68,37,35,39,57,44,63,10,26,104,121,18,1],["UGEL Pangoa","Junín",139,72,53,14,40,57,42,91,6,52,81,121,10,8],["UGEL Ascope","La libertad",137,52,43,42,45,48,44,73,2,40,95,133,3,1],["UGEL Nasca","Ica",133,41,57,35,50,65,18,48,6,35,92,81,38,14],["UGEL Anta","Cusco",123,59,49,15,47,40,36,62,2,37,84,110,10,3],["UGEL 16 Barranca","Lima Provincias",121,42,55,24,31,60,30,55,10,34,77,100,17,4],["UGEL Chulucanas","Piura",118,52,45,21,31,48,39,47,3,28,87,87,26,5],["UGEL Intercultural Bilingüe Condorcanqui","Amazonas",118,51,46,21,21,30,67,92,11,27,80,112,6,0],["UGEL Camaná","Arequipa",118,53,41,24,39,49,30,42,2,40,76,105,8,5],["UGEL Mariscal Cáceres","San Martín",116,50,46,20,32,59,25,33,6,35,75,110,5,1],["UGEL Chachapoyas","Amazonas",115,42,40,33,44,50,21,38,8,38,69,102,13,0],["UGEL Huancabamba","Piura",115,67,29,19,29,58,28,66,0,28,87,94,19,2],["UGEL Pacasmayo","La libertad",115,50,45,20,47,45,23,56,8,26,80,87,21,7],["UGEL Huancavelica","Huancavelica",114,42,41,31,34,49,31,61,3,45,66,94,19,1],["UGEL Huari","Ancash",114,41,48,25,31,42,41,66,2,33,79,102,8,4],["UGEL Intercultural Bilingüe Rio Santiago","Amazonas",113,27,73,13,22,12,79,107,4,27,82,60,49,4],["UGEL Islay","Arequipa",112,62,28,22,35,53,24,33,15,20,77,34,69,9],["UGEL San Ignacio","Cajamarca",112,64,26,22,26,39,47,63,17,45,50,103,7,2],["UGEL Pasco","Pasco",110,36,42,32,41,45,24,65,1,31,78,93,7,10],["UGEL Morropón","Piura",107,48,40,19,19,37,51,50,1,18,88,97,10,0],["UGEL Pataz","La libertad",105,48,27,30,33,31,41,85,9,30,66,86,17,2],["UGEL Chupaca","Junín",101,34,39,28,37,50,14,55,9,34,57,90,10,1],["UGEL Sánchez Carrión","La libertad",100,31,42,27,36,41,23,48,3,32,65,62,17,21],["UGEL Luya","Amazonas",96,34,46,16,33,34,29,56,1,24,71,88,8,0],["UGEL Contralmirante Villar","Tumbes",95,31,31,33,18,58,19,24,1,17,77,75,15,5],["UGEL Pichanaki","Junín",94,26,33,35,30,38,26,37,4,35,55,66,28,0],["UGEL Tarma","Junín",93,39,29,25,37,36,20,41,4,37,52,75,12,6],["UGEL Tayacaja","Huancavelica",92,47,32,13,26,42,24,70,4,41,47,85,7,0],["UGEL Alto Amazonas - San Lorenzo","Loreto",92,20,55,17,3,8,81,86,1,12,79,65,24,3],["UGEL El Dorado","San Martín",91,25,37,29,22,46,23,27,1,25,65,71,13,7],["UGEL Cutervo","Cajamarca",87,21,28,38,49,19,19,63,2,31,53,61,7,19],["UGEL Bagua","Amazonas",85,36,23,26,19,44,22,24,3,23,59,71,14,0],["UGEL Intercultural Bilingüe Cenepa","Amazonas",84,26,30,28,6,10,68,71,7,12,64,64,19,1],["UGEL Huanta","Ayacucho",81,23,38,20,20,32,29,53,1,25,55,74,7,0],["UGEL Yauli","Junín",79,24,32,23,29,29,21,30,4,19,56,63,14,2],["UGEL Ibir-Imaza","Amazonas",79,43,22,14,8,12,59,68,2,18,59,60,15,4],["UGEL Ayabaca","Piura",77,30,33,14,29,31,17,41,6,22,49,62,11,4],["UGEL Angaraes","Huancavelica",77,53,19,5,33,31,13,58,17,36,23,71,6,0],["UGEL Calca","Cusco",74,14,45,15,21,37,16,46,2,18,54,67,7,0],["UGEL 14 Oyón","Lima Provincias",74,31,21,22,29,22,23,48,0,31,43,52,20,2],["UGEL Huarmey","Ancash",73,36,24,13,28,36,9,23,0,19,54,37,19,17],["UGEL Casma","Ancash",72,40,18,14,27,37,8,25,5,16,51,68,2,2],["UGEL Canchis","Cusco",71,40,23,8,27,27,17,55,9,26,36,58,8,5],["UGEL La Mar","Ayacucho",70,23,34,13,25,26,19,33,7,12,51,67,3,0],["UGEL Bellavista","San Martín",68,18,26,24,18,12,38,41,0,33,35,62,6,0],["UGEL Urubamba","Cusco",68,19,38,11,25,27,16,22,1,24,43,46,19,3],["UGEL Pachitea","Huánuco",66,23,25,18,16,28,22,22,2,20,44,47,13,6],["UGEL Yungay","Ancash",66,30,24,12,21,19,26,26,1,21,44,60,5,1],["UGEL Sechura","Piura",65,21,30,14,8,35,22,21,0,7,58,42,8,15],["UGEL Pichari-Kimbiri-Villa Virgen","Cusco",65,22,16,27,20,28,17,28,6,16,43,56,9,0],["UGEL Pallasca","Ancash",65,18,22,25,23,25,17,35,8,15,42,55,10,0],["UGEL Chincheros","Apurímac",64,29,31,4,29,18,17,35,8,20,36,60,4,0],["UGEL Virú","La libertad",63,33,21,9,21,21,21,34,4,27,32,50,10,3],["UGEL Ramón Castilla - Caballococha","Loreto",62,17,36,9,15,22,25,37,1,13,48,40,18,4],["UGEL Julcán","La libertad",61,31,19,11,26,33,2,31,2,20,39,57,4,0],["UGEL Zarumilla","Tumbes",61,23,23,15,18,34,9,14,1,11,49,48,8,5],["UGEL Marañon","Huánuco",61,24,24,13,16,25,20,27,4,23,34,60,1,0],["UGEL Ucayali - Contamana","Loreto",61,31,23,7,5,16,40,42,3,7,51,55,4,2],["UGEL Bolognesi","Ancash",61,27,19,15,25,25,11,36,1,14,46,47,9,5],["UGEL Andahuaylas","Apurímac",60,30,22,8,23,25,12,38,5,21,33,57,3,0],["UGEL Santiago de Chuco","La libertad",59,17,21,21,15,23,21,25,1,14,44,48,11,0],["UGEL Castilla","Arequipa",59,25,25,9,18,13,28,24,1,11,47,54,4,1],["UGEL Bongará","Amazonas",58,13,22,23,27,19,12,27,2,20,36,42,15,1],["UGEL Caylloma","Arequipa",57,27,22,8,24,16,17,40,10,15,32,40,15,2],["UGEL Utcubamba","Amazonas",57,21,18,18,5,24,28,32,2,18,36,53,3,1],["UGEL Quispicanchi","Cusco",55,25,28,2,19,26,10,28,5,17,33,53,0,2],["UGEL Celendín","Cajamarca",54,22,24,8,17,21,16,31,5,13,36,53,1,0],["UGEL Huaylas","Ancash",52,23,29,0,20,14,18,29,2,12,38,34,13,5],["UGEL Cajabamba","Cajamarca",51,22,15,14,18,25,8,27,4,11,36,44,5,2],["UGEL Atalaya","Ucayali",50,26,12,12,5,9,36,42,0,13,37,38,9,3],["UGEL Recuay","Ancash",50,16,19,15,14,29,7,16,5,14,31,46,4,0],["UGEL Hualgayoc","Cajamarca",49,20,16,13,10,21,18,28,0,13,36,40,8,1],["UGEL Cotabambas","Apurímac",49,22,19,8,12,16,21,35,6,20,23,44,4,1],["UGEL San Marcos","Cajamarca",48,19,24,5,20,21,7,26,10,6,32,47,1,0],["UGEL Santa Cruz","Cajamarca",47,12,24,11,9,26,12,24,1,13,33,46,1,0],["UGEL Daniel Alcides Carrión","Pasco",46,14,17,15,18,21,7,16,3,18,25,35,9,2],["UGEL Huarmaca","Piura",46,15,15,16,15,17,14,17,1,9,36,41,5,0],["UGEL Junin","Junín",46,18,19,9,16,18,12,23,0,12,34,32,13,1],["UGEL 12 Canta","Lima Provincias",44,19,19,6,16,17,11,20,1,20,23,38,6,0],["UGEL Loreto - Nauta","Loreto",44,13,23,8,11,15,18,27,2,11,31,26,7,11],["UGEL 13 Yauyos","Lima Provincias",44,14,20,10,30,9,5,34,1,14,29,43,1,0],["UGEL Paucartambo","Cusco",43,16,22,5,8,26,9,22,4,16,23,31,10,2],["UGEL Carhuaz","Ancash",43,17,16,10,11,25,7,23,4,18,21,42,1,0],["UGEL Chumbivilcas","Cusco",43,14,21,8,13,13,17,38,9,15,19,38,4,1],["UGEL Jorge Basadre","Tacna",42,13,12,17,14,21,7,20,12,7,22,33,7,2],["UGEL Picota","San Martín",42,17,19,6,16,15,11,19,1,17,24,41,1,0],["UGEL Chota","Cajamarca",41,22,17,2,9,21,11,26,3,22,16,39,1,1],["UGEL Concepción","Junín",40,13,14,13,16,18,6,22,3,15,22,31,5,4],["UGEL Otuzco","La libertad",40,22,12,6,14,18,8,20,1,12,27,37,3,0],["UGEL Rodríguez de Mendoza","Amazonas",40,15,18,7,12,13,15,17,2,13,25,36,2,2],["UGEL Huallaga","San Martín",39,24,11,4,6,16,17,15,2,2,35,37,2,0],["UGEL Dos de Mayo","Huánuco",39,19,14,6,13,17,9,13,3,14,22,39,0,0],["UGEL Gran Chimú","La libertad",38,10,20,8,15,12,11,29,0,24,14,32,6,0],["UGEL Antonio Raimondi","Ancash",38,9,24,5,15,16,7,23,1,8,29,33,3,2],["UGEL Lucanas","Ayacucho",38,15,14,9,14,11,13,30,2,14,22,36,2,0],["UGEL Espinar","Cusco",37,12,13,12,17,9,11,22,0,11,26,32,5,0],["UGEL Puerto Inca","Huánuco",37,12,18,7,8,23,6,18,3,14,20,33,2,2],["UGEL Paruro","Cusco",35,16,13,6,7,17,11,12,5,10,20,32,3,0],["UGEL Yunguyo","Puno",34,22,7,5,22,5,7,22,0,19,15,25,6,3],["UGEL General Sánchez Cerro","Moquegua",32,11,5,16,9,9,14,11,1,5,26,22,10,0],["UGEL Pomabamba","Ancash",31,7,18,6,13,11,7,17,1,6,24,29,1,1],["UGEL Requena","Loreto",31,15,15,1,3,3,25,25,0,7,24,24,2,5],["UGEL Churcampa","Huancavelica",30,15,13,2,19,8,3,17,1,11,18,29,0,1],["UGEL 11 Cajatambo","Lima Provincias",29,11,14,4,13,11,5,6,1,7,21,24,1,4],["UGEL Azángaro","Puno",29,5,16,8,16,1,12,26,4,5,20,23,3,3],["UGEL Bolívar","La libertad",29,4,19,6,9,18,2,18,4,5,20,28,1,0],["UGEL Aymaraes","Apurímac",29,12,14,3,10,16,3,13,1,15,13,26,3,0],["UGEL Huacaybamba","Huánuco",28,15,11,2,8,13,7,13,0,7,21,27,0,1],["UGEL Contumazá","Cajamarca",28,10,9,9,14,7,7,18,1,14,13,24,4,0],["UGEL Cangallo","Ayacucho",28,7,16,5,9,9,10,19,0,9,19,26,1,1],["UGEL Acomayo","Cusco",27,12,6,9,18,7,2,7,0,7,20,13,11,3],["UGEL Grau","Apurímac",27,14,10,3,8,15,4,17,0,13,14,25,2,0],["UGEL Tahuamanu","Madre de Dios",26,8,15,3,15,8,3,14,0,7,19,26,0,0],["UGEL Sandia","Puno",26,9,17,0,10,13,3,20,0,15,11,26,0,0],["UGEL San Miguel","Cajamarca",25,11,11,3,3,12,10,11,4,10,11,24,0,1],["UGEL Huamalíes","Huánuco",25,8,12,5,6,12,7,15,1,6,18,24,1,0],["UGEL Yarowilca","Huánuco",25,14,9,2,8,8,9,10,1,6,18,23,1,1],["UGEL Huaytará","Huancavelica",24,8,12,4,11,9,4,8,1,12,11,22,2,0],["UGEL Melgar","Puno",24,8,10,6,8,7,9,19,3,2,19,19,5,0],["UGEL Vilcashuamán","Ayacucho",23,9,12,2,7,10,6,18,1,7,15,23,0,0],["UGEL Candarave","Tacna",22,18,2,2,13,5,4,13,2,10,10,21,1,0],["UGEL Puerto Bermúdez","Pasco",22,12,9,1,5,4,13,17,3,8,11,22,0,0],["UGEL Condesuyos","Arequipa",21,6,9,6,12,2,7,13,4,2,15,16,4,1],["UGEL Chucuito","Puno",20,4,11,5,8,5,7,15,1,4,15,16,2,2],["UGEL Carlos F. Fitzcarrald","Ancash",20,9,7,4,8,2,10,15,1,6,13,18,2,0],["UGEL Tarata","Tacna",20,9,5,6,11,5,4,8,0,6,14,17,1,2],["UGEL Paucar de Sarasara","Ayacucho",20,9,7,4,13,4,3,15,3,6,11,19,1,0],["UGEL Palpa","Ica",20,8,7,5,4,12,4,3,0,2,18,20,0,0],["UGEL Surcubamba","Huancavelica",20,10,10,0,9,3,8,16,1,2,17,20,0,0],["UGEL Putumayo","Loreto",19,5,12,2,4,2,13,11,0,4,14,5,11,3],["UGEL Huancané","Puno",19,4,12,3,6,7,6,15,2,9,8,16,3,0],["UGEL Crucero","Puno",19,4,12,3,12,5,2,12,1,7,11,18,1,0],["UGEL Víctor Fajardo","Ayacucho",18,4,4,10,4,9,5,17,4,7,7,17,1,0],["UGEL San Pablo","Cajamarca",18,9,8,1,8,7,3,7,0,8,10,18,0,0],["UGEL Canas","Cusco",17,5,6,6,5,5,7,9,0,9,8,10,5,2],["UGEL Rio Tambo","Junín",17,2,8,7,5,6,6,14,0,3,14,11,5,1],["UGEL Asunción","Ancash",17,4,6,7,8,4,5,9,1,4,12,14,2,1],["UGEL Sihuas","Ancash",17,7,5,5,2,8,7,9,1,2,14,14,2,1],["UGEL Corongo","Ancash",17,6,3,8,12,4,1,8,1,4,12,12,0,5],["UGEL Rio Ene - Mantaro","Junín",17,4,11,2,10,4,3,15,4,6,7,5,10,2],["UGEL El Collao","Puno",15,4,9,2,3,5,7,5,1,5,9,14,1,0],["UGEL Manu","Madre de Dios",15,3,10,2,2,11,2,10,2,9,4,13,2,0],["UGEL Castrovirreyna","Huancavelica",13,9,2,2,2,6,5,5,1,5,7,11,2,0],["UGEL Antabamba","Apurímac",13,3,10,0,6,7,0,11,5,3,5,13,0,0],["UGEL Huancasancos","Ayacucho",12,3,6,3,7,1,4,8,0,5,7,11,1,0],["UGEL Sucre","Ayacucho",12,4,7,1,4,3,5,6,0,6,6,12,0,0],["UGEL Carabaya","Puno",12,6,3,3,3,2,7,10,1,6,5,11,1,0],["UGEL Aija","Ancash",11,7,0,4,7,4,0,7,1,4,6,10,1,0],["UGEL San Antonio de Putina","Puno",11,1,5,5,6,4,1,9,0,5,6,8,3,0],["UGEL Parinacochas","Ayacucho",10,4,4,2,5,3,2,5,0,5,5,9,1,0],["UGEL Ocros","Ancash",9,1,4,4,3,6,0,4,0,5,4,5,2,2],["UGEL Mariscal Luzuriaga","Ancash",9,5,2,2,4,3,2,3,0,2,7,7,2,0],["UGEL Lauricocha","Huánuco",8,2,5,1,3,4,1,5,0,2,6,7,1,0],["UGEL Lampa","Puno",8,8,0,0,5,1,2,7,0,3,5,8,0,0],["UGEL Huancarama","Apurímac",7,4,3,0,1,1,5,3,0,2,5,7,0,0],["UGEL Acobamba","Huancavelica",6,3,3,0,4,1,1,3,0,1,5,6,0,0],["UGEL Purus","Ucayali",6,3,3,0,3,2,1,2,0,3,3,6,0,0],["UGEL Datem del Marañón Intercultural Bilingüe","Loreto",5,0,0,5,0,0,5,5,0,2,3,0,0,5],["UGEL Moho","Puno",3,1,1,1,0,0,3,2,1,0,2,2,1,0],["UGEL San Ignacio de Loyola-Ichuña","Moquegua",2,2,0,0,1,1,0,1,0,1,1,2,0,0]];
+
+const NAT={"sex": 18.6, "staff": 35.3, "psi": 39.1, "fis": 42.3, "sec": 63.7, "prim": 31.2, "ini": 4.9, "fin": 77.5, "proc": 17.6, "pend": 5.0};
+
+const nf=n=>n.toLocaleString("es-PE");
+const pc=n=>n.toFixed(1).replace(".",",")+" %";
+const SVGNS="http://www.w3.org/2000/svg";
+const mk=(t,a)=>{const e=document.createElementNS(SVGNS,t); for(const k in a) e.setAttribute(k,a[k]); return e;};
+
+/* ---- tooltip ---- */
+const tip=document.getElementById("tip");
+function showTip(e,html){
+  tip.innerHTML=html; tip.style.opacity=1;
+  const r=tip.getBoundingClientRect();
+  let x=e.clientX+14, y=e.clientY-r.height-12;
+  if(x+r.width>innerWidth-10) x=e.clientX-r.width-14;
+  if(y<8) y=e.clientY+18;
+  tip.style.left=x+"px"; tip.style.top=y+"px";
+}
+const hideTip=()=>{tip.style.opacity=0;};
+
+/* ======================================================
+   ACT 1 - cien expedientes envejeciendo
+   ====================================================== */
+(function(){
+  const byMonth=new Map(MAT.map(d=>[d[0],{n:d[1],pct:d[2]}]));
+  const svg=document.getElementById("dots");
+  const sl=document.getElementById("slider");
+  const COLS=10, ROWS=10, CELL=31, R=11.5, PAD=7;
+  svg.setAttribute("viewBox","0 0 "+(PAD*2+COLS*CELL)+" "+(PAD*2+ROWS*CELL));
+
+  const cells=[];
+  for(let i=0;i<COLS*ROWS;i++){
+    const c=mk("circle",{cx:PAD+(i%COLS)*CELL+CELL/2, cy:PAD+Math.floor(i/COLS)*CELL+CELL/2, r:R});
+    c.style.transition="fill .18s, stroke .18s, opacity .18s";
+    svg.appendChild(c); cells.push(c);
+  }
+
+  // curva completa, como referencia secundaria
+  const mc=document.getElementById("minicurve");
+  const MW=330, MH=58, ML=4, MR=4, MT=8, MB=12;
+  mc.setAttribute("viewBox","0 0 "+MW+" "+MH);
+  const mx=m=>ML+(m/31)*(MW-ML-MR), my=p=>MT+(1-p/100)*(MH-MT-MB);
+  mc.appendChild(mk("path",{
+    d:"M"+MAT.map(d=>mx(d[0]).toFixed(1)+","+my(d[2]).toFixed(1)).join("L"),
+    fill:"none", stroke:"var(--ink-3)", "stroke-width":1.5, "stroke-linejoin":"round"}));
+  const marker=mk("circle",{r:4,fill:"var(--s1)",stroke:"var(--surface-1)","stroke-width":2});
+  mc.appendChild(marker);
+
+  const NOTES=[
+    [0,  "Un caso reportado hoy todav\u00eda no puede estar cerrado. Arrastra el control."],
+    [1,  "Al primer mes el sistema apenas ha empezado a moverse."],
+    [3,  "Pasado el trimestre siguen abiertos m\u00e1s expedientes de los que se cerraron."],
+    [5,  "La mitad. Y justo aqu\u00ed la curva se estanca durante varios meses."],
+    [8,  "Reci\u00e9n cerca del a\u00f1o la mayor\u00eda est\u00e1 cerrada."],
+    [13, "El tramo lento: los \u00faltimos expedientes son los que m\u00e1s cuestan."],
+    [20, "Pasados veinte meses el sistema ya cerr\u00f3 pr\u00e1cticamente todo."],
+    [24, "Este es el techo real: alrededor del 99 %, a m\u00e1s de dos a\u00f1os del reporte."]
+  ];
+  const noteFor=m=>{let t=NOTES[0][1]; for(const [k,v] of NOTES) if(m>=k) t=v; return t;};
+
+  function paint(m){
+    const d=byMonth.get(m), k=Math.round(d.pct);
+    cells.forEach((c,i)=>{
+      if(i<k){
+        c.setAttribute("fill","var(--s1)"); c.setAttribute("stroke","none");
+        c.setAttribute("opacity","1");
+      }else{
+        c.setAttribute("fill","none"); c.setAttribute("stroke","var(--ink-3)");
+        c.setAttribute("stroke-width","1.6"); c.setAttribute("opacity",".5");
+      }
+    });
+    document.getElementById("a-pct").textContent=k;
+    document.getElementById("a-mo").textContent=m;
+    document.getElementById("a-molbl").textContent =
+      m===0 ? "el d\u00eda del reporte" : (m===1 ? "mes desde el reporte" : "meses desde el reporte");
+    document.getElementById("a-note").textContent=noteFor(m);
+    marker.setAttribute("cx",mx(m)); marker.setAttribute("cy",my(d.pct));
+    document.getElementById("a-n").innerHTML =
+      "cohorte de <b>"+nf(d.n)+"</b> expedientes" +
+      (d.n<300 ? " \u00b7 grupo peque\u00f1o: son reportes de enero o febrero, sin clases" : "");
+  }
+
+  sl.addEventListener("input",()=>paint(+sl.value));
+  paint(0);
+})();
+
+/* ======================================================
+   ACT 2 — morphing scrollytelling
+   ====================================================== */
+(function(){
+  const svg=document.getElementById("morph");
+  const host=svg.parentElement;
+  let W=900,H=470;
+  const marks=DRE.map(d=>({name:d[0], n:d[1], sex:d[2], staff:d[3],
+    el:mk("rect",{rx:2,fill:"var(--s1)"}), lab:mk("text",{class:"lbl"}), cur:null}));
+  const gAx=mk("g",{}), gM=mk("g",{}), gAn=mk("g",{});
+  svg.append(gAx,gM,gAn);
+  marks.forEach(m=>{
+    m.el.style.cursor="crosshair";
+    m.el.addEventListener("mousemove",e=>showTip(e,
+      `<b>${m.name}</b><br>${nf(m.n)} reportes<br>Personal IE ${pc(m.staff)}<br>Sexual ${pc(m.sex)}`));
+    m.el.addEventListener("mouseleave",hideTip);
+    gM.append(m.el,m.lab);
+  });
+
+  const HL=["Loreto","Puno","Amazonas","Huancavelica","Apurímac","Lima Metropolitana"];
+  const isHL=n=>HL.includes(n);
+  // En la dispersion el cluster andino se apila: se rotula solo el par que
+  // sostiene el contraste, los demas quedan destacados por color.
+  const SCAT_LAB=["Loreto","Lima Metropolitana"];
+
+  function layout(step){
+    const m=marks.length;
+    if(step<=1){
+      const key = step===0 ? "n" : "staff";
+      const sorted=[...marks].sort((a,b)=>b[key]-a[key]);
+      const L=Math.round(Math.min(128,Math.max(74,W*0.26)));
+      // right margin has to hold the longest value label ("17,030")
+      const R=Math.max(58,Math.round(W*0.10)), T=10, B=26;
+      const rowH=(H-T-B)/m, bh=Math.max(4,rowH-3);
+      const fs=Math.max(8,Math.min(11.5,rowH-4.5));
+      const max=Math.max(...marks.map(d=>d[key]));
+      sorted.forEach((d,i)=>{
+        const w=Math.max(2,(d[key]/max)*(W-L-R));
+        // When rows get too thin to letter every region, keep the ones the
+        // story names plus the leaders — never an unlabelled wall of bars.
+        const room = rowH>12.5;
+        d.target={x:L,y:T+i*rowH,w,h:bh,rx:2,fs,
+          fill:isHL(d.name)?"var(--s2)":"var(--s1)",op:isHL(d.name)?1:.62,
+          lx:L-8, ly:T+i*rowH+bh/2+fs*0.34, anchor:"end",
+          txt:d.name, tvis: (room||isHL(d.name)||i<5)?1:0,
+          vx:L+w+6, vtxt: step===0?nf(d.n):pc(d[key])};
+      });
+    } else {
+      const L=54,R=26,T=22,B=44;
+      const lx=v=>Math.log10(v), xmin=lx(200), xmax=lx(20000);
+      const X=v=>L+(lx(v)-xmin)/(xmax-xmin)*(W-L-R);
+      const Y=p=>T+(1-(p-20)/55)*(H-T-B);
+      marks.forEach(d=>{
+        const s=isHL(d.name)?15:11;
+        d.target={x:X(d.n)-s/2,y:Y(d.staff)-s/2,w:s,h:s,rx:s/2,fs:11.5,
+          fill:isHL(d.name)?"var(--s2)":"var(--s1)",op:isHL(d.name)?.95:.6,
+          lx:X(d.n)+(X(d.n)<W*.6?s/2+7:-s/2-7), ly:Y(d.staff)+4,
+          anchor:X(d.n)<W*.6?"start":"end",
+          txt:d.name, tvis:SCAT_LAB.includes(d.name)?1:0, vx:-999, vtxt:""};
+      });
+    }
+  }
+
+  function axes(step){
+    gAx.textContent=""; gAn.textContent="";
+    if(step<=1) return;
+    const L=54,R=26,T=22,B=44;
+    const lx=v=>Math.log10(v), xmin=lx(200), xmax=lx(20000);
+    const X=v=>L+(lx(v)-xmin)/(xmax-xmin)*(W-L-R);
+    const Y=p=>T+(1-(p-20)/55)*(H-T-B);
+    [20,35,50,65,75].forEach(p=>{
+      gAx.appendChild(mk("line",{x1:L,x2:W-R,y1:Y(p),y2:Y(p),stroke:"var(--grid)","stroke-width":1}));
+      const t=mk("text",{x:L-9,y:Y(p)+3.5,"text-anchor":"end",class:"ax"}); t.textContent=p+"%"; gAx.appendChild(t);
+    });
+    [200,500,1000,2000,5000,10000,20000].forEach(v=>{
+      const t=mk("text",{x:X(v),y:H-B+20,"text-anchor":"middle",class:"ax"});
+      t.textContent=v>=1000?(v/1000)+"k":v; gAx.appendChild(t);
+    });
+    const t=mk("text",{x:(L+W-R)/2,y:H-10,"text-anchor":"middle",class:"ax","letter-spacing":".1em"});
+    t.textContent="TOTAL DE REPORTES (ESCALA LOG)"; gAx.appendChild(t);
+    gAx.appendChild(mk("line",{x1:L,x2:W-R,y1:Y(35.3),y2:Y(35.3),
+      stroke:"var(--ink-3)","stroke-width":1,"stroke-dasharray":"3 3"}));
+    const n=mk("text",{x:L+6,y:Y(35.3)-7,class:"note"}); n.textContent="promedio nacional 35,3 %"; gAx.appendChild(n);
+    if(step===3){
+      const r=mk("text",{x:W-R,y:T+14,"text-anchor":"end",class:"val emph","font-size":"13"});
+      r.textContent="r = −0,54"; gAn.appendChild(r);
+    }
+  }
+
+  let raf=null;
+  function apply(animate){
+    const D=animate?620:0, t0=performance.now();
+    marks.forEach(d=>{ if(!d.cur) d.cur={...d.target}; d.from={...d.cur}; });
+    const ease=t=>t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;
+    cancelAnimationFrame(raf);
+    (function frame(now){
+      const t=D===0?1:Math.min(1,(now-t0)/D), e=ease(t);
+      marks.forEach(d=>{
+        const f=d.from, g=d.target, c=d.cur;
+        for(const k of ["x","y","w","h","rx","op"]) c[k]=f[k]+(g[k]-f[k])*e;
+        d.el.setAttribute("x",c.x.toFixed(2)); d.el.setAttribute("y",c.y.toFixed(2));
+        d.el.setAttribute("width",Math.max(0.5,c.w).toFixed(2));
+        d.el.setAttribute("height",Math.max(0.5,c.h).toFixed(2));
+        d.el.setAttribute("rx",c.rx.toFixed(2));
+        d.el.setAttribute("fill",g.fill); d.el.setAttribute("fill-opacity",c.op.toFixed(2));
+        d.el.setAttribute("stroke","var(--surface-1)"); d.el.setAttribute("stroke-width",g.rx>3?2:0);
+        d.lab.setAttribute("x",(f.lx+(g.lx-f.lx)*e).toFixed(1));
+        d.lab.setAttribute("y",(f.ly+(g.ly-f.ly)*e).toFixed(1));
+        d.lab.setAttribute("text-anchor",g.anchor);
+        d.lab.setAttribute("opacity",(g.tvis*e + (f.tvis??0)*(1-e)).toFixed(2));
+        d.lab.setAttribute("font-size",(g.fs||11.5).toFixed(1));
+        d.lab.setAttribute("font-weight",isHL(d.name)?600:400);
+        d.lab.setAttribute("fill",isHL(d.name)?"var(--ink)":"var(--ink-2)");
+        d.lab.textContent=g.txt;
+      });
+      if(t<1) raf=requestAnimationFrame(frame);
+    })(t0);
+  }
+
+  // value labels live in their own layer so they fade wholesale
+  const gVal=mk("g",{}); svg.appendChild(gVal);
+  function values(step){
+    gVal.textContent="";
+    if(step>1) return;
+    marks.forEach(d=>{
+      const t=mk("text",{x:d.target.vx,y:d.target.ly,class:"val",
+        "font-size":Math.max(8,(d.target.fs||10.5)-0.5).toFixed(1)});
+      if(d.target.tvis===0) return;
+      t.textContent=d.target.vtxt;
+      if(isHL(d.name)) t.setAttribute("class","val emph");
+      gVal.appendChild(t);
+    });
+  }
+
+  const TITLES=[
+    ["Reportes por DRE","Conteo absoluto, 2024 – ago 2026. Es la vista que publica el portal."],
+    ["Proporción de reportes que señalan al personal de la IE","Misma base, otra pregunta. Nacional: 35,3 %."],
+    ["Volumen frente a composición","Cada punto es una DRE. Eje horizontal en escala logarítmica."],
+    ["Volumen frente a composición","La pendiente es la firma del subregistro."]
+  ];
+
+  let cur=-1;
+  function setStep(i,animate){
+    if(i===cur) return;
+    const prevScatter = cur>=2, nowScatter = i>=2;
+    cur=i;
+    document.getElementById("g-title").textContent=TITLES[i][0];
+    document.getElementById("g-sub").textContent=TITLES[i][1];
+    layout(i); axes(i); apply(animate && !(prevScatter&&nowScatter&&false));
+    setTimeout(()=>values(i), animate?620:0);
+  }
+
+  function resize(){
+    const r=host.getBoundingClientRect();
+    W=Math.max(320,Math.round(r.width-32));
+    H=Math.max(260,Math.round(host.querySelector("#morph").getBoundingClientRect().height));
+    svg.setAttribute("viewBox",`0 0 ${W} ${H}`);
+    const c=cur; cur=-1; setStep(c<0?0:c,false);
+  }
+  addEventListener("resize",resize);
+
+  // Boot synchronously: requestAnimationFrame never fires in a backgrounded tab,
+  // which would leave this chart blank for anyone who opens the page in one.
+  resize();
+  addEventListener("load",resize);
+  if(document.fonts?.ready) document.fonts.ready.then(resize);
+
+  const io=new IntersectionObserver(es=>{
+    es.forEach(en=>{
+      if(en.isIntersecting){
+        document.querySelectorAll(".step").forEach(s=>s.classList.remove("on"));
+        en.target.classList.add("on");
+        setStep(+en.target.dataset.step, true);
+      }
+    });
+  },{rootMargin:"-45% 0px -45% 0px"});
+  document.querySelectorAll(".step").forEach(s=>io.observe(s));
+})();
+
+/* ======================================================
+   ACT 3 — UGEL explorer
+   ====================================================== */
+(function(){
+  const q=document.getElementById("q"), res=document.getElementById("results"), prof=document.getElementById("profile");
+  const norm=s=>s.normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase();
+  const IDX=UGEL.map((u,i)=>({i,key:norm(u[0]+" "+u[1])}));
+  let sel=-1, list=[];
+
+  function bar(label,val,tot,natPct,color){
+    const p=tot?val/tot*100:0;
+    return `<div class="row"><span class="rl">${label}</span>
+      <span class="track"><span class="fill" style="width:${p.toFixed(1)}%;background:${color}"></span>
+      ${natPct!=null?`<span class="nat" style="left:${natPct.toFixed(1)}%"></span>`:""}</span>
+      <span class="rv">${pc(p)}</span></div>`;
+  }
+
+  function sparkline(a,b,c){
+    const v=[a,b,c], max=Math.max(...v,1), W=150,H=38;
+    const pts=v.map((n,i)=>[10+i*((W-20)/2), H-6-(n/max)*(H-16)]);
+    const dots=pts.map((p,i)=>`<circle cx="${p[0]}" cy="${p[1]}" r="3.5" fill="var(--s1)"/>
+      <text x="${p[0]}" y="${p[1]-8}" text-anchor="middle" class="val">${nf(v[i])}</text>`).join("");
+    return `<svg class="spark" viewBox="0 0 ${W} ${H}" style="width:100%;max-width:190px;height:auto">
+      <path d="M${pts.map(p=>p.join(",")).join("L")}" fill="none" stroke="var(--s1)" stroke-width="2"
+        stroke-linecap="round" stroke-linejoin="round"/>${dots}
+      <text x="10" y="${H-0.5}" class="ax">2024</text>
+      <text x="${W-10}" y="${H-0.5}" text-anchor="end" class="ax">2026*</text></svg>`;
+  }
+
+  function render(i){
+    const u=UGEL[i];
+    const [name,dre,tot,n24,n25,n26,psi,fis,sex,staff,ini,pri,sec,fin,proc,pend]=u;
+    const rank=UGEL.findIndex(x=>x[0]===name)+1;
+    prof.innerHTML=`
+      <div class="phead">
+        <div><p class="pname">${name}</p><p class="pdre">DRE ${dre} · puesto ${rank} de 225 por volumen</p></div>
+        <div class="ptot"><b>${nf(tot)}</b><span>reportes · ene 2024 – ago 2026</span></div>
+      </div>
+      <div class="grid2">
+        <div class="blk">
+          <h4>Tipo de violencia</h4>
+          ${bar("Psicológica",psi,tot,NAT.psi,"var(--s1)")}
+          ${bar("Física",fis,tot,NAT.fis,"var(--s1)")}
+          ${bar("Sexual",sex,tot,NAT.sex,"var(--s2)")}
+          <div class="natnote"><i></i> la marca vertical es el promedio nacional</div>
+        </div>
+        <div class="blk">
+          <h4>Quién ejerce la violencia</h4>
+          ${bar("Personal IE",staff,tot,NAT.staff,"var(--s2)")}
+          ${bar("Entre pares",tot-staff,tot,100-NAT.staff,"var(--s1)")}
+          <h4 style="margin-top:22px">Evolución anual</h4>
+          ${sparkline(n24,n25,n26)}
+          <div class="natnote">* 2026 cubre solo enero – agosto</div>
+        </div>
+        <div class="blk">
+          <h4>Nivel educativo</h4>
+          ${bar("Secundaria",sec,tot,NAT.sec,"var(--s1)")}
+          ${bar("Primaria",pri,tot,NAT.prim,"var(--s1)")}
+          ${bar("Inicial",ini,tot,NAT.ini,"var(--s1)")}
+        </div>
+        <div class="blk">
+          <h4>Estado de atención al 31 ago 2026</h4>
+          ${bar("Finalizada",fin,tot,NAT.fin,"var(--s3)")}
+          ${bar("En proceso",proc,tot,NAT.proc,"var(--s1)")}
+          ${bar("Pendiente",pend,tot,NAT.pend,"var(--s2)")}
+        </div>
+      </div>`;
+  }
+
+  function search(term){
+    const t=norm(term.trim());
+    list = t==="" ? IDX.slice(0,10) : IDX.filter(o=>o.key.includes(t)).slice(0,40);
+    if(!list.length){ res.hidden=true; return; }
+    res.innerHTML=list.map((o,k)=>{
+      const u=UGEL[o.i];
+      return `<button type="button" data-k="${k}" class="${k===sel?"sel":""}"><b>${u[0]}</b> <span>${nf(u[2])}</span><br>
+        <span style="float:none;color:var(--ink-3);font-size:12px;font-family:inherit">DRE ${u[1]}</span></button>`;
+    }).join("");
+    res.hidden=false;
+  }
+  function choose(k){
+    if(!list[k]) return;
+    const u=UGEL[list[k].i];
+    q.value=u[0]; res.hidden=true; sel=-1;
+    render(list[k].i);
+  }
+
+  q.addEventListener("input",()=>{sel=-1; search(q.value);});
+  q.addEventListener("focus",()=>search(q.value));
+  q.addEventListener("keydown",e=>{
+    if(res.hidden) return;
+    if(e.key==="ArrowDown"||e.key==="ArrowUp"){
+      e.preventDefault(); sel=Math.max(0,Math.min(list.length-1,sel+(e.key==="ArrowDown"?1:-1)));
+      search(q.value);
+      res.querySelector(".sel")?.scrollIntoView({block:"nearest"});
+    } else if(e.key==="Enter"){ e.preventDefault(); choose(sel<0?0:sel); }
+    else if(e.key==="Escape"){ res.hidden=true; }
+  });
+  res.addEventListener("click",e=>{
+    const b=e.target.closest("button"); if(b) choose(+b.dataset.k);
+  });
+  document.addEventListener("click",e=>{
+    if(!e.target.closest(".picker")) res.hidden=true;
+  });
+
+  // open at rest on the case that started this investigation
+  const start=UGEL.findIndex(u=>u[0]==="UGEL 07 San Borja");
+  q.value=UGEL[start][0];
+  render(start);
+})();
+
+/* mapa de Lima: hover por distrito */
+(function(){
+  const m=document.getElementById("limamap"); if(!m) return;
+  m.querySelectorAll("path").forEach(el=>{
+    const html=`<b>${el.dataset.d}</b><br>${el.dataset.u}<br>`+
+      `${(+el.dataset.n).toLocaleString("es-PE")} reportes en toda la UGEL`;
+    el.addEventListener("mousemove",e=>showTip(e,html));
+    el.addEventListener("mouseleave",hideTip);
+  });
+})();
+</script>

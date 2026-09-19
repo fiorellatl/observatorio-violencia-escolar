@@ -1,0 +1,23 @@
+# Netlify — Observatorio de Violencia Escolar
+
+[build]
+  command = "npm run build"
+  publish = ".next"
+
+[build.environment]
+  NODE_VERSION = "20"
+  # Cuántas fichas de colegio se prerrenderizan en el build. El resto se
+  # generan bajo demanda (dynamicParams = true). Subirlo mejora el SEO y
+  # alarga el build; 0 = todas las que tienen reportes recientes.
+  PRERENDER_LIMIT = "4000"
+
+# El runtime de Next.js para Netlify: necesario para las rutas dinámicas
+# (/colegio/[slug] de colegios no prerrenderizados).
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
+
+# El índice de búsqueda es inmutable entre despliegues: que lo cachee el CDN.
+[[headers]]
+  for = "/data/*"
+  [headers.values]
+    Cache-Control = "public, max-age=3600, stale-while-revalidate=86400"

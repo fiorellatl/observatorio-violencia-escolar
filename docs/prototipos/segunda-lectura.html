@@ -1,0 +1,538 @@
+<title>Segunda lectura de SíseVe</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+
+<style>
+:root{
+  --ground:#f6f6f3; --panel:#fdfdfb; --ink:#15181b; --ink-2:#565c63; --ink-3:#848a91;
+  --rule:#deded7; --rule-2:#eaeae4;
+  --s1:#2a78d6; --s2:#eb6834; --s3:#1baf7a;
+  --flag:#c0392b; --grid:#e6e6df;
+  --surface-1:var(--panel);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --ground:#121311; --panel:#1a1a19; --ink:#f3f3ee; --ink-2:#b4b3a9; --ink-3:#83827a;
+    --rule:#2e2e2b; --rule-2:#232322;
+    --s1:#3987e5; --s2:#d95926; --s3:#199e70;
+    --flag:#e66767; --grid:#2a2a27;
+  }
+}
+:root[data-theme="dark"]{
+  --ground:#121311; --panel:#1a1a19; --ink:#f3f3ee; --ink-2:#b4b3a9; --ink-3:#83827a;
+  --rule:#2e2e2b; --rule-2:#232322;
+  --s1:#3987e5; --s2:#d95926; --s3:#199e70;
+  --flag:#e66767; --grid:#2a2a27;
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0; background:var(--ground); color:var(--ink);
+  font-family:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  font-size:16px; line-height:1.6; -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:980px; margin:0 auto; padding-inline:20px; padding-block:0 72px}
+
+/* ---------- masthead ---------- */
+.mast{padding-block:56px 36px; border-bottom:1px solid var(--rule)}
+.kicker{
+  font-family:"IBM Plex Mono",ui-monospace,monospace; font-size:11px; font-weight:500;
+  letter-spacing:.14em; text-transform:uppercase; color:var(--ink-3); margin:0 0 20px
+}
+h1{
+  font-family:Newsreader,Georgia,serif; font-weight:500; font-size:clamp(2.4rem,6.4vw,4rem);
+  line-height:1.04; letter-spacing:-.018em; margin:0 0 20px; text-wrap:balance;
+}
+.standfirst{
+  font-family:Newsreader,Georgia,serif; font-size:clamp(1.05rem,2.4vw,1.28rem);
+  line-height:1.52; color:var(--ink-2); max-width:60ch; margin:0;
+}
+.standfirst em{color:var(--ink); font-style:italic}
+
+/* ---------- stat strip ---------- */
+.stats{
+  display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+  gap:1px; background:var(--rule); border:1px solid var(--rule); margin-block:36px 0;
+}
+.stat{background:var(--panel); padding:18px 18px 16px}
+.stat .v{
+  font-family:"IBM Plex Mono",monospace; font-size:1.7rem; font-weight:600;
+  letter-spacing:-.02em; font-variant-numeric:tabular-nums; display:block; line-height:1.1;
+}
+.stat .k{
+  font-size:12px; color:var(--ink-2); margin-top:7px; display:block; line-height:1.4;
+}
+
+/* ---------- findings ---------- */
+section{padding-block:52px; border-bottom:1px solid var(--rule)}
+.eyebrow{
+  font-family:"IBM Plex Mono",monospace; font-size:11px; font-weight:600;
+  letter-spacing:.14em; text-transform:uppercase; color:var(--s1); margin:0 0 14px;
+  display:flex; align-items:center; gap:10px;
+}
+.eyebrow::after{content:""; flex:1; height:1px; background:var(--rule)}
+h2{
+  font-family:Newsreader,Georgia,serif; font-weight:500; font-size:clamp(1.5rem,3.6vw,2.1rem);
+  line-height:1.2; letter-spacing:-.012em; margin:0 0 16px; max-width:28ch; text-wrap:balance;
+}
+p{margin:0 0 15px; max-width:66ch; color:var(--ink-2)}
+p strong{color:var(--ink); font-weight:600}
+p:last-child{margin-bottom:0}
+.mono{font-family:"IBM Plex Mono",monospace; font-size:.92em; font-variant-numeric:tabular-nums}
+
+/* contrast box: what SiseVe shows vs what the data shows */
+.contrast{
+  display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
+  gap:1px; background:var(--rule); border:1px solid var(--rule); margin:22px 0;
+}
+.contrast > div{background:var(--panel); padding:16px 18px}
+.contrast h3{
+  font-family:"IBM Plex Mono",monospace; font-size:10.5px; font-weight:600; letter-spacing:.12em;
+  text-transform:uppercase; margin:0 0 9px; color:var(--ink-3);
+}
+.contrast .b h3{color:var(--s1)}
+.contrast p{font-size:14.5px; margin:0; max-width:none}
+
+/* ---------- figures ---------- */
+figure{margin:26px 0 0; background:var(--panel); border:1px solid var(--rule); padding:20px 18px 16px}
+.figtitle{
+  font-size:14.5px; font-weight:600; color:var(--ink); margin:0 0 3px; letter-spacing:-.005em;
+}
+.figsub{font-size:12.5px; color:var(--ink-3); margin:0 0 16px; line-height:1.45}
+figcaption{
+  font-size:12px; color:var(--ink-3); margin-top:14px; padding-top:12px;
+  border-top:1px solid var(--rule-2); line-height:1.5;
+}
+.scroller{overflow-x:auto; -webkit-overflow-scrolling:touch}
+svg{display:block; width:100%; height:auto; max-width:100%}
+.scroller svg{min-width:560px}
+
+/* legend */
+.legend{display:flex; flex-wrap:wrap; gap:16px; margin-bottom:14px}
+.legend span{display:flex; align-items:center; gap:7px; font-size:12.5px; color:var(--ink-2)}
+.swatch{width:11px; height:11px; border-radius:2px; flex:none}
+
+/* svg text roles */
+.ax{font-family:"IBM Plex Mono",monospace; font-size:10.5px; fill:var(--ink-3)}
+.lbl{font-family:"IBM Plex Sans",sans-serif; font-size:11.5px; fill:var(--ink-2)}
+.val{font-family:"IBM Plex Mono",monospace; font-size:10.5px; fill:var(--ink-2); font-weight:500}
+.emph{fill:var(--ink); font-weight:600}
+.note{font-family:"IBM Plex Sans",sans-serif; font-size:11px; fill:var(--ink-3); font-style:italic}
+
+/* tooltip */
+#tip{
+  position:fixed; z-index:50; pointer-events:none; opacity:0; transition:opacity .11s;
+  background:var(--ink); color:var(--ground); padding:7px 10px; border-radius:4px;
+  font-family:"IBM Plex Mono",monospace; font-size:11.5px; line-height:1.5;
+  max-width:230px; box-shadow:0 3px 14px rgba(0,0,0,.24);
+}
+#tip b{font-weight:600}
+.hit{cursor:crosshair}
+
+/* table view (relief + accessibility) */
+details{margin-top:14px}
+summary{
+  font-family:"IBM Plex Mono",monospace; font-size:11.5px; color:var(--ink-2);
+  cursor:pointer; padding:5px 0; letter-spacing:.03em;
+}
+summary:focus-visible{outline:2px solid var(--s1); outline-offset:2px}
+table{border-collapse:collapse; width:100%; font-size:12.5px; margin-top:10px}
+th,td{text-align:right; padding:5px 9px; border-bottom:1px solid var(--rule-2);
+  font-variant-numeric:tabular-nums; font-family:"IBM Plex Mono",monospace}
+th:first-child,td:first-child{text-align:left; font-family:"IBM Plex Sans",sans-serif}
+th{color:var(--ink-3); font-weight:500; border-bottom:1px solid var(--rule)}
+td{color:var(--ink-2)}
+
+/* method footer */
+.method{padding-block:44px 0; border:0}
+.method h2{font-size:1.15rem; font-family:"IBM Plex Sans",sans-serif; font-weight:600; margin-bottom:14px}
+.method p, .method li{font-size:14px; color:var(--ink-2)}
+.method ul{margin:0 0 14px; padding-left:20px; max-width:66ch}
+.method li{margin-bottom:7px}
+.method code{
+  font-family:"IBM Plex Mono",monospace; font-size:12.5px; background:var(--panel);
+  border:1px solid var(--rule); padding:1px 5px; border-radius:3px; color:var(--ink);
+}
+.warnbox{
+  border-left:3px solid var(--flag); background:var(--panel); padding:16px 18px; margin:22px 0;
+}
+.warnbox p{font-size:14.5px; margin:0; max-width:none}
+.warnbox strong{color:var(--flag)}
+
+@media (prefers-reduced-motion:reduce){*{transition:none!important; animation:none!important}}
+</style>
+
+<div class="wrap">
+
+<header class="mast">
+  <p class="kicker">Datos abiertos · Minedu Perú · corte 31 ago 2026</p>
+  <h1>Segunda lectura de SíseVe</h1>
+  <p class="standfirst">El portal del Minedu publica 22 gráficos por UGEL. Debajo de ellos hay una base de <em>50,633 reportes individuales</em>, descargable sin autenticación, que responde preguntas que el tablero oficial no formula — y que corrige al menos una lectura que el propio tablero induce.</p>
+
+  <div class="stats">
+    <div class="stat"><span class="v" id="s-casos">—</span><span class="k">reportes, ene 2024 – ago 2026</span></div>
+    <div class="stat"><span class="v" id="s-ugel">—</span><span class="k">UGEL con al menos un reporte</span></div>
+    <div class="stat"><span class="v" id="s-staff">—</span><span class="k">ejercidos por personal de la IE</span></div>
+    <div class="stat"><span class="v" id="s-castigo">—</span><span class="k">castigos físicos, prohibidos desde 2015</span></div>
+  </div>
+</header>
+
+<!-- ============ 1. ATENCIÓN ============ -->
+<section>
+  <p class="eyebrow">Atención</p>
+  <h2>El tablero invita a leer un derrumbe donde solo hay expedientes jóvenes</h2>
+
+  <p>SíseVe grafica «atención en proceso» contra «atención finalizada» <strong>por año de reporte</strong>. En UGEL 07 San Borja eso da 100 % finalizado en 2024, 75 % en 2025 y 10 % en 2026. Leído de corrido, parece un sistema que dejó de cerrar casos.</p>
+
+  <p>No lo es. Todos los estados se observan en <strong>un único corte</strong>, el 31 de agosto de 2026. Un caso de 2024 tuvo dos años para cerrarse; uno de julio de 2026, seis semanas. La comparación entre años mide edad del expediente, no gestión.</p>
+
+  <div class="contrast">
+    <div class="a">
+      <h3>Lo que el tablero compara</h3>
+      <p>Tres años entre sí, con todos los casos observados el mismo día. El año en curso siempre saldrá último.</p>
+    </div>
+    <div class="b">
+      <h3>Lo que hay que comparar</h3>
+      <p>Cada cohorte contra su propia antigüedad. Así la curva deja de medir el calendario y mide al sistema.</p>
+    </div>
+  </div>
+
+  <figure>
+    <p class="figtitle">Cierre de expedientes según antigüedad del reporte</p>
+    <p class="figsub">Porcentaje con «atención finalizada» al corte del 31 ago 2026, por meses transcurridos desde el reporte. Nacional, cohortes de n ≥ 60.</p>
+    <div id="c-mat"></div>
+    <figcaption>La mitad de los expedientes sigue abierta a los cuatro meses; el 98 % se alcanza recién pasados los veinte. Los dientes alrededor de los meses 6–7 y 18–19 corresponden a enero y febrero, cuando no hay clases y el volumen cae a decenas de casos.</figcaption>
+  </figure>
+</section>
+
+<!-- ============ 2. TAXONOMÍA ============ -->
+<section>
+  <p class="eyebrow">Taxonomía</p>
+  <h2>El subtipo ya decide quién es el agresor</h2>
+
+  <p>La base trae una columna que el tablero <strong>nunca grafica</strong>: <span class="mono">SUBTIPO_VIOLENCIA</span>, con 18 categorías. Al cruzarla con quién ejerce la violencia aparece algo que no es un hallazgo estadístico sino de diseño: <strong>15 de los 18 subtipos son exclusivos de una clase de agresor.</strong></p>
+
+  <p>«Castigo físico», «trato humillante», «hostigamiento sexual» y «discriminación» son 100 % personal de la IE. «Acoso escolar», «ciber acoso», «intimidación» y «aislamiento» son 100 % entre escolares. No es que los docentes no acosen: es que si el agresor es un docente, el hecho se clasifica bajo otra etiqueta.</p>
+
+  <div class="warnbox">
+    <p><strong>Consecuencia para cualquier cifra de bullying.</strong> En SíseVe el acoso escolar es, por construcción, solo entre pares. Un titular del tipo «casos de bullying» nunca incluye al personal de la escuela — y no porque no ocurra, sino porque la taxonomía lo manda a otra casilla.</p>
+  </div>
+
+  <figure>
+    <p class="figtitle">Quién ejerce la violencia, por subtipo</p>
+    <p class="figsub">Los 18 subtipos registrados, ordenados por volumen. Barras completas al 100 % revelan categorías reservadas a una sola clase de agresor.</p>
+    <div class="legend">
+      <span><i class="swatch" style="background:var(--s1)"></i>Entre escolares</span>
+      <span><i class="swatch" style="background:var(--s2)"></i>Personal de la IE a escolares</span>
+    </div>
+    <div class="scroller" id="c-sub"></div>
+    <figcaption>Solo tres subtipos se reparten entre ambos: violencia verbal, tocamientos y violación sexual. De las 829 violaciones sexuales registradas, <span class="mono">368</span> se atribuyen a personal de la institución educativa.</figcaption>
+  </figure>
+</section>
+
+<!-- ============ 3. COBERTURA ============ -->
+<section>
+  <p class="eyebrow">Cobertura</p>
+  <h2>Donde menos se reporta, lo poco que llega es más grave</h2>
+
+  <p>El tablero muestra conteos absolutos por región. Nunca muestra <strong>composición</strong>, y ahí está el patrón: cuanto menor es el volumen total de una DRE, mayor es la proporción de casos atribuidos al personal de la escuela.</p>
+
+  <p>Loreto registra 699 reportes en 31 meses y el <strong>68 %</strong> señala a un adulto de la institución. Lima Metropolitana registra 17,030 y ese valor cae al 28 %. La correlación entre volumen y gravedad de la composición es nítida: <span class="mono">r = −0,54</span>.</p>
+
+  <p>La lectura natural no es que los docentes amazónicos agredan más. Es la firma clásica del <strong>subregistro</strong>: donde denunciar cuesta, solo llega a la plataforma lo más grave y lo más difícil de silenciar. El mismo patrón, algo más débil, aparece en la proporción de violencia sexual (<span class="mono">r = −0,36</span>).</p>
+
+  <figure>
+    <p class="figtitle">Volumen de reportes frente a composición del agresor</p>
+    <p class="figsub">Cada punto es una DRE. Eje horizontal en escala logarítmica. Nacional: 35,3 % personal de la IE.</p>
+    <div id="c-scatter"></div>
+    <figcaption>Un tablero que solo publica conteos absolutos deja invisible a Loreto: 699 casos lo colocan al final de cualquier ranking, cuando su composición es la señal de alerta más fuerte de la base.</figcaption>
+  </figure>
+</section>
+
+<!-- ============ 4. CALENDARIO ============ -->
+<section>
+  <p class="eyebrow">Calendario</p>
+  <h2>Veintisiete veces más reportes en junio que en febrero</h2>
+
+  <p>SíseVe publica una «evolución mensual» como serie continua, lo que invita a leer picos y caídas como cambios en la violencia escolar. Son el año lectivo. Febrero acumula 246 reportes contra 6,765 de junio: sin clases no hay canal de reporte.</p>
+
+  <p>De ahí una regla práctica: <strong>el año 2026 no es comparable con 2024 ni 2025.</strong> Cubre enero–agosto, y le faltan justamente setiembre a diciembre, cuatro meses de calendario activo que en años completos aportan cerca del <span class="mono">30 %</span> del total.</p>
+
+  <figure>
+    <p class="figtitle">Reportes por mes calendario</p>
+    <p class="figsub">Suma de 2024, 2025 y 2026. Enero y febrero son vacaciones escolares en Perú.</p>
+    <div id="c-months"></div>
+    <figcaption>El mismo efecto aparece en la semana: el 95,4 % de los reportes cae de lunes a viernes.</figcaption>
+  </figure>
+</section>
+
+<!-- ============ 5. ADVERTENCIA ============ -->
+<section>
+  <p class="eyebrow">Advertencia</p>
+  <h2>Qué no puede decir esta base</h2>
+
+  <p><strong>La fecha es de registro, no del hecho.</strong> Que el 95,4 % de los reportes caiga en día hábil lo confirma: se está midiendo cuándo alguien abrió el expediente, no cuándo ocurrió la agresión. La estacionalidad de arriba es de la denuncia, no necesariamente de la violencia.</p>
+
+  <p><strong>Un reporte no es un caso confirmado.</strong> La nota del propio archivo oficial lo dice: son «alertas de violencia escolar» y «puede existir más de un reporte sobre un mismo caso». Nada en la base permite deduplicar.</p>
+
+  <p><strong>No hay denominador.</strong> El campo <span class="mono">NUMERO_MATRICULADO</span> viene en cero en todas las respuestas del portal, así que ninguna cifra puede convertirse en tasa por cada mil estudiantes. Todo lo de arriba son composiciones y conteos, nunca prevalencia.</p>
+
+  <p><strong>No hay institución educativa.</strong> La columna más fina es la UGEL. No existe nombre de colegio ni código modular en ningún endpoint, ni en el archivo caso por caso, ni en el JavaScript del portal.</p>
+</section>
+
+<section class="method">
+  <h2>Método</h2>
+  <ul>
+    <li>Fuente única: <code>POST /Web/Inicio/DescargarEXCEL</code> del portal público de SíseVe, más los seis endpoints de <code>/TableroControl/</code> usados para validación cruzada. Sin autenticación y sin evadir ningún control.</li>
+    <li>50,633 filas, 2024-01-02 a 2026-08-31, con las columnas <span class="mono">FECHA_REPORTE, DRE, UGEL, NIVEL_EDUCATIVO, TIPO_REPORTE, TIPO_VIOLENCIA, SUBTIPO_VIOLENCIA, TIPO_ESTADO_REPORTE</span>.</li>
+    <li>Validación: los totales del archivo coinciden exactamente con <code>ListarDatosMapa</code> en 2024 (19,297) y 2025 (19,531). En 2026 el archivo trae 14 casos más que los agregados del tablero, todos en UGEL 07 — año aún abierto, cortes distintos. No se corrigió.</li>
+    <li>«Cierre» agrupa <span class="mono">Atención finalizada</span>. «Pendiente» agrupa <span class="mono">Pendiente de atención por la IE</span> y <span class="mono">Observado por UGEL</span>.</li>
+    <li>Se conservan las categorías originales del Minedu. Ningún valor fue imputado ni estimado.</li>
+  </ul>
+</section>
+
+</div>
+
+<div id="tip" role="status" aria-live="polite"></div>
+
+<script>
+const DATA = {
+  totals:{casos:50633,ugel:225,staffPct:35.3,castigo:3876,violacion:829,violacionStaff:368,sexPct:18.6},
+  maturation:[{m:0,n:2371,pct:0},{m:1,n:2249,pct:10.2},{m:2,n:2246,pct:34.3},{m:3,n:1822,pct:42.8},{m:4,n:2174,pct:47.4},{m:5,n:757,pct:46.8},{m:6,n:96,pct:47.9},{m:7,n:90,pct:67.8},{m:8,n:1596,pct:71.2},{m:9,n:2630,pct:79.6},{m:10,n:2057,pct:83.3},{m:11,n:2789,pct:86.8},{m:12,n:1676,pct:88.5},{m:13,n:2108,pct:90.6},{m:14,n:2303,pct:90.1},{m:15,n:1502,pct:91.1},{m:16,n:1987,pct:92.8},{m:17,n:677,pct:92.8},{m:18,n:71,pct:88.7},{m:19,n:135,pct:85.9},{m:20,n:1568,pct:96.3},{m:21,n:2107,pct:98.1},{m:22,n:2422,pct:98.4},{m:23,n:2592,pct:99.5},{m:24,n:1610,pct:99.5},{m:25,n:1700,pct:99.5},{m:26,n:2216,pct:99.6},{m:27,n:2208,pct:99.5},{m:28,n:2118,pct:99.7},{m:29,n:539,pct:99.6},{m:30,n:79,pct:100},{m:31,n:138,pct:97.8}],
+  subtypes:[{tipo:"Física",sub:"Sin lesiones",n:10294,staff:0},{tipo:"Física",sub:"Con lesiones",n:7191,staff:0},{tipo:"Psicológica",sub:"Verbal",n:6763,staff:3096},{tipo:"Sexual",sub:"Tocamientos y actos libidinosos",n:5989,staff:2373},{tipo:"Psicológica",sub:"Trato humillante",n:5093,staff:5093},{tipo:"Física",sub:"Castigo físico",n:3876,staff:3876},{tipo:"Psicológica",sub:"Acoso escolar",n:3084,staff:0},{tipo:"Psicológica",sub:"Intimidación",n:1824,staff:0},{tipo:"Psicológica",sub:"Ciber acoso",n:1581,staff:0},{tipo:"Sexual",sub:"Hostigamiento sexual",n:1476,staff:1476},{tipo:"Psicológica",sub:"Discriminación",n:1149,staff:1149},{tipo:"Sexual",sub:"Violación sexual",n:829,staff:368},{tipo:"Sexual",sub:"Fines sexuales por medios tecnológicos",n:453,staff:453},{tipo:"Sexual",sub:"Acoso sexual",n:353,staff:0},{tipo:"Sexual",sub:"Acoso sexual por medios tecnológicos",n:307,staff:0},{tipo:"Psicológica",sub:"Aislamiento",n:280,staff:0},{tipo:"Física",sub:"Con uso de armas",n:64,staff:0},{tipo:"Psicológica",sub:"Con uso de armas",n:27,staff:0}],
+  dre:[{dre:"Lima Metropolitana",n:17030,pctSex:14.8,pctStaff:28.2},{dre:"Arequipa",n:3522,pctSex:16.2,pctStaff:37.4},{dre:"Piura",n:2997,pctSex:20.5,pctStaff:31.5},{dre:"Áncash",n:2264,pctSex:18.7,pctStaff:34.7},{dre:"La Libertad",n:2252,pctSex:18.1,pctStaff:40.9},{dre:"Junín",n:2136,pctSex:20.6,pctStaff:49.0},{dre:"Lambayeque",n:1952,pctSex:16.4,pctStaff:25.2},{dre:"Cusco",n:1927,pctSex:18.6,pctStaff:41.6},{dre:"Callao",n:1828,pctSex:15.1,pctStaff:31.2},{dre:"Ica",n:1781,pctSex:14.2,pctStaff:25.3},{dre:"Lima Provincias",n:1567,pctSex:19.6,pctStaff:39.4},{dre:"Tacna",n:1527,pctSex:14.8,pctStaff:36.1},{dre:"San Martín",n:1332,pctSex:24.9,pctStaff:35.4},{dre:"Cajamarca",n:1260,pctSex:22.4,pctStaff:41.3},{dre:"Huánuco",n:1238,pctSex:18.9,pctStaff:31.4},{dre:"Ucayali",n:999,pctSex:27.2,pctStaff:41.1},{dre:"Amazonas",n:845,pctSex:47.3,pctStaff:63.0},{dre:"Ayacucho",n:745,pctSex:22.6,pctStaff:55.8},{dre:"Loreto",n:699,pctSex:57.9,pctStaff:68.2},{dre:"Puno",n:531,pctSex:24.3,pctStaff:64.4},{dre:"Tumbes",n:404,pctSex:20.3,pctStaff:30.4},{dre:"Apurímac",n:395,pctSex:19.7,pctStaff:62.0},{dre:"Moquegua",n:390,pctSex:16.9,pctStaff:35.4},{dre:"Pasco",n:388,pctSex:19.8,pctStaff:44.6},{dre:"Huancavelica",n:376,pctSex:23.7,pctStaff:63.3},{dre:"Madre de Dios",n:248,pctSex:33.5,pctStaff:47.6}],
+  months:[{m:1,n:363},{m:2,n:246},{m:3,n:1973},{m:4,n:6279},{m:5,n:5532},{m:6,n:6765},{m:7,n:6057},{m:8,n:5657},{m:9,n:5381},{m:10,n:4479},{m:11,n:4737},{m:12,n:3164}]
+};
+
+const nf = n => n.toLocaleString("es-PE");
+const MES = ["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Set","Oct","Nov","Dic"];
+
+/* stat strip */
+document.getElementById("s-casos").textContent   = nf(DATA.totals.casos);
+document.getElementById("s-ugel").textContent    = DATA.totals.ugel;
+document.getElementById("s-staff").textContent   = DATA.totals.staffPct.toString().replace(".",",") + " %";
+document.getElementById("s-castigo").textContent = nf(DATA.totals.castigo);
+
+/* ---------- tooltip ---------- */
+const tip = document.getElementById("tip");
+function showTip(e, html){
+  tip.innerHTML = html;
+  tip.style.opacity = 1;
+  const r = tip.getBoundingClientRect();
+  let x = e.clientX + 14, y = e.clientY - r.height - 12;
+  if (x + r.width > innerWidth - 10) x = e.clientX - r.width - 14;
+  if (y < 8) y = e.clientY + 18;
+  tip.style.left = x + "px";
+  tip.style.top  = y + "px";
+}
+const hideTip = () => { tip.style.opacity = 0; };
+function bind(el, html){
+  el.classList.add("hit");
+  el.addEventListener("mousemove", e => showTip(e, html));
+  el.addEventListener("mouseleave", hideTip);
+}
+const SVGNS = "http://www.w3.org/2000/svg";
+function mk(tag, attrs){
+  const e = document.createElementNS(SVGNS, tag);
+  for (const k in attrs) e.setAttribute(k, attrs[k]);
+  return e;
+}
+function svgRoot(host, w, h){
+  const s = mk("svg", {viewBox:`0 0 ${w} ${h}`, role:"img"});
+  document.getElementById(host).appendChild(s);
+  return s;
+}
+
+/* ================= 1. maturation curve ================= */
+(function(){
+  const W=760, H=340, L=48, R=18, T=18, B=46;
+  const d = DATA.maturation, maxM = 31;
+  const s = svgRoot("c-mat", W, H);
+  s.setAttribute("aria-label","Curva de cierre de expedientes según antigüedad");
+  const x = m => L + (m/maxM)*(W-L-R);
+  const y = p => T + (1-p/100)*(H-T-B);
+
+  [0,25,50,75,100].forEach(p=>{
+    s.appendChild(mk("line",{x1:L,x2:W-R,y1:y(p),y2:y(p),stroke:"var(--grid)","stroke-width":1}));
+    const t = mk("text",{x:L-9,y:y(p)+3.5,"text-anchor":"end",class:"ax"}); t.textContent=p+"%";
+    s.appendChild(t);
+  });
+  for(let m=0;m<=maxM;m+=4){
+    const t = mk("text",{x:x(m),y:H-B+20,"text-anchor":"middle",class:"ax"}); t.textContent=m;
+    s.appendChild(t);
+  }
+  const xl = mk("text",{x:(L+W-R)/2,y:H-8,"text-anchor":"middle",class:"ax"});
+  xl.textContent="MESES DESDE EL REPORTE"; xl.setAttribute("letter-spacing",".1em");
+  s.appendChild(xl);
+
+  // area + line
+  const pts = d.map(p=>[x(p.m),y(p.pct)]);
+  s.appendChild(mk("path",{
+    d:`M${pts[0][0]},${y(0)}L`+pts.map(p=>p.join(",")).join("L")+`L${pts[pts.length-1][0]},${y(0)}Z`,
+    fill:"var(--s1)","fill-opacity":".09", stroke:"none"}));
+  s.appendChild(mk("path",{
+    d:"M"+pts.map(p=>p.join(",")).join("L"),
+    fill:"none", stroke:"var(--s1)","stroke-width":2,
+    "stroke-linejoin":"round","stroke-linecap":"round"}));
+
+  // reference band: the 98% plateau
+  s.appendChild(mk("line",{x1:x(20),x2:W-R,y1:y(98),y2:y(98),
+    stroke:"var(--s2)","stroke-width":1.5,"stroke-dasharray":"4 3"}));
+  const nt = mk("text",{x:W-R,y:y(98)-9,"text-anchor":"end",class:"note",fill:"var(--s2)"});
+  nt.textContent="meseta del 98 % — a partir del mes 20";
+  s.appendChild(nt);
+
+  // emphasized endpoints
+  [d[0], d.find(p=>p.m===4), d.find(p=>p.m===21)].forEach(p=>{
+    s.appendChild(mk("circle",{cx:x(p.m),cy:y(p.pct),r:4.5,fill:"var(--s1)",
+      stroke:"var(--surface-1)","stroke-width":2}));
+  });
+  const a1 = mk("text",{x:x(4)+9,y:y(47.4)+4,class:"val emph"}); a1.textContent="47,4 % a los 4 meses";
+  s.appendChild(a1);
+
+  // hit targets
+  d.forEach(p=>{
+    const c = mk("circle",{cx:x(p.m),cy:y(p.pct),r:11,fill:"transparent"});
+    bind(c, `<b>Mes ${p.m}</b><br>${p.pct.toString().replace(".",",")} % cerrado<br>${nf(p.n)} casos`);
+    s.appendChild(c);
+  });
+})();
+
+/* ================= 2. subtype × perpetrator ================= */
+(function(){
+  const d = DATA.subtypes, rowH=25, gap=7, L=232, R=64, T=8;
+  const W=760, H=T + d.length*rowH + 30;
+  const s = svgRoot("c-sub", W, H);
+  s.setAttribute("aria-label","Distribución del agresor por subtipo de violencia");
+  const barW = W-L-R;
+
+  d.forEach((p,i)=>{
+    const yy = T + i*rowH;
+    const bh = rowH-gap;
+    const staffPct = p.staff/p.n;
+    const peerW = barW*(1-staffPct), staffW = barW*staffPct;
+
+    const lab = mk("text",{x:L-11,y:yy+bh/2+4,"text-anchor":"end",class:"lbl"});
+    lab.textContent = p.sub.length>32 ? p.sub.slice(0,31)+"…" : p.sub;
+    s.appendChild(lab);
+
+    const tipHtml = `<b>${p.sub}</b><br>${p.tipo} · ${nf(p.n)} reportes<br>`+
+      `Entre escolares ${(100-staffPct*100).toFixed(1).replace(".",",")} %<br>`+
+      `Personal IE ${(staffPct*100).toFixed(1).replace(".",",")} %`;
+
+    if (peerW > 0.5){
+      const r1 = mk("rect",{x:L,y:yy,width:Math.max(peerW-(staffW>0.5?2:0),1),height:bh,
+        fill:"var(--s1)",rx:3});
+      bind(r1,tipHtml); s.appendChild(r1);
+    }
+    if (staffW > 0.5){
+      const r2 = mk("rect",{x:L+peerW,y:yy,width:Math.max(staffW,1),height:bh,
+        fill:"var(--s2)",rx:3});
+      bind(r2,tipHtml); s.appendChild(r2);
+    }
+    const v = mk("text",{x:W-R+9,y:yy+bh/2+4,class:"val"});
+    v.textContent = nf(p.n);
+    if (staffPct===1 || staffPct===0) v.setAttribute("class","val emph");
+    s.appendChild(v);
+  });
+
+  const cap = mk("text",{x:L,y:H-9,class:"ax"});
+  cap.textContent="0 %"; s.appendChild(cap);
+  const cap2 = mk("text",{x:L+barW,y:H-9,"text-anchor":"end",class:"ax"});
+  cap2.textContent="100 % de los reportes del subtipo"; s.appendChild(cap2);
+})();
+
+/* ================= 3. DRE scatter ================= */
+(function(){
+  const W=760, H=400, L=52, R=22, T=20, B=52;
+  const d = DATA.dre;
+  const s = svgRoot("c-scatter", W, H);
+  s.setAttribute("aria-label","Volumen de reportes frente a porcentaje de agresor personal de la IE");
+  const lx = v => Math.log10(v);
+  const xmin = lx(200), xmax = lx(20000);
+  const x = v => L + (lx(v)-xmin)/(xmax-xmin)*(W-L-R);
+  const y = p => T + (1-(p-20)/55)*(H-T-B);
+
+  [20,35,50,65,75].forEach(p=>{
+    s.appendChild(mk("line",{x1:L,x2:W-R,y1:y(p),y2:y(p),stroke:"var(--grid)","stroke-width":1}));
+    const t=mk("text",{x:L-9,y:y(p)+3.5,"text-anchor":"end",class:"ax"}); t.textContent=p+"%";
+    s.appendChild(t);
+  });
+  [200,500,1000,2000,5000,10000,20000].forEach(v=>{
+    const t=mk("text",{x:x(v),y:H-B+20,"text-anchor":"middle",class:"ax"});
+    t.textContent = v>=1000 ? (v/1000)+"k" : v;
+    s.appendChild(t);
+  });
+  const xl=mk("text",{x:(L+W-R)/2,y:H-10,"text-anchor":"middle",class:"ax"});
+  xl.textContent="TOTAL DE REPORTES (ESCALA LOG)"; xl.setAttribute("letter-spacing",".1em");
+  s.appendChild(xl);
+
+  // national reference
+  s.appendChild(mk("line",{x1:L,x2:W-R,y1:y(35.3),y2:y(35.3),
+    stroke:"var(--ink-3)","stroke-width":1,"stroke-dasharray":"3 3"}));
+  const rl=mk("text",{x:L+6,y:y(35.3)-7,class:"note"});
+  rl.textContent="promedio nacional 35,3 %"; s.appendChild(rl);
+
+  const LABEL = ["Loreto","Puno","Amazonas","Huancavelica","Apurímac","Lima Metropolitana","Ica"];
+  d.forEach(p=>{
+    const cx=x(p.n), cy=y(p.pctStaff);
+    const hi = LABEL.includes(p.dre);
+    const c = mk("circle",{cx,cy,r:hi?7:5.5,
+      fill: hi ? "var(--s2)" : "var(--s1)",
+      "fill-opacity": hi ? .95 : .62,
+      stroke:"var(--surface-1)","stroke-width":2});
+    bind(c, `<b>${p.dre}</b><br>${nf(p.n)} reportes<br>Personal IE ${p.pctStaff.toFixed(1).replace(".",",")} %<br>Sexual ${p.pctSex.toFixed(1).replace(".",",")} %`);
+    s.appendChild(c);
+    if (hi){
+      const right = cx < W*0.62;
+      const t = mk("text",{x: cx + (right?12:-12), y: cy+4,
+        "text-anchor": right?"start":"end", class:"lbl"});
+      t.setAttribute("fill","var(--ink)");
+      t.setAttribute("font-weight","600");
+      t.setAttribute("font-size","11.5");
+      t.textContent = p.dre;
+      s.appendChild(t);
+    }
+  });
+  const rr=mk("text",{x:W-R,y:T+12,"text-anchor":"end",class:"val emph"});
+  rr.setAttribute("font-size","12"); rr.textContent="r = −0,54";
+  s.appendChild(rr);
+})();
+
+/* ================= 4. monthly seasonality ================= */
+(function(){
+  const W=760, H=250, L=48, R=18, T=22, B=44;
+  const d = DATA.months, max=7000;
+  const s = svgRoot("c-months", W, H);
+  s.setAttribute("aria-label","Reportes por mes calendario");
+  const bw = (W-L-R)/12;
+  const y = v => T + (1-v/max)*(H-T-B);
+
+  [0,2000,4000,6000].forEach(v=>{
+    s.appendChild(mk("line",{x1:L,x2:W-R,y1:y(v),y2:y(v),stroke:"var(--grid)","stroke-width":1}));
+    const t=mk("text",{x:L-9,y:y(v)+3.5,"text-anchor":"end",class:"ax"});
+    t.textContent = v ? v/1000+"k" : "0"; s.appendChild(t);
+  });
+
+  d.forEach((p,i)=>{
+    const vac = p.m<=2;
+    const xx = L + i*bw + 3;
+    const r = mk("rect",{x:xx, y:y(p.n), width:bw-6, height:y(0)-y(p.n),
+      fill: vac ? "var(--s3)" : "var(--s1)", rx:3});
+    bind(r, `<b>${MES[p.m-1]}</b><br>${nf(p.n)} reportes`);
+    s.appendChild(r);
+
+    const t=mk("text",{x:xx+(bw-6)/2, y:H-B+20, "text-anchor":"middle", class:"ax"});
+    t.textContent = MES[p.m-1]; s.appendChild(t);
+
+    // direct labels on the low aqua bars (relief rule) and on the peak
+    if (vac || p.n===6765){
+      const v=mk("text",{x:xx+(bw-6)/2, y:y(p.n)-7, "text-anchor":"middle", class:"val emph"});
+      v.textContent = nf(p.n); s.appendChild(v);
+    }
+  });
+  const nt=mk("text",{x:L+bw*2+8, y:T+4, class:"note", fill:"var(--s3)"});
+  nt.textContent="vacaciones escolares"; s.appendChild(nt);
+})();
+</script>

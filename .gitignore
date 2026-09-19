@@ -1,0 +1,35 @@
+# ── Datos ────────────────────────────────────────────────────────────────
+# NUNCA versionar la base de nivel-reporte: contiene datos personales de
+# menores (edad, sexo, grado, turno del estudiante agredido). La capa pública
+# de data/public/ sí se versiona: es agregada y pasó por la anonimización.
+data/raw/
+data/processed/
+*.xlsx
+*.xls
+*.mp4
+
+# ── Node / Next ──────────────────────────────────────────────────────────
+node_modules/
+.next/
+out/
+build/
+*.tsbuildinfo
+next-env.d.ts
+
+# ── Entorno ──────────────────────────────────────────────────────────────
+.env
+.env.*
+!.env.example
+
+# ── Netlify ──────────────────────────────────────────────────────────────
+.netlify/
+
+# ── Python ───────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# ── Sistema ──────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
