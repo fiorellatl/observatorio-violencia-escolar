@@ -105,9 +105,6 @@ Los pasos 2 y 3 son **reanudables**: cachean cada respuesta en `data/raw/` y
 saltan lo ya descargado. Van con pausa deliberada — son servidores del Estado.
 El paso 3 tarda: cada ficha pesa ~370 KB y el ritmo es de unas 30 por minuto.
 
-El paso 2 es reanudable: cachea cada página en `data/raw/escale_est/` y salta las
-ya descargadas.
-
 Otros scripts del pipeline están documentados en [`docs/PIPELINE.md`](docs/PIPELINE.md),
 y la auditoría completa de fuentes en
 [`docs/AUDITORIA-FUENTES.md`](docs/AUDITORIA-FUENTES.md).
