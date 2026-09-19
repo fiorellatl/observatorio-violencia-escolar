@@ -91,6 +91,23 @@ export default async function ColegioPage({
   if (s.secciones != null)
     contexto.push({ label: "Secciones", valor: nf(s.secciones), fuente: "ESCALE", anio: s.anio_matricula });
 
+  // Contexto de Identicole: cada campo trae su propia fuente y año, que pueden
+  // diferir dentro de la misma ficha (Padrón 2026 junto a Censo Escolar 2021).
+  const ETIQUETAS: Record<string, string> = {
+    area: "Área",
+    turno: "Turno",
+    jornada: "Jornada escolar",
+    alumnado: "Alumnado",
+    internet: "Acceso a internet",
+    accesibilidad: "Accesibilidad",
+    espacios_educativos: "Espacios educativos",
+    equipamiento: "Tipos de equipamiento",
+  };
+  for (const [clave, etiqueta] of Object.entries(ETIQUETAS)) {
+    const c = s.contexto?.[clave];
+    if (c) contexto.push({ label: etiqueta, valor: String(c.v), fuente: c.f, anio: c.a });
+  }
+
   return (
     <article className="mx-auto max-w-shell px-5 py-10">
       <nav className="mb-6 text-[0.8rem] text-ink-3">
@@ -158,9 +175,15 @@ export default async function ColegioPage({
           />
           <MetricCard
             label="Pensión mensual"
-            value={null}
+            value={s.pension != null ? `S/ ${nf(s.pension)}` : null}
             fuente="Identicole"
-            ausente="Pendiente de integrar"
+            anio={s.anio_pension}
+            nota={s.pension != null ? "Declarada por el colegio al Ministerio" : undefined}
+            ausente={
+              s.gestion?.startsWith("Públic")
+                ? "No aplica: colegio público"
+                : "Aún no consultada"
+            }
           />
         </div>
       </section>
@@ -228,10 +251,10 @@ export default async function ColegioPage({
             </div>
           ))}
         </dl>
-        <p className="mt-5 text-[0.8rem] leading-relaxed text-ink-3">
-          Área urbano/rural, jornada escolar completa, infraestructura, conectividad y
-          resultados educativos provienen de Identicole y aún no están integrados. No se
-          muestran variables que todavía no tenemos.
+        <p className="mt-5 max-w-prose text-[0.8rem] leading-relaxed text-ink-3">
+          {Object.keys(s.contexto ?? {}).length === 0
+            ? "El contexto de Identicole —área, jornada escolar, conectividad, infraestructura— aún no se ha consultado para este colegio. No mostramos variables que todavía no tenemos."
+            : "Los años difieren entre fuentes a propósito: el padrón se actualiza cada año y el Censo Escolar no. Cada dato lleva el suyo."}
         </p>
       </section>
 

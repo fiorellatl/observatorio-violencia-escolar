@@ -37,6 +37,18 @@ export interface SchoolDetail {
   secciones?: number | null;
   anio_matricula?: string | null;
   tasa_2024?: number | null;
+  /** Solo colegios privados, y solo donde ya bajamos la ficha de Identicole. */
+  pension?: number | null;
+  anio_pension?: string | null;
+  /** Contexto de Identicole. Cada campo lleva su propia fuente y año. */
+  contexto?: Record<string, ContextField>;
+}
+
+/** Un dato de contexto con su procedencia: v = valor, f = fuente, a = año. */
+export interface ContextField {
+  v: string | number;
+  f: string;
+  a?: string | null;
 }
 
 /** Fila compacta del índice de búsqueda: [nombre, distrito, región, codMod, total] */

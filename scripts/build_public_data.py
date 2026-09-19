@@ -82,6 +82,46 @@ def cargar_matricula():
     return {k: v for k, v in json.loads(est.read_text(encoding="utf-8")).items()}
 
 
+def cargar_identicole():
+    """
+    Ficha de Identicole por codigo modular.
+
+    Cada bloque de la ficha declara su propia fuente y ano (Padron 2026,
+    SIAGIE 2025, Censo Escolar 2021). Se conserva esa procedencia por campo en
+    vez de aplanarla: la interfaz muestra el ano de cada dato y aplanarlo aqui
+    seria presentar como simultaneo lo que no lo es.
+    """
+    f = ROOT / "data" / "processed" / "identicole.json"
+    if not f.exists():
+        return {}
+    crudo = json.loads(f.read_text(encoding="utf-8"))
+    out = {}
+    for cm, d in crudo.items():
+        anios = d.get("_anios", {})
+        ctx = {}
+
+        def poner(clave, valor, bloque, etiqueta):
+            if valor not in (None, "", "No disponible"):
+                ctx[clave] = {"v": valor, "f": etiqueta, "a": anios.get(bloque)}
+
+        poner("area", d.get("area"), "padron", "Identicole")
+        poner("turno", d.get("turno"), "padron", "Identicole")
+        poner("jornada", d.get("modelo"), "padron", "Identicole")
+        poner("alumnado", d.get("alumnado"), "padron", "Identicole")
+        poner("internet", d.get("internet"), "censo", "Censo Escolar")
+        poner("accesibilidad", d.get("accesibilidad"), "censo", "Censo Escolar")
+        poner("espacios_educativos", d.get("espacios_educativos_n"), "censo", "Censo Escolar")
+        poner("equipamiento", d.get("equipamiento_n"), "censo", "Censo Escolar")
+
+        out[cm.zfill(7)] = {
+            "pension_2024": d.get("pension_2024"),
+            "pension_2025": d.get("pension_2025"),
+            "anio_pension": anios.get("siagie"),
+            "contexto": ctx,
+        }
+    return out
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--fuente", required=True, help="xlsx de SiseVe por Transparencia")
@@ -153,6 +193,9 @@ def main():
     # ---- matricula, si esta disponible ----
     mat = cargar_matricula()
     print(f"{len(mat):,} colegios con matricula de ESCALE")
+    ident = cargar_identicole()
+    con_pension = sum(1 for v in ident.values() if v["pension_2025"] or v["pension_2024"])
+    print(f"{len(ident):,} fichas de Identicole · {con_pension:,} con pension")
 
     # ---- indice de busqueda + ficha ----
     indice, fichas = [], {}
@@ -172,8 +215,13 @@ def main():
             "p": e["provincia"], "r": e["departamento"], "g": e["gestion"],
             "nv": e["nivel"], "t": total,
         })
+        ic = ident.get(cm, {})
         fichas[slug] = {
             **e, "slug": slug, "total": total, "anios": anios,
+            "pension": ic.get("pension_2025") or ic.get("pension_2024"),
+            "anio_pension": ic.get("anio_pension") if ic.get("pension_2025")
+                            else ("2024" if ic.get("pension_2024") else None),
+            "contexto": ic.get("contexto") or {},
             "matricula": (m or {}).get("talumno"),
             "docentes": (m or {}).get("tdocente"),
             "secciones": (m or {}).get("tseccion"),
@@ -192,7 +240,7 @@ def main():
         "slug": f["slug"], "nombre": f["nombre"], "distrito": f["distrito"],
         "gestion": f["gestion"], "nivel": f["nivel"],
         "matricula": f["matricula"], "reportes": f["anios"].get(ANIO_TRANSVERSAL, {}).get("total", 0),
-        "tasa": f["tasa_2024"],
+        "tasa": f["tasa_2024"], "pension": f.get("pension"),
     } for f in fichas.values() if f["matricula"] and f["tasa_2024"] is not None]
 
     meta = {
@@ -210,6 +258,8 @@ def main():
                          "via": "Solicitud de acceso a la información pública"},
             "matricula": {"nombre": "Padrón de IIEE – ESCALE", "anio": "2026",
                           "via": "API pública escale.minedu.gob.pe/padron/rest"},
+            "contexto": {"nombre": "Identicole – MINEDU", "anio": "2021–2026",
+                         "via": "Ficha pública por código modular"},
         },
     }
 

@@ -13,17 +13,35 @@ import {
 import { dec, nf } from "@/lib/format";
 import type { CrossRow } from "@/lib/types";
 
+type ClaveX = "matricula" | "pension";
+
 /**
- * Matrícula frente a tasa de reportes.
+ * Dispersión de colegios: una variable del colegio frente a su tasa de reportes.
  *
- * Eje X logarítmico porque el tamaño de los colegios abarca dos órdenes de
- * magnitud: en escala lineal el 90 % de los puntos se apelmaza contra el eje.
+ * El eje X va en escala logarítmica porque tanto la matrícula como la pensión
+ * abarcan dos órdenes de magnitud; en escala lineal la mayoría de los puntos se
+ * apelmaza contra el eje y el gráfico deja de informar.
  */
-export function ScatterSizeRate({ data, alto = 360 }: { data: CrossRow[]; alto?: number }) {
-  // Se incluyen los colegios con tasa 0: son la mayoría y quedan sobre el eje.
-  // Filtrarlos sería seleccionar sobre el resultado y haría parecer que todo
-  // colegio tiene reportes.
-  const puntos = data.filter((d) => d.matricula > 0);
+export function ScatterXY({
+  data,
+  xKey,
+  xLabel,
+  formatoX,
+  alto = 360,
+}: {
+  data: CrossRow[];
+  xKey: ClaveX;
+  xLabel: string;
+  formatoX?: (v: number) => string;
+  alto?: number;
+}) {
+  const puntos = data.filter((d) => {
+    const x = d[xKey];
+    return typeof x === "number" && x > 0;
+  });
+
+  const fmt =
+    formatoX ?? ((v: number) => (v >= 1000 ? `${Math.round(v / 1000)}k` : String(v)));
 
   return (
     <div style={{ height: alto }} className="w-full">
@@ -32,17 +50,16 @@ export function ScatterSizeRate({ data, alto = 360 }: { data: CrossRow[]; alto?:
           <CartesianGrid stroke="var(--rule-2)" />
           <XAxis
             type="number"
-            dataKey="matricula"
+            dataKey={xKey}
             scale="log"
             domain={["auto", "auto"]}
             allowDataOverflow
-            name="Matrícula"
             tickLine={false}
             axisLine={{ stroke: "var(--rule)" }}
             tick={{ fill: "var(--ink-3)", fontSize: 11, fontFamily: "var(--font-mono)" }}
-            tickFormatter={(v: number) => (v >= 1000 ? `${Math.round(v / 1000)}k` : String(v))}
+            tickFormatter={fmt}
             label={{
-              value: "MATRÍCULA (ESCALA LOG)",
+              value: xLabel,
               position: "insideBottom",
               offset: -18,
               style: {
@@ -56,7 +73,6 @@ export function ScatterSizeRate({ data, alto = 360 }: { data: CrossRow[]; alto?:
           <YAxis
             type="number"
             dataKey="tasa"
-            name="Reportes por 1,000"
             tickLine={false}
             axisLine={false}
             width={46}
@@ -65,12 +81,6 @@ export function ScatterSizeRate({ data, alto = 360 }: { data: CrossRow[]; alto?:
           <ZAxis range={[26, 26]} />
           <Tooltip
             cursor={{ strokeDasharray: "3 3", stroke: "var(--ink-3)" }}
-            contentStyle={{
-              background: "var(--surface)",
-              border: "1px solid var(--rule)",
-              borderRadius: 8,
-              fontSize: 12.5,
-            }}
             content={({ active, payload }) => {
               if (!active || !payload?.length) return null;
               const d = payload[0].payload as CrossRow;
@@ -83,6 +93,11 @@ export function ScatterSizeRate({ data, alto = 360 }: { data: CrossRow[]; alto?:
                   <p className="tabular mt-1 font-mono text-ink-2">
                     {nf(d.matricula)} estudiantes · {nf(d.reportes)} reportes
                   </p>
+                  {d.pension ? (
+                    <p className="tabular font-mono text-ink-2">
+                      Pensión S/ {nf(d.pension)}
+                    </p>
+                  ) : null}
                   <p className="tabular font-mono font-semibold text-ink">
                     {dec(d.tasa, 1)} por 1,000
                   </p>

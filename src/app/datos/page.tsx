@@ -3,7 +3,7 @@ import { DataSourceBadge } from "@/components/DataSourceBadge";
 import { MethodologyNote } from "@/components/MethodologyNote";
 import { ReportTrend } from "@/components/ReportTrend";
 import { ViolenceBreakdown } from "@/components/ViolenceBreakdown";
-import { ScatterSizeRate } from "@/components/ScatterSizeRate";
+import { ScatterXY } from "@/components/ScatterXY";
 import { getCross, getMeta, getNational } from "@/lib/data/provider";
 import { nf } from "@/lib/format";
 
@@ -55,6 +55,7 @@ export default function DatosPage() {
   }));
 
   const sinReportes = cross.filter((c) => c.reportes === 0).length;
+  const conPension = cross.filter((c) => (c.pension ?? 0) > 0);
   const comparables = nacional.filter((n) => !n.pandemia && n.anio !== meta.anio_parcial);
   const pico = comparables.reduce((a, b) => (b.total > a.total ? b : a), comparables[0]);
 
@@ -164,7 +165,7 @@ export default function DatosPage() {
         {cross.length > 0 ? (
           <>
             <div className="mt-6">
-              <ScatterSizeRate data={cross} />
+              <ScatterXY data={cross} xKey="matricula" xLabel="MATRÍCULA (ESCALA LOG)" />
             </div>
             <FichaTecnica
               n={`${nf(cross.length)} colegios`}
@@ -212,19 +213,59 @@ export default function DatosPage() {
       <section className="mt-6 rounded-xl border border-rule bg-surface p-6">
         <div className="flex flex-wrap items-baseline justify-between gap-2">
           <h2 className="font-display text-display-m font-medium">Reportes y pensión</h2>
-          <DataSourceBadge fuente="Identicole" anio={null} />
+          <DataSourceBadge fuente="Identicole" anio={conPension.length ? t : null} />
         </div>
         <p className="mt-2 max-w-prose text-[0.9rem] text-ink-2">
-          Relación entre la pensión mensual declarada y la tasa de reportes.
+          Relación entre la pensión mensual declarada y la tasa de reportes. Solo
+          colegios privados: los públicos no cobran pensión.
         </p>
-        <div className="mt-6 rounded-lg border border-dashed border-rule px-5 py-10 text-center">
-          <p className="text-[0.92rem] font-medium text-ink">Pendiente de integrar</p>
-          <p className="mx-auto mt-2 max-w-prose text-[0.86rem] leading-relaxed text-ink-3">
-            Las pensiones 2024 y 2025 están disponibles en Identicole, ficha por ficha, y
-            su extracción está auditada pero no ejecutada. Solo cubren colegios privados
-            y son declarativas: las informa cada colegio al Ministerio.
-          </p>
-        </div>
+
+        {conPension.length >= 30 ? (
+          <>
+            <div className="mt-6">
+              <ScatterXY
+                data={conPension}
+                xKey="pension"
+                xLabel="PENSIÓN MENSUAL EN SOLES (ESCALA LOG)"
+                formatoX={(v) => (v >= 1000 ? `${Math.round(v / 1000)}k` : String(v))}
+              />
+            </div>
+            <FichaTecnica
+              n={`${nf(conPension.length)} colegios privados`}
+              anio={t}
+              variables="Pensión, matrícula, reportes"
+              cobertura={`${nf(conPension.length)} de ${nf(
+                cross.filter((c) => c.gestion.startsWith("Priv")).length
+              )} privados del corte`}
+            />
+            <div className="mt-4 space-y-3">
+              <MethodologyNote tono="aviso">
+                La pensión es <strong className="font-semibold text-ink">declarativa</strong>:
+                la informa cada colegio al Ministerio y no está auditada.
+              </MethodologyNote>
+              <MethodologyNote>
+                Aunque se observe una asociación, no significa que el precio cause o
+                evite la violencia. La pensión va junto con el tamaño del colegio, el
+                distrito, la composición socioeconómica de las familias y su capacidad
+                de escalar un caso hasta que quede registrado. Cualquiera de esas
+                variables puede explicar lo que se ve aquí.
+              </MethodologyNote>
+            </div>
+          </>
+        ) : (
+          <div className="mt-6 rounded-lg border border-dashed border-rule px-5 py-10 text-center">
+            <p className="text-[0.92rem] font-medium text-ink">
+              Integración en curso
+            </p>
+            <p className="mx-auto mt-2 max-w-prose text-[0.86rem] leading-relaxed text-ink-3">
+              Las pensiones se leen de la ficha pública de Identicole, colegio por
+              colegio. Llevamos {nf(conPension.length)} de{" "}
+              {nf(cross.filter((c) => c.gestion.startsWith("Priv")).length)} privados del
+              corte de {t}. El gráfico aparece cuando la cobertura alcanza para que
+              signifique algo.
+            </p>
+          </div>
+        )}
       </section>
 
       <p className="mt-10 max-w-prose text-[0.82rem] leading-relaxed text-ink-3">
