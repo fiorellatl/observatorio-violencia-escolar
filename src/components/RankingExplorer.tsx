@@ -55,6 +55,9 @@ type Puesto = {
   total: number;
   tasa: number | null;
   previo: number;
+  /** Conteos efectivos de la fila: de la institución o del nivel filtrado. */
+  conteos: Record<string, [number, number, number, number]>;
+  alumnos: number;
 };
 
 /** Trayectoria mínima del colegio. Sin ejes: es una forma, no un gráfico. */
@@ -177,9 +180,16 @@ export function RankingExplorer() {
         (pr < 0 || f[3] === pr) &&
         (d < 0 || f[2] === d) &&
         (g < 0 || f[5] === g) &&
-        (n < 0 || f[6] === n)
+        (n < 0 || f[6].includes(n))
     );
   }, [idx, q]);
+
+  /** Id del nivel filtrado, o -1. Decide si se leen los conteos de la
+      institución o los del servicio de ese nivel. */
+  const nivelFiltrado = useMemo(
+    () => (idx && q("nivel") ? idx.dic.n.indexOf(q("nivel")) : -1),
+    [idx, q]
+  );
 
   const anioPrevio = useMemo(() => {
     if (!idx) return null;
@@ -198,15 +208,20 @@ export function RankingExplorer() {
     const out: Puesto[] = [];
 
     for (const f of candidatos) {
-      const c = f[8][anio];
+      // Con un nivel filtrado, la fila habla de ESE servicio: sus reportes y
+      // sus alumnos. Mostrar el total institucional bajo el rótulo "Primaria"
+      // sería atribuirle a primaria los reportes de secundaria.
+      const porNivel = nivelFiltrado >= 0 ? f[9]?.[String(nivelFiltrado)] : undefined;
+      const conteos = porNivel ? porNivel[1] : f[8];
+      const c = conteos[anio];
       const conteo = c ? c[posTipo] : 0;
       const total = c ? c[0] : 0;
       reportesTotal += total;
       if (total > 0) conReportes++;
 
-      const mat = f[7];
+      const mat = porNivel ? porNivel[0] : f[7];
       const tasa = hayTasa && mat >= idx.matricula_minima ? (conteo / mat) * 1000 : null;
-      const previo = anioPrevio ? (f[8][anioPrevio]?.[posTipo] ?? 0) : 0;
+      const previo = anioPrevio ? (conteos[anioPrevio]?.[posTipo] ?? 0) : 0;
 
       if (metrica === "tasa") {
         if (tasa === null) {
@@ -217,10 +232,10 @@ export function RankingExplorer() {
           ceros++;
           continue;
         }
-        out.push({ fila: f, valor: tasa, conteo, total, tasa, previo });
+        out.push({ fila: f, valor: tasa, conteo, total, tasa, previo, conteos, alumnos: mat });
       } else {
         if (conteo === 0) continue;
-        out.push({ fila: f, valor: conteo, conteo, total, tasa, previo });
+        out.push({ fila: f, valor: conteo, conteo, total, tasa, previo, conteos, alumnos: mat });
       }
     }
 
@@ -231,7 +246,7 @@ export function RankingExplorer() {
       cerosOcultos: ceros,
       universo: { colegios: candidatos.length, reportes: reportesTotal, conReportes },
     };
-  }, [idx, candidatos, anio, posTipo, metrica, verCeros, hayTasa, anioPrevio]);
+  }, [idx, candidatos, anio, posTipo, metrica, verCeros, hayTasa, anioPrevio, nivelFiltrado]);
 
   /**
    * Posición del año anterior. Solo se calcula si el universo comparado es el
@@ -241,18 +256,29 @@ export function RankingExplorer() {
   const posicionPrevia = useMemo(() => {
     if (!idx || metrica !== "reportes" || !anioPrevio) return null;
     const lista = candidatos
-      .map((f) => ({ cm: f[1], v: f[8][anioPrevio]?.[posTipo] ?? 0, n: f[0] }))
+      .map((f) => {
+        const pn = nivelFiltrado >= 0 ? f[9]?.[String(nivelFiltrado)] : undefined;
+        return { cm: f[1], v: (pn ? pn[1] : f[8])[anioPrevio]?.[posTipo] ?? 0, n: f[0] };
+      })
       .filter((x) => x.v > 0)
       .sort((a, b) => b.v - a.v || a.n.localeCompare(b.n, "es"));
     const m = new Map<string, number>();
     lista.forEach((x, k) => m.set(x.cm, k + 1));
     return m;
-  }, [idx, candidatos, anioPrevio, posTipo, metrica]);
+  }, [idx, candidatos, anioPrevio, posTipo, metrica, nivelFiltrado]);
 
   const total = puestos.length;
   const visibles = puestos.slice(pagina * POR_PAGINA, (pagina + 1) * POR_PAGINA);
   const paginas = Math.ceil(total / POR_PAGINA);
   const filtrosActivos = ["region", "provincia", "distrito", "gestion", "nivel"].filter((k) => q(k)).length;
+
+  /** Parámetros que definen este universo, tal cual los leerá la ficha. */
+  const contexto = (() => {
+    const c = new URLSearchParams(params.toString());
+    if (!c.get("anio")) c.set("anio", anio);
+    c.set("de", "rankings");
+    return c.toString();
+  })();
 
   const descargar = () => {
     if (!idx) return;
@@ -262,8 +288,8 @@ export function RankingExplorer() {
     const filas = puestos.map((p, i) => [
       i + 1, `"${p.fila[0].replace(/"/g, '""')}"`, p.fila[1],
       `"${idx.dic.d[p.fila[2]]}"`, `"${idx.dic.p[p.fila[3]]}"`, `"${idx.dic.r[p.fila[4]]}"`,
-      `"${idx.dic.g[p.fila[5]]}"`, `"${idx.dic.n[p.fila[6]]}"`,
-      anio, p.conteo, p.total, p.fila[7] || "", p.tasa != null ? p.tasa.toFixed(2) : "",
+      `"${idx.dic.g[p.fila[5]]}"`, `"${p.fila[6].map((k) => idx.dic.n[k]).join(" · ")}"`,
+      anio, p.conteo, p.total, p.alumnos || "", p.tasa != null ? p.tasa.toFixed(2) : "",
     ]);
     const csv = [cab.join(","), ...filas.map((f) => f.join(","))].join("\n");
     const url = URL.createObjectURL(new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8" }));
@@ -504,12 +530,14 @@ export function RankingExplorer() {
               const provincia = idx.dic.p[p.fila[3]];
               const region = idx.dic.r[p.fila[4]];
               const gestion = idx.dic.g[p.fila[5]];
-              const nivel = idx.dic.n[p.fila[6]];
-              const alumnos = p.fila[7];
+              const nivel = p.fila[6].map((k) => idx.dic.n[k]).filter(Boolean).join(" · ");
+              const alumnos = p.alumnos;
               const prevPos = posicionPrevia?.get(p.fila[1]) ?? null;
               const delta = p.conteo - p.previo;
-              const serie = idx.anios.map((a) => p.fila[8][a]?.[posTipo] ?? 0);
-              const href = `/colegio/${slugify(p.fila[0], distrito, p.fila[1])}`;
+              const serie = idx.anios.map((a) => p.conteos[a]?.[posTipo] ?? 0);
+              // El contexto viaja con el enlace: la ficha necesita saber de qué
+              // universo viene para ofrecer el anterior y el siguiente correctos.
+              const href = `/colegio/${slugify(p.fila[0], distrito, p.fila[1])}?${contexto}`;
 
               return (
                 <li key={`${p.fila[1]}-${i}`} className="border-b border-rule-2">

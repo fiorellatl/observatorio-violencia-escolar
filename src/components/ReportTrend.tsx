@@ -4,6 +4,7 @@ import {
   Bar,
   BarChart,
   Cell,
+  LabelList,
   ReferenceArea,
   ResponsiveContainer,
   Tooltip,
@@ -27,7 +28,7 @@ export interface TrendPoint {
  * porque es parcial. Las tres diferencias son de forma además de color, para que
  * se lean también en escala de grises.
  */
-export function ReportTrend({ data, alto = 230 }: { data: TrendPoint[]; alto?: number }) {
+export function ReportTrend({ data, alto = 320 }: { data: TrendPoint[]; alto?: number }) {
   // Los años de pandemia caen tan bajo que una barra hueca de 6 px no se ve, y
   // son justo los que hay que señalar. Se sombrea la franja completa: lo que
   // debe leerse es el hueco, no la barra.
@@ -47,7 +48,7 @@ export function ReportTrend({ data, alto = 230 }: { data: TrendPoint[]; alto?: n
       </svg>
 
       <ResponsiveContainer width="100%" height="100%">
-        <BarChart data={data} margin={{ top: 8, right: 4, bottom: 4, left: -18 }}>
+        <BarChart data={data} margin={{ top: 24, right: 4, bottom: 4, left: -18 }}>
           <XAxis
             dataKey="anio"
             tickLine={false}
@@ -102,7 +103,21 @@ export function ReportTrend({ data, alto = 230 }: { data: TrendPoint[]; alto?: n
               }}
             />
           ) : null}
-          <Bar dataKey="total" radius={[3, 3, 0, 0]} maxBarSize={44}>
+          <Bar dataKey="total" radius={[3, 3, 0, 0]} maxBarSize={56} isAnimationActive={false}>
+            {/* La cifra encima de la barra ahorra el viaje al eje. Se ocultan
+                los ceros: un "0" flotando sobre nada es ruido. */}
+            <LabelList
+              dataKey="total"
+              position="top"
+              offset={7}
+              formatter={(v: number) => (v > 0 ? nf(v) : "")}
+              style={{
+                fill: "var(--ink-3)",
+                fontSize: 11,
+                fontFamily: "var(--font-mono)",
+                fontVariantNumeric: "tabular-nums",
+              }}
+            />
             {data.map((d) => (
               <Cell
                 key={d.anio}

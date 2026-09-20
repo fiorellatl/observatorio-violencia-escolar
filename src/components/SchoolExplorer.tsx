@@ -28,10 +28,19 @@ type Filtros = Record<Clave, string>;
 
 const VACIO: Filtros = { region: "", provincia: "", distrito: "", gestion: "", nivel: "", q: "" };
 
-/** Devuelve los valores presentes en las filas que ya pasaron el resto de filtros. */
+/**
+ * Valores presentes en las filas que ya pasaron el resto de filtros.
+ *
+ * El nivel es una lista —una institución ofrece varios—, así que la columna
+ * puede traer un número o un array y se aplanan los dos casos.
+ */
 function opciones(filas: BrowseRow[], dic: string[], pos: number): string[] {
   const vistos = new Set<number>();
-  for (const f of filas) vistos.add(f[pos] as number);
+  for (const f of filas) {
+    const v = f[pos];
+    if (Array.isArray(v)) for (const x of v) vistos.add(x);
+    else vistos.add(v as number);
+  }
   return [...vistos]
     .map((i) => dic[i])
     .filter(Boolean)
@@ -52,7 +61,8 @@ function aplica(filas: BrowseRow[], idx: BrowseIndex, f: Filtros, salvo?: Clave)
     if (p >= 0 && x[3] !== p) return false;
     if (d >= 0 && x[2] !== d) return false;
     if (g >= 0 && x[5] !== g) return false;
-    if (n >= 0 && x[6] !== n) return false;
+    // "Nivel" significa que la institución OFRECE ese nivel.
+    if (n >= 0 && !x[6].includes(n)) return false;
     if (q && !norm(x[0]).includes(q)) return false;
     return true;
   });
@@ -102,6 +112,14 @@ export function SchoolExplorer() {
   }, [texto, filtros.q, poner]);
 
   const activos = CLAVES.filter((k) => filtros[k]).length;
+
+  // El contexto viaja con el enlace: la ficha lo usa para ofrecer el colegio
+  // anterior y el siguiente dentro de esta misma lista filtrada.
+  const contexto = useMemo(() => {
+    const c = new URLSearchParams(params.toString());
+    c.set("de", "colegios");
+    return c.toString();
+  }, [params]);
 
   const resultados = useMemo(
     () => (datos ? aplica(datos.filas, datos, filtros) : []),
@@ -232,11 +250,11 @@ export function SchoolExplorer() {
               const provincia = datos!.dic.p[f[3]];
               const region = datos!.dic.r[f[4]];
               const gestion = datos!.dic.g[f[5]];
-              const nivel = datos!.dic.n[f[6]];
+              const nivel = f[6].map((k) => datos!.dic.n[k]).filter(Boolean).join(" · ");
               return (
                 <li key={`${f[1]}-${i}`}>
                   <Link
-                    href={`/colegio/${slugify(f[0], distrito, f[1])}`}
+                    href={`/colegio/${slugify(f[0], distrito, f[1])}?${contexto}`}
                     className="group flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 px-4 py-3 transition-colors hover:bg-accent-soft"
                   >
                     <span className="min-w-0 flex-1">

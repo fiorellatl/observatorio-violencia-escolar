@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { boton } from "@/lib/ui";
+import { boton, botonAcento } from "@/lib/ui";
 
 /**
  * Copiar el enlace de la página actual.
@@ -14,7 +14,17 @@ import { boton } from "@/lib/ui";
  * funciona, se muestra la URL para copiarla a mano en vez de fingir que se
  * copió.
  */
-export function ShareButton({ etiqueta = "Compartir" }: { etiqueta?: string }) {
+export function ShareButton({
+  etiqueta = "Compartir",
+  titulo,
+  acento = false,
+}: {
+  etiqueta?: string;
+  /** Si se pasa y el navegador trae la hoja de compartir nativa, se usa esa:
+      en un móvil es lo que la gente espera, y lleva a WhatsApp en un toque. */
+  titulo?: string;
+  acento?: boolean;
+}) {
   const [estado, setEstado] = useState<"listo" | "copiado" | "fallo">("listo");
   const [url, setUrl] = useState("");
 
@@ -28,6 +38,16 @@ export function ShareButton({ etiqueta = "Compartir" }: { etiqueta?: string }) {
     const actual = window.location.href;
     setUrl(actual);
     try {
+      if (titulo && navigator.share) {
+        // Cancelar la hoja nativa lanza AbortError: no es un fallo y no debe
+        // pintarse como tal, así que se sale sin cambiar de estado.
+        try {
+          await navigator.share({ title: titulo, url: actual });
+          return;
+        } catch {
+          return;
+        }
+      }
       if (navigator.clipboard?.writeText) {
         await navigator.clipboard.writeText(actual);
       } else {
@@ -50,7 +70,7 @@ export function ShareButton({ etiqueta = "Compartir" }: { etiqueta?: string }) {
 
   return (
     <div className="inline-flex flex-col items-start gap-1.5">
-      <button type="button" onClick={copiar} className={boton}>
+      <button type="button" onClick={copiar} className={acento ? botonAcento : boton}>
         <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden>
           <path
             d="M6.5 9.5L9.5 6.5M6 4.5L7.5 3a2.8 2.8 0 014 4L10 8.5M10 11.5L8.5 13a2.8 2.8 0 01-4-4L6 7.5"

@@ -156,10 +156,12 @@ export function SearchBox({
                   <span>
                     {datos?.dic.d[fila[2]]}, {datos?.dic.r[fila[4]]}
                   </span>
-                  {datos?.dic.n[fila[6]] ? (
+                  {fila[6]?.length ? (
                     <>
                       <span aria-hidden>·</span>
-                      <span>{datos.dic.n[fila[6]]}</span>
+                      <span>
+                        {fila[6].map((k) => datos?.dic.n[k]).filter(Boolean).join(" · ")}
+                      </span>
                     </>
                   ) : null}
                   <span aria-hidden>·</span>

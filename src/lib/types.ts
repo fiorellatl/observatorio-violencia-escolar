@@ -52,12 +52,70 @@ export interface ContextField {
 }
 
 /**
- * Fila del índice de navegación. Los textos repetidos viajan como índice a un
- * diccionario, no como texto:
- * [nombre, codMod, distritoId, provinciaId, regiónId, gestiónId, nivelId,
- *  totalDeReportes, últimoAñoConReportes]
+ * Un SERVICIO educativo dentro de una institución: un nivel con su propio
+ * código modular. El modelo los conserva porque los reportes, los alumnos y
+ * la composición se registran por servicio; lo que se agrega es la ficha.
  */
-export type BrowseRow = [string, string, number, number, number, number, number, number, string];
+export interface InstitutionService {
+  cm: string;
+  slug: string;
+  nombre: string;
+  nivel: string;
+  total: number;
+  anios: Record<string, YearCounts>;
+  matricula?: number | null;
+  anio_matricula?: string | null;
+  docentes?: number | null;
+  secciones?: number | null;
+  pension?: number | null;
+  anio_pension?: string | null;
+  tasa_2024?: number | null;
+}
+
+/**
+ * Una INSTITUCIÓN educativa: lo que una persona llama "un colegio".
+ *
+ * Agrupa sus servicios por `codinst`, el identificador oficial del padrón.
+ * Nunca por nombre ni por `codlocal`. Un servicio sin `codinst` es su propia
+ * institución: preferimos no agrupar antes que agrupar mal.
+ *
+ * `matricula` y `tasa_2024` son null cuando algún servicio no trae
+ * denominador: sumar un numerador completo sobre un denominador parcial
+ * inflaría la tasa.
+ */
+export interface Institution {
+  codinst: string | null;
+  slug: string;
+  /** Código modular del servicio cabecera: la clave en los índices. */
+  cm: string;
+  nombre: string;
+  distrito: string;
+  provincia: string;
+  departamento: string;
+  gestion: string;
+  dre: string;
+  ugel: string;
+  niveles: string[];
+  total: number;
+  anios: Record<string, YearCounts>;
+  matricula: number | null;
+  matricula_completa: boolean;
+  anio_matricula?: string | null;
+  tasa_2024: number | null;
+  contexto?: Record<string, ContextField>;
+  servicios: InstitutionService[];
+}
+
+/**
+ * Fila del índice de navegación. Los textos repetidos viajan como índice a un
+ * diccionario, no como texto. Una fila es una INSTITUCIÓN, no un servicio:
+ * [nombre, codMod cabecera, distritoId, provinciaId, regiónId, gestiónId,
+ *  nivelIds, totalDeReportes, últimoAñoConReportes]
+ *
+ * `nivelIds` es una lista porque una institución ofrece varios niveles y el
+ * filtro significa "ofrece este nivel", no "es de este nivel".
+ */
+export type BrowseRow = [string, string, number, number, number, number, number[], number, string];
 
 export interface BrowseIndex {
   dic: { r: string[]; p: string[]; d: string[]; g: string[]; n: string[] };
@@ -116,8 +174,8 @@ export interface Provenance {
 
 /**
  * Fila del índice de rankings:
- * [nombre, codMod, distritoId, provinciaId, regiónId, gestiónId, nivelId,
- *  matrícula (0 si no se conoce), conteos por año]
+ * [nombre, codMod cabecera, distritoId, provinciaId, regiónId, gestiónId,
+ *  nivelIds, matrícula (0 si no se conoce), conteos por año, porNivel?]
  *
  * `conteos[año] = [total, física, psicológica, sexual]`. Solo los años con
  * algún reporte: la mayoría de colegios no tiene actividad todos los años y
@@ -130,9 +188,12 @@ export type RankingRow = [
   number,
   number,
   number,
-  number,
+  number[],
   number,
   Record<string, [number, number, number, number]>,
+  /** Desglose por nivel: nivelId -> [matrícula, conteos]. Solo en
+      instituciones con más de un servicio; en las demás sería una copia. */
+  Record<string, [number, Record<string, [number, number, number, number]>]>?,
 ];
 
 export interface RankingIndex {

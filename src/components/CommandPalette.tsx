@@ -199,7 +199,9 @@ export function CommandPalette() {
                 hits.map((fila, i) => {
                   const distrito = datos?.dic.d[fila[2]] ?? "";
                   const region = datos?.dic.r[fila[4]] ?? "";
-                  const nivel = datos?.dic.n[fila[6]] ?? "";
+                  // Una institución ofrece varios niveles y se nombran todos:
+                  // el buscador devuelve un colegio, no un colegio por nivel.
+                  const nivel = (fila[6] ?? []).map((k) => datos?.dic.n[k]).filter(Boolean).join(" · ");
                   return (
                     <button
                       key={`${fila[1]}-${i}`}
@@ -237,9 +239,6 @@ export function CommandPalette() {
               )}
             </div>
 
-            <p className="border-t border-rule px-4 py-2 text-[0.72rem] text-ink-3">
-              Un colegio puede aparecer varias veces: el Estado da un código a cada nivel.
-            </p>
           </div>
         </div>
       ) : null}
