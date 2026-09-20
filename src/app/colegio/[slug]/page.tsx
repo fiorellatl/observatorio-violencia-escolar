@@ -4,13 +4,13 @@ import { notFound } from "next/navigation";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { DataSourceBadge } from "@/components/DataSourceBadge";
 import { MethodologyNote } from "@/components/MethodologyNote";
-import { MetricCard } from "@/components/MetricCard";
+import { MetricBand } from "@/components/MetricBand";
 import { ReportTrend } from "@/components/ReportTrend";
 import { ShareButton } from "@/components/ShareButton";
 import { ViolenceBreakdown } from "@/components/ViolenceBreakdown";
 import { getMeta, getPrerenderSlugs, getSchool } from "@/lib/data/provider";
 import { dec, nf, valorLegible } from "@/lib/format";
-import { bajada, tarjetaEnlace } from "@/lib/ui";
+import { entradilla, panelEnlace } from "@/lib/ui";
 
 export const dynamicParams = true;
 
@@ -109,9 +109,9 @@ export default async function ColegioPage({
     espacios_educativos: "Espacios educativos",
     equipamiento: "Tipos de equipamiento",
   };
-  for (const [clave, etiqueta] of Object.entries(ETIQUETAS)) {
+  for (const [clave, meta] of Object.entries(ETIQUETAS)) {
     const c = s.contexto?.[clave];
-    if (c) contexto.push({ label: etiqueta, valor: valorLegible(c.v), fuente: c.f, anio: c.a });
+    if (c) contexto.push({ label: meta, valor: valorLegible(c.v), fuente: c.f, anio: c.a });
   }
 
   return (
@@ -167,49 +167,53 @@ export default async function ColegioPage({
       </header>
 
       {/* ── Resumen ───────────────────────────────────────────── */}
-      <section id="resumen" className="scroll-mt-28 py-8">
+      <section id="resumen" className="scroll-mt-28 border-b border-rule py-10 sm:py-12">
         <h2 className="sr-only">Resumen de datos</h2>
-        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-          <MetricCard
-            label={`Reportes registrados en ${t}`}
-            value={delAnio ? nf(delAnio.total) : "0"}
-            fuente="SíseVe"
-            anio={t}
-            nota={`${nf(s.total)} en total desde ${anios[0]}`}
-          />
-          <MetricCard
-            label="Matrícula"
-            value={s.matricula != null ? nf(s.matricula) : null}
-            unit="estudiantes"
-            fuente="ESCALE"
-            anio={s.anio_matricula}
-            ausente="Aún no integrada para esta zona"
-          />
-          <MetricCard
-            label="Reportes por 1,000 estudiantes"
-            value={s.tasa_2024 != null ? dec(s.tasa_2024, 1) : null}
-            fuente="SíseVe / ESCALE"
-            anio={t}
-            ausente={
-              s.matricula == null
-                ? "Requiere matrícula"
-                : `Matrícula menor a ${nf(meta.matricula_minima)}: la tasa no sería fiable`
-            }
-            nota={s.tasa_2024 != null ? "Permite comparar colegios de distinto tamaño" : undefined}
-          />
-          <MetricCard
-            label="Pensión mensual"
-            value={s.pension != null ? `S/ ${nf(s.pension)}` : null}
-            fuente="Identicole"
-            anio={s.anio_pension}
-            nota={s.pension != null ? "Declarada por el colegio al Ministerio" : undefined}
-            ausente={
-              s.gestion?.startsWith("Públic")
-                ? "No aplica: colegio público"
-                : "Aún no consultada"
-            }
-          />
-        </div>
+        <MetricBand
+          metricas={[
+            {
+              label: `Reportes registrados en ${t}`,
+              valor: delAnio ? nf(delAnio.total) : "0",
+              fuente: "SíseVe",
+              anio: t,
+              nota: delAnio
+                ? `${nf(s.total)} en total desde ${anios[0]}`
+                : `Ninguno ese año. ${nf(s.total)} en total desde ${anios[0]}`,
+            },
+            {
+              label: "Matrícula",
+              valor: s.matricula != null ? nf(s.matricula) : null,
+              unidad: "estudiantes",
+              fuente: "ESCALE",
+              anio: s.anio_matricula,
+              ausente: "El padrón de esta zona aún no está integrado",
+            },
+            {
+              label: "Reportes por 1.000 estudiantes",
+              valor: s.tasa_2024 != null ? dec(s.tasa_2024, 1) : null,
+              fuente: "SíseVe / ESCALE",
+              anio: t,
+              nota:
+                s.tasa_2024 != null
+                  ? "Permite comparar colegios de distinto tamaño"
+                  : undefined,
+              ausente:
+                s.matricula == null
+                  ? "Sin matrícula no hay denominador, y sin denominador no hay tasa"
+                  : `Matrícula menor a ${nf(meta.matricula_minima)}: la tasa no sería fiable`,
+            },
+            {
+              label: "Pensión mensual",
+              valor: s.pension != null ? `S/ ${nf(s.pension)}` : null,
+              fuente: "Identicole",
+              anio: s.anio_pension,
+              nota: s.pension != null ? "Declarada por el colegio al Ministerio" : undefined,
+              ausente: s.gestion?.startsWith("Públic")
+                ? "No aplica: es un colegio público"
+                : "Identicole aún no se ha consultado para este colegio",
+            },
+          ]}
+        />
       </section>
 
       {/* ── Evolución ─────────────────────────────────────────── */}
@@ -249,7 +253,7 @@ export default async function ColegioPage({
             <h2 className="font-display text-display-m font-medium">Quién ejerce</h2>
             <DataSourceBadge fuente="SíseVe" anio={`${anios[0]}–${ultimo}`} />
           </div>
-          <ViolenceBreakdown items={actores} total={s.total} />
+          <ViolenceBreakdown items={actores} total={s.total} variante="duo" />
           <p className="mt-4 text-[0.78rem] leading-relaxed text-ink-3">
             El acoso escolar y el ciberacoso se registran solo entre estudiantes. Cuando
             el agresor es un adulto del colegio, el sistema lo clasifica bajo otras
@@ -293,13 +297,13 @@ export default async function ColegioPage({
       {/* ── Salidas ───────────────────────────────────────────── */}
       <section className="mt-10 border-t border-rule pt-9">
         <h2 className="font-display text-display-m font-medium">Explora más</h2>
-        <p className={bajada}>
+        <p className={entradilla}>
           Este colegio en su contexto, y el contexto sin este colegio.
         </p>
         <div className="mt-6 grid gap-4 sm:grid-cols-2">
           <Link
             href={`/colegios?region=${encodeURIComponent(s.departamento)}&distrito=${encodeURIComponent(s.distrito)}`}
-            className={tarjetaEnlace}
+            className={panelEnlace}
           >
             <p className="font-display text-[1.05rem] font-medium">
               Otros colegios de {s.distrito}
@@ -310,20 +314,20 @@ export default async function ColegioPage({
           </Link>
           <Link
             href={`/colegios?region=${encodeURIComponent(s.departamento)}&nivel=${encodeURIComponent(s.nivel)}&gestion=${encodeURIComponent(s.gestion)}`}
-            className={tarjetaEnlace}
+            className={panelEnlace}
           >
             <p className="font-display text-[1.05rem] font-medium">Colegios parecidos</p>
             <p className="mt-1.5 text-[0.86rem] leading-relaxed text-ink-2">
               Mismo nivel y misma gestión en {s.departamento}.
             </p>
           </Link>
-          <Link href="/datos" className={tarjetaEnlace}>
+          <Link href="/datos" className={panelEnlace}>
             <p className="font-display text-[1.05rem] font-medium">Los datos del país</p>
             <p className="mt-1.5 text-[0.86rem] leading-relaxed text-ink-2">
               Qué se registra, cómo ha cambiado y qué no se puede concluir.
             </p>
           </Link>
-          <Link href="/metodologia" className={tarjetaEnlace}>
+          <Link href="/metodologia" className={panelEnlace}>
             <p className="font-display text-[1.05rem] font-medium">Cómo leer esta ficha</p>
             <p className="mt-1.5 text-[0.86rem] leading-relaxed text-ink-2">
               Qué es un reporte, qué es una tasa y qué significa un cero.

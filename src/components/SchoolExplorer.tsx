@@ -5,7 +5,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { nf, norm, slugify } from "@/lib/format";
 import { useBrowseIndex } from "@/lib/useBrowseIndex";
-import { boton, campo, etiqueta } from "@/lib/ui";
+import { boton, campo, meta } from "@/lib/ui";
 import type { BrowseIndex, BrowseRow } from "@/lib/types";
 
 /**
@@ -123,7 +123,7 @@ export function SchoolExplorer() {
 
   const Select = ({ k, label }: { k: Exclude<Clave, "q">; label: string }) => (
     <div>
-      <label htmlFor={`f-${k}`} className={`${etiqueta} block`}>
+      <label htmlFor={`f-${k}`} className={`${meta} block`}>
         {label}
       </label>
       <select
@@ -161,7 +161,7 @@ export function SchoolExplorer() {
     <div>
       <div className="rounded-xl border border-rule bg-surface p-4 sm:p-5">
         <div>
-          <label htmlFor="f-q" className={`${etiqueta} block`}>
+          <label htmlFor="f-q" className={`${meta} block`}>
             Nombre del colegio
           </label>
           <input

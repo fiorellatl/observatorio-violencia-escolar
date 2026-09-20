@@ -4,7 +4,7 @@ import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { MethodologyNote } from "@/components/MethodologyNote";
 import { getMeta } from "@/lib/data/provider";
 import { nf } from "@/lib/format";
-import { bajada, tarjeta, tarjetaEnlace, tituloSeccion } from "@/lib/ui";
+import { entradilla, panelPad, panelEnlace, h3 } from "@/lib/ui";
 
 export const metadata: Metadata = {
   title: "Comparar colegios",
@@ -38,14 +38,14 @@ export default function CompararPage() {
       </p>
 
       <section className="mt-10 border-t border-rule pt-9">
-        <div className={`${tarjeta} border-dashed`}>
+        <div className={`${panelPad} border-dashed`}>
           <p className="font-mono text-[0.68rem] uppercase tracking-wider text-ink-3">
             En construcción
           </p>
           <p className="mt-2 font-display text-[1.15rem] font-medium">
             La comparación está a medio camino
           </p>
-          <p className={bajada}>
+          <p className={entradilla}>
             Comparar exige algo que todavía no está terminado: un denominador para cada
             colegio. Sin matrícula no hay tasa, y sin tasa comparar dos colegios de tamaños
             distintos por su número de reportes diría más sobre cuántos estudiantes tienen
@@ -87,15 +87,15 @@ export default function CompararPage() {
       </section>
 
       <section className="mt-10 border-t border-rule pt-9">
-        <h2 className={tituloSeccion}>Mientras tanto</h2>
+        <h2 className={h3}>Mientras tanto</h2>
         <div className="mt-5 grid gap-4 sm:grid-cols-2">
-          <Link href="/colegios" className={tarjetaEnlace}>
+          <Link href="/colegios" className={panelEnlace}>
             <p className="font-display text-[1.05rem] font-medium">Busca un colegio</p>
             <p className="mt-1.5 text-[0.86rem] leading-relaxed text-ink-2">
               Filtra por región, distrito, gestión o nivel y abre su ficha.
             </p>
           </Link>
-          <Link href="/datos" className={tarjetaEnlace}>
+          <Link href="/datos" className={panelEnlace}>
             <p className="font-display text-[1.05rem] font-medium">Explora los datos</p>
             <p className="mt-1.5 text-[0.86rem] leading-relaxed text-ink-2">
               Qué está pasando, cómo ha cambiado y qué se registra en todo el país.

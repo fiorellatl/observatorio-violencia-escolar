@@ -1,4 +1,4 @@
-import { tarjeta } from "@/lib/ui";
+import { panelPad } from "@/lib/ui";
 
 /**
  * Estados de dato.
@@ -47,7 +47,7 @@ export function SinDatos({
 }) {
   const t = TEXTOS[motivo];
   return (
-    <div className={`${tarjeta} border-dashed`}>
+    <div className={`${panelPad} border-dashed`}>
       <p className="text-[0.9rem] font-medium text-ink-2">{titulo ?? t.titulo}</p>
       {children ?? (t.detalle ? (
         <p className="mt-1.5 max-w-prose text-[0.84rem] leading-relaxed text-ink-3">{t.detalle}</p>
@@ -75,7 +75,7 @@ export function Proximamente({
   children: React.ReactNode;
 }) {
   return (
-    <div className={`${tarjeta} border-dashed`}>
+    <div className={`${panelPad} border-dashed`}>
       <p className="font-mono text-[0.68rem] uppercase tracking-wider text-ink-3">
         Próximamente
       </p>

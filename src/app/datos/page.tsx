@@ -10,7 +10,7 @@ import { ScatterXY } from "@/components/ScatterXY";
 import { ViolenceBreakdown } from "@/components/ViolenceBreakdown";
 import { getCross, getMeta, getNational } from "@/lib/data/provider";
 import { nf } from "@/lib/format";
-import { bajada, etiqueta, tarjeta, tarjetaEnlace, tituloSeccion } from "@/lib/ui";
+import { entradilla, meta as clsMeta, panelPad, panelEnlace, h3 } from "@/lib/ui";
 
 /**
  * Recharts son ~90 KB de JavaScript. La dispersión vive bien abajo de la
@@ -55,7 +55,7 @@ function FichaTecnica({
         ["Cobertura", cobertura],
       ].map(([k, v]) => (
         <div key={k}>
-          <dt className={etiqueta}>{k}</dt>
+          <dt className={clsMeta}>{k}</dt>
           <dd className="tabular mt-0.5 text-ink-2">{v}</dd>
         </div>
       ))}
@@ -179,8 +179,8 @@ export default function DatosPage() {
                 d: "año incompleto, corte a agosto",
               },
             ].map((c) => (
-              <div key={c.k} className={tarjeta}>
-                <dt className={etiqueta}>{c.k}</dt>
+              <div key={c.k} className={panelPad}>
+                <dt className={clsMeta}>{c.k}</dt>
                 <dd className="tabular mt-2 font-display text-stat font-medium">{c.v}</dd>
                 <p className="mt-1.5 text-[0.8rem] text-ink-3">{c.d}</p>
               </div>
@@ -197,12 +197,12 @@ export default function DatosPage() {
 
         {/* ── ¿Cómo ha cambiado? ─────────────────────────────── */}
         <Pregunta id="como-cambio" pregunta="¿Cómo ha cambiado?">
-          <div className={tarjeta}>
+          <div className={panelPad}>
             <div className="flex flex-wrap items-baseline justify-between gap-2">
-              <h3 className={tituloSeccion}>Reportes registrados por año</h3>
+              <h3 className={h3}>Reportes registrados por año</h3>
               <DataSourceBadge fuente="SíseVe" anio={`${meta.anio_min}–${meta.anio_max}`} />
             </div>
-            <p className={bajada}>Todos los reportes del país según su año de registro.</p>
+            <p className={entradilla}>Todos los reportes del país según su año de registro.</p>
 
             <div className="mt-6">
               <ReportTrend data={serie} alto={300} />
@@ -234,12 +234,12 @@ export default function DatosPage() {
         {/* ── ¿Qué se registra? ──────────────────────────────── */}
         <Pregunta id="que-se-registra" pregunta="¿Qué se registra?">
           <div className="grid gap-4 lg:grid-cols-2">
-            <div className={tarjeta}>
+            <div className={panelPad}>
               <div className="flex flex-wrap items-baseline justify-between gap-2">
-                <h3 className={tituloSeccion}>Tipo de violencia</h3>
+                <h3 className={h3}>Tipo de violencia</h3>
                 <DataSourceBadge fuente="SíseVe" anio={t} />
               </div>
-              <p className={bajada}>
+              <p className={entradilla}>
                 Composición de los {nf(delAnio?.total ?? 0)} reportes de {t}.
               </p>
               <div className="mt-5">
@@ -247,12 +247,12 @@ export default function DatosPage() {
               </div>
             </div>
 
-            <div className={tarjeta}>
+            <div className={panelPad}>
               <div className="flex flex-wrap items-baseline justify-between gap-2">
-                <h3 className={tituloSeccion}>Quién ejerce</h3>
+                <h3 className={h3}>Quién ejerce</h3>
                 <DataSourceBadge fuente="SíseVe" anio={t} />
               </div>
-              <p className={bajada}>
+              <p className={entradilla}>
                 Entre estudiantes o desde un adulto de la institución.
               </p>
               <div className="mt-5">
@@ -282,12 +282,12 @@ export default function DatosPage() {
 
         {/* ── ¿Cambia con el tamaño? ─────────────────────────── */}
         <Pregunta id="tamano" pregunta="¿Cambia con el tamaño del colegio?">
-          <div className={tarjeta}>
+          <div className={panelPad}>
             <div className="flex flex-wrap items-baseline justify-between gap-2">
-              <h3 className={tituloSeccion}>Matrícula y tasa de reportes</h3>
+              <h3 className={h3}>Matrícula y tasa de reportes</h3>
               <DataSourceBadge fuente="SíseVe / ESCALE" anio={t} />
             </div>
-            <p className={bajada}>
+            <p className={entradilla}>
               Cada punto es un colegio: estudiantes matriculados en el eje horizontal,
               reportes por cada 1.000 estudiantes en el vertical.
             </p>
@@ -339,12 +339,12 @@ export default function DatosPage() {
 
         {/* ── ¿Y con la pensión? ─────────────────────────────── */}
         <Pregunta id="pension" pregunta="¿Y con la pensión?">
-          <div className={tarjeta}>
+          <div className={panelPad}>
             <div className="flex flex-wrap items-baseline justify-between gap-2">
-              <h3 className={tituloSeccion}>Pensión mensual y tasa de reportes</h3>
+              <h3 className={h3}>Pensión mensual y tasa de reportes</h3>
               <DataSourceBadge fuente="Identicole" anio={conPension.length ? "2025" : null} />
             </div>
-            <p className={bajada}>
+            <p className={entradilla}>
               Solo colegios privados: los públicos no cobran pensión.
             </p>
 
@@ -394,15 +394,15 @@ export default function DatosPage() {
 
         {/* ── Salidas ────────────────────────────────────────── */}
         <section className="border-t border-rule pt-9 sm:pt-11">
-          <h2 className={tituloSeccion}>Sigue explorando</h2>
+          <h2 className={h3}>Sigue explorando</h2>
           <div className="mt-5 grid gap-4 sm:grid-cols-2">
-            <Link href="/colegios" className={tarjetaEnlace}>
+            <Link href="/colegios" className={panelEnlace}>
               <p className="font-display text-[1.05rem] font-medium">Busca un colegio</p>
               <p className="mt-1.5 text-[0.86rem] leading-relaxed text-ink-2">
                 Filtra por región, distrito, gestión o nivel y abre su ficha.
               </p>
             </Link>
-            <Link href="/metodologia" className={tarjetaEnlace}>
+            <Link href="/metodologia" className={panelEnlace}>
               <p className="font-display text-[1.05rem] font-medium">Cómo se hizo esto</p>
               <p className="mt-1.5 text-[0.86rem] leading-relaxed text-ink-2">
                 Las fuentes, los años, los límites y lo que decidimos no publicar.
