@@ -210,6 +210,7 @@ export function getRankingIndex(): RankingIndex {
     anios,
     anio_tasa: meta.anio_transversal,
     anio_padron: meta.fuentes.matricula?.anio ?? "",
+    anio_principal: getAnioPrincipal(),
     anio_parcial: meta.anio_parcial,
     matricula_minima: meta.matricula_minima,
     dic,
@@ -233,4 +234,50 @@ export function getSignals(): Signals | null {
       : null;
   }
   return _signals;
+}
+
+/**
+ * Año principal de la experiencia: el último año COMPLETO.
+ *
+ * No es el año con denominador. Que 2024 fuera el único año con tasa hizo que
+ * la ficha mostrara 2024 como si fuera el estado actual del colegio, cuando el
+ * último año cerrado es otro. La disponibilidad de una métrica secundaria no
+ * puede decidir de qué año habla el producto.
+ */
+export function getAnioPrincipal(): string {
+  const meta = getMeta();
+  const pandemia = new Set(meta.anios_pandemia);
+  const completos = getNational()
+    .map((n) => n.anio)
+    .filter((a) => !pandemia.has(a) && a !== meta.anio_parcial)
+    .sort();
+  return completos[completos.length - 1] ?? meta.anio_transversal;
+}
+
+/**
+ * Posición de un colegio en el ranking nacional por reportes de un año.
+ *
+ * Se calcula sobre el universo completo y sin filtros, que es el único que la
+ * ficha puede afirmar sin mentir: un puesto depende del universo, así que la
+ * interfaz tiene que decir cuál usó. Empate resuelto por nombre, igual que en
+ * el explorador, para que los dos den el mismo número.
+ */
+let _rank: Record<string, Map<string, { pos: number; total: number }>> | null = null;
+
+export function getPosicionRanking(
+  cm: string,
+  anio: string
+): { pos: number; universo: number } | null {
+  _rank ??= {};
+  if (!_rank[anio]) {
+    const lista = Object.values(allDetail())
+      .map((s) => ({ cm: s.cm, v: s.anios[anio]?.total ?? 0, n: s.nombre }))
+      .filter((x) => x.v > 0)
+      .sort((a, b) => b.v - a.v || a.n.localeCompare(b.n, "es"));
+    const m = new Map<string, { pos: number; total: number }>();
+    lista.forEach((x, i) => m.set(x.cm, { pos: i + 1, total: lista.length }));
+    _rank[anio] = m;
+  }
+  const r = _rank[anio].get(cm);
+  return r ? { pos: r.pos, universo: r.total } : null;
 }

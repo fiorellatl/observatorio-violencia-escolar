@@ -313,9 +313,10 @@ export default function DatosPage() {
                 />
                 <div className="mt-4 space-y-3">
                   <MethodologyNote tono="aviso">
-                    El número de alumnos solo está descargado para Lima Metropolitana, así que este
-                    gráfico describe Lima y no el Perú. Y la tasa solo existe para {t}:
-                    hay un único padrón con el número de alumnos, así que no se ofrece selector de año.
+                    Datos {t}. Es el único año con censo de alumnos publicado, así que es
+                    el único donde reportes y denominador son del mismo año. No es el año
+                    principal del observatorio —ese es el último año completo—, sino el
+                    único donde esta comparación es legítima.
                   </MethodologyNote>
                   <MethodologyNote tono="aviso">
                     Solo entran colegios con al menos {nf(meta.matricula_minima)}{" "}

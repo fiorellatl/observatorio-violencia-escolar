@@ -58,7 +58,7 @@ function Pie({ s, extra }: { s: SignalSchool; extra?: string }) {
           {nf(s.matricula)} estudiantes · ESCALE {s.anio_matricula}
         </span>
       ) : (
-        <span className="text-[0.78rem] text-ink-3">Sin matrícula conocida</span>
+        <span className="text-[0.78rem] text-ink-3">Sin número de alumnos conocido</span>
       )}
       <Link
         href={`/colegio/${s.slug}`}

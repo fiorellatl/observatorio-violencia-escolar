@@ -130,7 +130,9 @@ export function RankingExplorer() {
   const metrica: Metrica = q("metrica") === "tasa" ? "tasa" : "reportes";
   const tipo = (TIPOS.find((t) => t.v === q("tipo"))?.v ?? "todos") as Tipo;
   const verCeros = q("ceros") === "1";
-  const anio = q("anio") || idx?.anios[idx.anios.length - 1] || "";
+  // Por defecto, el último año COMPLETO. 2026 está en curso y no se compara
+  // con años cerrados salvo que el usuario lo pida.
+  const anio = q("anio") || idx?.anio_principal || "";
   const posTipo = TIPOS.find((t) => t.v === tipo)!.pos;
 
   /** Solo hay padrón para un año: fuera de él, no hay tasa. */
@@ -376,8 +378,8 @@ export function RankingExplorer() {
         {(
           [
             ["reportes", "Más reportes registrados",
-             "Ordena por cantidad de reportes registrados. El número absoluto puede estar relacionado con el tamaño del colegio."],
-            ["tasa", "Mayor tasa de reportes",
+             "La métrica principal. Ordena por cantidad de reportes registrados; el número absoluto puede estar relacionado con el tamaño del colegio. No necesita denominador."],
+            ["tasa", "Mayor tasa de reportes · secundaria",
              `Divide los reportes de ${idx.anio_tasa} entre los alumnos de ${idx.anio_padron} —no hay padrón de ${idx.anio_tasa}—. Solo con al menos ${nf(idx.matricula_minima)} alumnos.`],
           ] as [Metrica, string, string][]
         ).map(([v, t, desc]) => (

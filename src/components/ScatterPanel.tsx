@@ -370,7 +370,7 @@ export function ScatterPanel({
 
                       <dl className="mt-3 space-y-1.5 border-t border-rule-3 pt-2.5">
                         <div className="flex items-baseline justify-between gap-3">
-                          <dt className="text-[0.8rem] text-ink-2">Matrícula</dt>
+                          <dt className="text-[0.8rem] text-ink-2"># Alumnos</dt>
                           <dd className="tabular text-[0.88rem] font-medium">
                             {nf(p.matricula)}{" "}
                             <span className="text-[0.74rem] font-normal text-ink-3">
@@ -433,7 +433,7 @@ export function ScatterPanel({
 
         <figcaption className="mt-2 text-[0.78rem] leading-relaxed text-ink-3">
           Eje vertical: reportes registrados por cada 1.000 estudiantes en {anio}. Eje
-          horizontal: matrícula, en escala logarítmica para que quepan en el mismo gráfico
+          horizontal: número de alumnos, en escala logarítmica para que quepan en el mismo gráfico
           colegios de 100 y de 2.500 estudiantes. La línea punteada es la mediana{" "}
           <strong className="font-semibold text-ink-2">
             calculada solo entre los colegios que registraron al menos un reporte

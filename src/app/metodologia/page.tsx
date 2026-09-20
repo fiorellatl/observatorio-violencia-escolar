@@ -74,7 +74,8 @@ export default function MetodologiaPage() {
       <Seccion titulo="¿Por qué usamos tasas?">
         <p>
           Un colegio de 2,000 estudiantes no se puede comparar con uno de 200
-          únicamente por la cantidad bruta de reportes. Cuando tenemos matrícula,
+          únicamente por la cantidad bruta de reportes. Cuando tenemos el número de alumnos
+          del mismo año,
           calculamos:
         </p>
         <p className="tabular rounded-lg border border-rule bg-surface px-4 py-3 font-mono text-[0.9rem] text-ink">
@@ -174,7 +175,7 @@ export default function MetodologiaPage() {
           <li>
             <p className="font-semibold text-ink">ESCALE — Padrón de Instituciones Educativas</p>
             <p className="text-[0.92rem]">
-              Matrícula, docentes, secciones, nivel educativo y ubicación, por código
+              # alumnos, docentes, secciones, nivel educativo y ubicación, por código
               modular. Integración en curso.
             </p>
             <a

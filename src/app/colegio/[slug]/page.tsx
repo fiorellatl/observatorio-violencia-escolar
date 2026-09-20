@@ -8,7 +8,13 @@ import { MetricBand } from "@/components/MetricBand";
 import { ReportTrend } from "@/components/ReportTrend";
 import { ShareButton } from "@/components/ShareButton";
 import { ViolenceBreakdown } from "@/components/ViolenceBreakdown";
-import { getMeta, getPrerenderSlugs, getSchool } from "@/lib/data/provider";
+import {
+  getAnioPrincipal,
+  getMeta,
+  getPosicionRanking,
+  getPrerenderSlugs,
+  getSchool,
+} from "@/lib/data/provider";
 import { dec, nf, valorLegible } from "@/lib/format";
 import { COLOR_ACTOR, COLOR_VIOLENCIA, color } from "@/lib/viz/colors";
 import { entradilla, panelEnlace } from "@/lib/ui";
@@ -35,7 +41,7 @@ export async function generateMetadata({
   const desc =
     `${s.nombre} (${s.distrito}, ${s.departamento}) registra ${nf(s.total)} reportes ` +
     `en SíseVe entre ${Object.keys(s.anios).sort()[0]} y ` +
-    `${Object.keys(s.anios).sort().slice(-1)[0]}. Datos públicos de matrícula, nivel y ` +
+    `${Object.keys(s.anios).sort().slice(-1)[0]}. Datos públicos del número de alumnos, nivel y ` +
     `contexto, con el año de cada fuente.`;
 
   // No indexamos colegios sin datos útiles: un único reporte antiguo no sostiene
@@ -70,7 +76,13 @@ export default async function ColegioPage({
     parcial: a === meta.anio_parcial,
   }));
 
+  // Año principal = último año COMPLETO. `anio_transversal` sigue existiendo,
+  // pero solo manda sobre la tasa, que es una métrica secundaria.
+  const principal = getAnioPrincipal();
   const t = meta.anio_transversal;
+  const delPrincipal = s.anios[principal];
+  const enCurso = s.anios[meta.anio_parcial];
+  const puesto = getPosicionRanking(s.cm, principal);
   const delAnio = s.anios[t];
   const suma = (k: keyof (typeof s.anios)[string]) =>
     anios.reduce((acc, a) => acc + (Number(s.anios[a][k]) || 0), 0);
@@ -173,38 +185,26 @@ export default async function ColegioPage({
         <MetricBand
           metricas={[
             {
-              label: `Reportes registrados en ${t}`,
-              valor: delAnio ? nf(delAnio.total) : "0",
+              label: `Reportes registrados en ${principal}`,
+              valor: nf(delPrincipal?.total ?? 0),
               fuente: "SíseVe",
-              anio: t,
-              nota: delAnio
-                ? `${nf(s.total)} en total desde ${anios[0]}`
-                : `Ninguno ese año. ${nf(s.total)} en total desde ${anios[0]}`,
+              anio: principal,
+              nota: `${principal} es el último año completo. ${nf(s.total)} reportes en total desde ${anios[0]}.`,
+            },
+            {
+              label: `Reportes en ${meta.anio_parcial}`,
+              valor: nf(enCurso?.total ?? 0),
+              fuente: "SíseVe",
+              anio: `${meta.anio_parcial} · en curso`,
+              nota: `Año en curso. Datos hasta el ${meta.corte}.`,
             },
             {
               label: "# Alumnos",
               valor: s.matricula != null ? nf(s.matricula) : null,
-              unidad: "estudiantes",
-              fuente: "ESCALE",
+              unidad: "alumnos",
+              fuente: "Censo Educativo",
               anio: s.anio_matricula,
-              ausente: "El padrón de esta zona aún no está integrado",
-            },
-            {
-              label: "Reportes por 1.000 alumnos",
-              valor: s.tasa_2024 != null ? dec(s.tasa_2024, 1) : null,
-              fuente: "SíseVe / ESCALE",
-              // Los dos años van juntos porque NO coinciden: los reportes son
-              // del año transversal y el padrón es el único que existe. Poner
-              // solo uno de los dos escondería de qué está hecho el número.
-              anio: `rep. ${t} · alum. ${s.anio_matricula ?? "—"}`,
-              nota:
-                s.tasa_2024 != null
-                  ? `Reportes de ${t} divididos entre los alumnos de ${s.anio_matricula}. Permite comparar colegios de distinto tamaño.`
-                  : undefined,
-              ausente:
-                s.matricula == null
-                  ? "Sin el número de alumnos no hay denominador, y sin denominador no hay tasa"
-                  : `Menos de ${nf(meta.matricula_minima)} alumnos: la tasa no sería fiable`,
+              ausente: "El censo educativo no trae este colegio",
             },
             {
               label: "Pensión mensual",
@@ -218,6 +218,65 @@ export default async function ColegioPage({
             },
           ]}
         />
+
+        {/* La tasa es secundaria y de otro año: va aparte, nunca como KPI
+            principal, y solo existe donde reportes y alumnos coinciden. */}
+        <div className="mt-8 flex flex-wrap items-baseline gap-x-8 gap-y-3 border-t border-rule-2 pt-5">
+          <div>
+            <p className="meta">Reportes por 1.000 alumnos</p>
+            {s.tasa_2024 != null ? (
+              <p className="mt-1.5 flex items-baseline gap-2">
+                <span className="cifra text-cifra-m text-ink-2">{dec(s.tasa_2024, 1)}</span>
+                <span className="text-[0.8rem] text-ink-3">
+                  reportes de {t} ÷ alumnos de {s.anio_matricula}
+                </span>
+              </p>
+            ) : (
+              <p className="mt-1.5 text-[0.86rem] text-ink-3">
+                {s.matricula == null
+                  ? "Sin denominador del mismo año"
+                  : `Menos de ${nf(meta.matricula_minima)} alumnos: la tasa no sería fiable`}
+              </p>
+            )}
+          </div>
+          <p className="max-w-[46ch] text-[0.78rem] leading-relaxed text-ink-3">
+            Métrica secundaria, útil para comparar colegios de distinto tamaño. Solo existe
+            en {t}, el único año con censo de alumnos publicado. No representa personas
+            afectadas ni casos únicos.
+          </p>
+        </div>
+
+        {/* ── Posición en el ranking ─────────────────────────────── */}
+        {puesto ? (
+          <div className="mt-8 border-t border-rule pt-6">
+            <p className="meta">Posición en el ranking</p>
+            <div className="mt-3 flex flex-wrap items-baseline justify-between gap-4">
+              <div>
+                <p className="flex items-baseline gap-2">
+                  <span className="cifra text-cifra-l text-ink">#{nf(puesto.pos)}</span>
+                  <span className="text-[0.92rem] text-ink-3">
+                    de {nf(puesto.universo)} colegios
+                  </span>
+                </p>
+                <p className="mt-1.5 text-[0.84rem] text-ink-2">
+                  Reportes registrados · {principal} · Nacional, todos los colegios
+                </p>
+              </div>
+              <Link
+                href={`/rankings?anio=${principal}`}
+                className="inline-flex items-baseline gap-1.5 text-[0.88rem] font-medium text-accent hover:underline"
+              >
+                Ver ranking completo
+                <span aria-hidden>→</span>
+              </Link>
+            </div>
+            <p className="mt-3 max-w-prose text-[0.78rem] leading-relaxed text-ink-3">
+              El puesto depende del universo: con otro año, otro territorio o otro tipo de
+              reporte, la posición cambia. Aquí se compara con todos los colegios del país
+              que registraron al menos un reporte en {principal}.
+            </p>
+          </div>
+        ) : null}
       </section>
 
       {/* ── Evolución ─────────────────────────────────────────── */}

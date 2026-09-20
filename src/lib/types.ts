@@ -144,6 +144,8 @@ export interface RankingIndex {
       coincide la interfaz tiene que decirlo. */
   anio_padron: string;
   anio_parcial: string;
+  /** Último año completo: el que la interfaz muestra por defecto. */
+  anio_principal: string;
   matricula_minima: number;
   dic: { r: string[]; p: string[]; d: string[]; g: string[]; n: string[] };
   filas: RankingRow[];
