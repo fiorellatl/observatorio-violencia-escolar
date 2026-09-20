@@ -113,3 +113,35 @@ export interface Provenance {
   fuente: string;
   anio: string | number | null | undefined;
 }
+
+/**
+ * Fila del índice de rankings:
+ * [nombre, codMod, distritoId, provinciaId, regiónId, gestiónId, nivelId,
+ *  matrícula (0 si no se conoce), conteos por año]
+ *
+ * `conteos[año] = [total, física, psicológica, sexual]`. Solo los años con
+ * algún reporte: la mayoría de colegios no tiene actividad todos los años y
+ * guardar ceros multiplicaría el peso sin añadir información.
+ */
+export type RankingRow = [
+  string,
+  string,
+  number,
+  number,
+  number,
+  number,
+  number,
+  number,
+  Record<string, [number, number, number, number]>,
+];
+
+export interface RankingIndex {
+  /** Años ofrecidos. Excluye la pandemia: no es comparable. */
+  anios: string[];
+  /** Único año con tasa. Solo hay un padrón de matrícula. */
+  anio_tasa: string;
+  anio_parcial: string;
+  matricula_minima: number;
+  dic: { r: string[]; p: string[]; d: string[]; g: string[]; n: string[] };
+  filas: RankingRow[];
+}

@@ -13,6 +13,8 @@ import path from "node:path";
 import type {
   BrowseIndex,
   BrowseRow,
+  RankingIndex,
+  RankingRow,
   CrossRow,
   Meta,
   NationalYear,
@@ -142,4 +144,73 @@ export function getBrowseIndex(): BrowseIndex {
 
   filas.sort((a, b) => b[7] - a[7]);
   return { dic, filas };
+}
+
+/**
+ * Índice para el explorador de rankings.
+ *
+ * Contiene, por colegio, los conteos por año y por tipo de violencia, más la
+ * matrícula cuando se conoce. Se sirve como archivo estático y solo lo
+ * descarga quien abre /rankings.
+ *
+ * Entran dos poblaciones: los colegios con reportes en los años comparables y
+ * los que tienen matrícula válida aunque no registren nada. Los segundos
+ * existen para que "incluir colegios con 0 reportes" signifique algo — sin
+ * ellos, el ranking por tasa daría por hecho que todo colegio registra algo.
+ *
+ * Se excluyen 2020 y 2021: con los colegios cerrados, ordenar por número de
+ * reportes mide el acceso al canal de denuncia, no lo que dice medir.
+ */
+export function getRankingIndex(): RankingIndex {
+  const meta = getMeta();
+  const pandemia = new Set(meta.anios_pandemia);
+  const anios = ["2022", "2023", "2024", "2025", "2026"].filter((a) => !pandemia.has(a));
+
+  const dic = { r: [] as string[], p: [] as string[], d: [] as string[], g: [] as string[], n: [] as string[] };
+  const mapas = { r: new Map<string, number>(), p: new Map<string, number>(), d: new Map<string, number>(), g: new Map<string, number>(), n: new Map<string, number>() };
+  const id = (clave: keyof typeof dic, valor: string): number => {
+    const m = mapas[clave];
+    let i = m.get(valor);
+    if (i === undefined) {
+      i = dic[clave].length;
+      dic[clave].push(valor);
+      m.set(valor, i);
+    }
+    return i;
+  };
+
+  const filas: RankingRow[] = [];
+  for (const s of Object.values(allDetail())) {
+    const mat = s.matricula ?? 0;
+    const activo = anios.some((a) => (s.anios[a]?.total ?? 0) > 0);
+    if (!activo && mat < meta.matricula_minima) continue;
+
+    const conteos: Record<string, [number, number, number, number]> = {};
+    for (const a of anios) {
+      const c = s.anios[a];
+      if (!c?.total) continue;
+      conteos[a] = [c.total, c.fisica ?? 0, c.psicologica ?? 0, c.sexual ?? 0];
+    }
+
+    filas.push([
+      s.nombre,
+      s.cm,
+      id("d", s.distrito),
+      id("p", s.provincia),
+      id("r", s.departamento),
+      id("g", s.gestion),
+      id("n", s.nivel ?? ""),
+      mat,
+      conteos,
+    ]);
+  }
+
+  return {
+    anios,
+    anio_tasa: meta.anio_transversal,
+    anio_parcial: meta.anio_parcial,
+    matricula_minima: meta.matricula_minima,
+    dic,
+    filas,
+  };
 }

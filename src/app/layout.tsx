@@ -50,6 +50,7 @@ const PRINCIPAL = [
   { href: "/datos", label: "Explora los datos" },
 ];
 const SECUNDARIA = [
+  { href: "/rankings", label: "Rankings" },
   { href: "/comparar", label: "Comparar" },
   { href: "/metodologia", label: "Metodología" },
 ];
