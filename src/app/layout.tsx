@@ -1,20 +1,23 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { IBM_Plex_Mono, IBM_Plex_Sans, Newsreader } from "next/font/google";
+import { IBM_Plex_Mono, IBM_Plex_Sans } from "next/font/google";
 import { CommandPalette } from "@/components/CommandPalette";
 import { getMeta } from "@/lib/data/provider";
 import { shell } from "@/lib/ui";
 import "./globals.css";
 
-const display = Newsreader({
-  subsets: ["latin"],
-  weight: ["400", "500", "600"],
-  variable: "--font-display",
-  display: "swap",
-});
+/**
+ * Una sola familia para todo el producto.
+ *
+ * Antes los titulares y las cifras iban en Newsreader, una serif. El carácter
+ * editorial ya no depende de la forma de la letra sino del sistema: tamaños
+ * con saltos grandes, tracking negativo en los títulos, pesos contrastados,
+ * aire y filetes finos. Una sola familia también significa una petición menos
+ * y ninguna discordancia entre un titular y la cifra que lo acompaña.
+ */
 const sans = IBM_Plex_Sans({
   subsets: ["latin"],
-  weight: ["400", "500", "600"],
+  weight: ["400", "500", "600", "700"],
   variable: "--font-sans",
   display: "swap",
 });
@@ -61,7 +64,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   const fuentes = Object.values(meta.fuentes);
 
   return (
-    <html lang="es" className={`${display.variable} ${sans.variable} ${mono.variable}`}>
+    <html lang="es" className={`${sans.variable} ${mono.variable}`}>
       <body className="flex min-h-screen flex-col antialiased">
         <a
           href="#contenido"

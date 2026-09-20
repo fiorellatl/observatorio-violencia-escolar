@@ -31,7 +31,9 @@ const config: Config = {
         },
       },
       fontFamily: {
-        display: ["var(--font-display)", "Georgia", "serif"],
+        // `display` se conserva como token semantico —"esto es un titular"—
+        // pero apunta a la misma sans que el resto. No hay serif en el producto.
+        display: ["var(--font-sans)", "system-ui", "sans-serif"],
         sans: ["var(--font-sans)", "system-ui", "sans-serif"],
         mono: ["var(--font-mono)", "ui-monospace", "monospace"],
       },
@@ -40,14 +42,15 @@ const config: Config = {
       fontSize: {
         // Editorial: el salto entre niveles es grande a propósito. Una
         // jerarquía con seis tamaños parecidos no es una jerarquía.
-        "display-xxl": ["clamp(2.9rem,7.5vw,5.6rem)", { lineHeight: "0.98", letterSpacing: "-0.032em" }],
-        "display-xl": ["clamp(2.2rem,5vw,3.5rem)", { lineHeight: "1.05", letterSpacing: "-0.024em" }],
-        "display-l": ["clamp(1.6rem,3.4vw,2.35rem)", { lineHeight: "1.14", letterSpacing: "-0.018em" }],
-        "display-m": ["clamp(1.22rem,2.2vw,1.55rem)", { lineHeight: "1.22", letterSpacing: "-0.011em" }],
+        "display-xxl": ["clamp(2.9rem,7.5vw,5.6rem)", { lineHeight: "1.0", letterSpacing: "-0.042em" }],
+        "display-xl": ["clamp(2.2rem,5vw,3.5rem)", { lineHeight: "1.07", letterSpacing: "-0.034em" }],
+        "display-l": ["clamp(1.6rem,3.4vw,2.35rem)", { lineHeight: "1.16", letterSpacing: "-0.026em" }],
+        "display-m": ["clamp(1.22rem,2.2vw,1.55rem)", { lineHeight: "1.24", letterSpacing: "-0.018em" }],
         // Cifras: tres pesos según el papel que hacen en la página.
         "cifra-xl": ["clamp(2.6rem,6vw,4.2rem)", { lineHeight: "0.92", letterSpacing: "-0.03em" }],
         "cifra-l": ["clamp(1.9rem,3.6vw,2.6rem)", { lineHeight: "0.95", letterSpacing: "-0.026em" }],
         "cifra-m": ["1.5rem", { lineHeight: "1", letterSpacing: "-0.02em" }],
+        stat: ["clamp(1.9rem,4.5vw,2.7rem)", { lineHeight: "1", letterSpacing: "-0.035em" }],
         cuerpo: ["1.01rem", { lineHeight: "1.62" }],
         "cuerpo-s": ["0.9rem", { lineHeight: "1.58" }],
       },

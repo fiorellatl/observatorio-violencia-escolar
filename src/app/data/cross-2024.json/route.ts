@@ -1,4 +1,4 @@
-import { getCross } from "@/lib/data/provider";
+import { getCross, getSchool } from "@/lib/data/provider";
 import type { CrossRow } from "@/lib/types";
 
 /**
@@ -9,25 +9,42 @@ import type { CrossRow } from "@/lib/types";
  * llegara a desplazarse hasta el gráfico. Ahora el gráfico los pide cuando se
  * monta.
  *
- * Viaja como arrays y no como objetos —las claves repetidas 3.881 veces son
- * la mitad del archivo— y sin el nombre del distrito ni la pensión, que el
- * gráfico no usa.
+ * Viaja como arrays y no como objetos: las claves repetidas 3.881 veces eran
+ * la mitad del archivo.
  */
 export const dynamic = "force-static";
 
-/** [slug, nombre, gestión, nivel, matrícula, reportes, tasa] */
-export type CrossCompacta = [string, string, string, string, number, number, number];
+/** [slug, nombre, gestión, nivel, matrícula, reportes, tasa, distrito, provincia, región] */
+export type CrossCompacta = [
+  string,
+  string,
+  string,
+  string,
+  number,
+  number,
+  number,
+  string,
+  string,
+  string,
+];
 
 export function GET() {
-  const filas: CrossCompacta[] = getCross().map((c: CrossRow) => [
-    c.slug,
-    c.nombre,
-    c.gestion,
-    c.nivel,
-    c.matricula,
-    c.reportes,
-    c.tasa,
-  ]);
+  const filas: CrossCompacta[] = getCross().map((c: CrossRow) => {
+    // La ubicación completa vive en la ficha; el corte solo trae el distrito.
+    const s = getSchool(c.slug);
+    return [
+      c.slug,
+      c.nombre,
+      c.gestion,
+      c.nivel,
+      c.matricula,
+      c.reportes,
+      c.tasa,
+      c.distrito,
+      s?.provincia ?? "",
+      s?.departamento ?? "",
+    ];
+  });
 
   return Response.json(filas, {
     headers: {

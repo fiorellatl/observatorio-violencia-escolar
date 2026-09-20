@@ -86,7 +86,7 @@ const PREGUNTAS = [
   { id: "como-cambio", texto: "¿Cómo ha cambiado?" },
   { id: "que-se-registra", texto: "¿Qué se registra?" },
   { id: "donde", texto: "¿Dónde se concentra?" },
-  { id: "tamano", texto: "¿Cambia con el tamaño del colegio?" },
+  { id: "tamano", texto: "¿Los colegios más grandes registran más reportes?" },
   { id: "pension", texto: "¿Y con la pensión?" },
 ];
 
@@ -181,7 +181,7 @@ export default function DatosPage() {
             ].map((c) => (
               <div key={c.k} className={panelPad}>
                 <dt className={clsMeta}>{c.k}</dt>
-                <dd className="tabular mt-2 font-display text-stat font-medium">{c.v}</dd>
+                <dd className="cifra mt-2 text-stat">{c.v}</dd>
                 <p className="mt-1.5 text-[0.8rem] text-ink-3">{c.d}</p>
               </div>
             ))}
@@ -281,15 +281,15 @@ export default function DatosPage() {
         </Pregunta>
 
         {/* ── ¿Cambia con el tamaño? ─────────────────────────── */}
-        <Pregunta id="tamano" pregunta="¿Cambia con el tamaño del colegio?">
+        <Pregunta id="tamano" pregunta="¿Los colegios más grandes registran más reportes?">
           <div className={panelPad}>
             <div className="flex flex-wrap items-baseline justify-between gap-2">
               <h3 className={h3}>Matrícula y tasa de reportes</h3>
               <DataSourceBadge fuente="SíseVe / ESCALE" anio={t} />
             </div>
             <p className={entradilla}>
-              Cada punto es un colegio: estudiantes matriculados en el eje horizontal,
-              reportes por cada 1.000 estudiantes en el vertical.
+              Cada punto representa un colegio. Comparamos su matrícula con la cantidad de
+              reportes registrados por cada 1.000 estudiantes durante {t}.
             </p>
 
             {cross.length > 0 ? (
@@ -306,22 +306,13 @@ export default function DatosPage() {
                 <div className="mt-4 space-y-3">
                   <MethodologyNote tono="aviso">
                     La matrícula solo está descargada para Lima Metropolitana, así que este
-                    gráfico describe Lima y no el Perú.
-                  </MethodologyNote>
-                  <MethodologyNote>
-                    Los colegios sin ningún reporte en {t} aparecen sobre la línea del cero
-                    y están incluidos por defecto: son la situación más común y esconderlos
-                    haría parecer que todo colegio registra algo.
+                    gráfico describe Lima y no el Perú. Y la tasa solo existe para {t}:
+                    hay un único padrón de matrícula, así que no se ofrece selector de año.
                   </MethodologyNote>
                   <MethodologyNote tono="aviso">
                     Solo entran colegios con al menos {nf(meta.matricula_minima)}{" "}
                     estudiantes. Por debajo, un único reporte dispara la tasa decenas de
                     puntos y el número deja de significar algo.
-                  </MethodologyNote>
-                  <MethodologyNote>
-                    Una asociación entre dos variables no significa que una cause la otra.
-                    El tamaño, la ubicación, la gestión y la disposición a denunciar están
-                    relacionados entre sí y con el número de reportes.
                   </MethodologyNote>
                 </div>
               </>

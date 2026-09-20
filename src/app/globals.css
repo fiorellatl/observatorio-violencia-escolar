@@ -114,11 +114,14 @@ body {
   font-variant-numeric: tabular-nums;
 }
 
-/* Cifra editorial: el número manda y la unidad se aparta. */
+/* Cifra editorial: el número manda y la unidad se aparta. Misma familia que
+   todo lo demás; lo que la distingue es el peso, el tracking y la altura de
+   línea, no un cambio de tipografía. */
 .cifra {
-  font-family: var(--font-display), Georgia, serif;
+  font-family: var(--font-sans), system-ui, sans-serif;
   font-variant-numeric: tabular-nums lining-nums;
-  letter-spacing: -0.025em;
+  font-weight: 600;
+  letter-spacing: -0.035em;
   line-height: 0.95;
 }
 
