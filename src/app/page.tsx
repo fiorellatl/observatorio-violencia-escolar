@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { ReportTrend } from "@/components/ReportTrend";
 import { SearchBox } from "@/components/SearchBox";
@@ -5,6 +6,10 @@ import { MethodologyNote } from "@/components/MethodologyNote";
 import { DataSourceBadge } from "@/components/DataSourceBadge";
 import { getMeta, getNational } from "@/lib/data/provider";
 import { nf } from "@/lib/format";
+
+export const metadata: Metadata = {
+  alternates: { canonical: "/" },
+};
 
 export default function Home() {
   const meta = getMeta();

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { getMeta } from "@/lib/data/provider";
 import { nf } from "@/lib/format";
 
@@ -6,11 +7,20 @@ export const metadata: Metadata = {
   title: "Metodología y fuentes",
   description:
     "Qué mide SíseVe y qué no mide, por qué usamos tasas, por qué 2020–2021 se tratan aparte y de dónde sale cada dato de este sitio.",
+  alternates: { canonical: "/metodologia" },
 };
 
-function Seccion({ titulo, children }: { titulo: string; children: React.ReactNode }) {
+function Seccion({
+  titulo,
+  id,
+  children,
+}: {
+  titulo: string;
+  id?: string;
+  children: React.ReactNode;
+}) {
   return (
-    <section className="border-t border-rule py-9">
+    <section id={id} className="scroll-mt-28 border-t border-rule py-9">
       <h2 className="font-display text-display-m font-medium text-balance">{titulo}</h2>
       <div className="mt-4 space-y-4 text-[0.96rem] leading-relaxed text-ink-2">{children}</div>
     </section>
@@ -21,8 +31,10 @@ export default function MetodologiaPage() {
   const meta = getMeta();
 
   return (
-    <div className="mx-auto max-w-read px-5 py-12">
-      <h1 className="font-display text-display-xl font-medium text-balance">
+    <div className="mx-auto max-w-read px-5 py-8 sm:py-10">
+      <Breadcrumbs items={[{ label: "Inicio", href: "/" }, { label: "Metodología" }]} />
+
+      <h1 className="mt-6 font-display text-display-xl font-medium text-balance">
         Cómo leer estos datos
       </h1>
       <p className="mt-5 text-[1.05rem] leading-relaxed text-ink-2">
@@ -128,7 +140,7 @@ export default function MetodologiaPage() {
         </p>
       </Seccion>
 
-      <Seccion titulo="¿Qué no publicamos?">
+      <Seccion titulo="¿Qué no publicamos?" id="privacidad">
         <p>
           La base original contiene datos personales de menores: edad, sexo, grado y
           turno del estudiante agredido, además de características del presunto

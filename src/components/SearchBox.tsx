@@ -3,14 +3,15 @@
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { nf, norm, slugify } from "@/lib/format";
-import type { SearchRow } from "@/lib/types";
+import { useBrowseIndex } from "@/lib/useBrowseIndex";
+import type { BrowseRow } from "@/lib/types";
 
 /**
- * Buscador tolerante: nombre del colegio, código modular o distrito.
+ * Buscador grande, para la portada.
  *
- * El índice (~1,6 MB) NO va en el bundle: se descarga la primera vez que alguien
- * escribe y el CDN lo cachea. Así la home carga ligera aunque el índice cubra
- * los 22 mil colegios.
+ * Comparte índice con el buscador global de la cabecera: el hook cachea la
+ * descarga a nivel de módulo, así que abrir la paleta después de escribir aquí
+ * no vuelve a pedir nada.
  */
 export function SearchBox({
   autoFocus = false,
@@ -20,24 +21,16 @@ export function SearchBox({
   placeholder?: string;
 }) {
   const [q, setQ] = useState("");
-  const [rows, setRows] = useState<SearchRow[] | null>(null);
-  const [cargando, setCargando] = useState(false);
+  const [consulta, setConsulta] = useState("");
   const [sel, setSel] = useState(-1);
   const [abierto, setAbierto] = useState(false);
   const caja = useRef<HTMLDivElement>(null);
+  const { datos, cargando, error, pedir } = useBrowseIndex();
 
-  const cargar = useCallback(async () => {
-    if (rows || cargando) return;
-    setCargando(true);
-    try {
-      const r = await fetch("/data/search-index.json");
-      setRows((await r.json()) as SearchRow[]);
-    } catch {
-      setRows([]);
-    } finally {
-      setCargando(false);
-    }
-  }, [rows, cargando]);
+  useEffect(() => {
+    const t = setTimeout(() => setConsulta(q), 120);
+    return () => clearTimeout(t);
+  }, [q]);
 
   useEffect(() => {
     const fuera = (e: MouseEvent) => {
@@ -48,36 +41,41 @@ export function SearchBox({
   }, []);
 
   const hits = useMemo(() => {
-    const t = norm(q);
-    if (t.length < 3 || !rows) return [];
+    const t = norm(consulta);
+    if (t.length < 3 || !datos) return [];
     const soloDigitos = /^\d+$/.test(t);
-    const out: { row: SearchRow; score: number }[] = [];
+    const out: { fila: BrowseRow; score: number }[] = [];
 
-    for (const row of rows) {
-      const [nombre, distrito, region, cm, total] = row;
+    for (const fila of datos.filas) {
+      const [nombre, cm] = fila;
       let score = -1;
 
       if (soloDigitos) {
-        // Código modular: acepta con y sin ceros por delante.
+        // Código modular: se acepta con y sin ceros por delante.
         if (cm === t.padStart(7, "0") || cm.replace(/^0+/, "") === t) score = 100;
         else if (cm.includes(t)) score = 40;
       } else {
         const n = norm(nombre);
-        const d = norm(distrito);
+        const d = norm(datos.dic.d[fila[2]] ?? "");
         if (n.startsWith(t)) score = 90;
         else if (n.includes(t)) score = 60;
         else if (d.startsWith(t)) score = 35;
-        else if (d.includes(t) || norm(region).includes(t)) score = 20;
+        else if (d.includes(t) || norm(datos.dic.r[fila[4]] ?? "").includes(t)) score = 20;
       }
 
-      if (score >= 0) out.push({ row, score: score + Math.min(total, 50) / 100 });
+      if (score >= 0) out.push({ fila, score: score + Math.min(fila[7], 50) / 100 });
     }
 
     out.sort((a, b) => b.score - a.score);
-    return out.slice(0, 25).map((o) => o.row);
-  }, [q, rows]);
+    return out.slice(0, 25).map((o) => o.fila);
+  }, [consulta, datos]);
 
-  const ir = (row: SearchRow) => `/colegio/${slugify(row[0], row[1], row[3])}`;
+  useEffect(() => setSel(-1), [consulta]);
+
+  const ir = useCallback(
+    (fila: BrowseRow) => `/colegio/${slugify(fila[0], datos?.dic.d[fila[2]] ?? "", fila[1])}`,
+    [datos]
+  );
 
   return (
     <div ref={caja} className="relative">
@@ -97,14 +95,13 @@ export function SearchBox({
         value={q}
         placeholder={placeholder}
         onFocus={() => {
-          void cargar();
+          pedir();
           setAbierto(true);
         }}
         onChange={(e) => {
           setQ(e.target.value);
-          setSel(-1);
           setAbierto(true);
-          void cargar();
+          pedir();
         }}
         onKeyDown={(e) => {
           if (!hits.length) return;
@@ -130,17 +127,21 @@ export function SearchBox({
           role="listbox"
           className="absolute z-30 mt-2 max-h-[22rem] w-full overflow-y-auto rounded-xl border border-rule bg-surface shadow-lg shadow-black/5"
         >
-          {cargando && !rows ? (
+          {error ? (
+            <p className="px-4 py-3 text-[0.85rem] text-ink-2">
+              No se pudo cargar el índice. Revisa tu conexión.
+            </p>
+          ) : cargando && !datos ? (
             <p className="px-4 py-3 text-[0.85rem] text-ink-3">Cargando el índice…</p>
           ) : hits.length === 0 ? (
             <p className="px-4 py-3 text-[0.85rem] text-ink-3">
               Sin resultados. Prueba con menos palabras o con el código modular.
             </p>
           ) : (
-            hits.map((row, i) => (
+            hits.map((fila, i) => (
               <Link
-                key={`${row[3]}-${i}`}
-                href={ir(row)}
+                key={`${fila[1]}-${i}`}
+                href={ir(fila)}
                 role="option"
                 aria-selected={i === sel}
                 onMouseEnter={() => setSel(i)}
@@ -149,23 +150,21 @@ export function SearchBox({
                 }`}
               >
                 <span className="block text-[0.92rem] font-medium leading-snug text-ink">
-                  {row[0]}
+                  {fila[0]}
                 </span>
                 <span className="mt-0.5 flex flex-wrap items-center gap-x-2 text-[0.76rem] text-ink-3">
                   <span>
-                    {row[1]}, {row[2]}
+                    {datos?.dic.d[fila[2]]}, {datos?.dic.r[fila[4]]}
                   </span>
-                  {row[5] ? (
+                  {datos?.dic.n[fila[6]] ? (
                     <>
                       <span aria-hidden>·</span>
-                      <span>{row[5]}</span>
+                      <span>{datos.dic.n[fila[6]]}</span>
                     </>
                   ) : null}
                   <span aria-hidden>·</span>
-                  <span className="tabular font-mono">{row[3]}</span>
-                  <span aria-hidden>·</span>
                   <span className="tabular">
-                    {nf(row[4])} {row[4] === 1 ? "reporte" : "reportes"}
+                    {nf(fila[7])} {fila[7] === 1 ? "reporte" : "reportes"}
                   </span>
                 </span>
               </Link>

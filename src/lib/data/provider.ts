@@ -10,7 +10,15 @@
  */
 import fs from "node:fs";
 import path from "node:path";
-import type { CrossRow, Meta, NationalYear, SchoolDetail, SearchRow } from "@/lib/types";
+import type {
+  BrowseIndex,
+  BrowseRow,
+  CrossRow,
+  Meta,
+  NationalYear,
+  SchoolDetail,
+  SearchRow,
+} from "@/lib/types";
 
 const DIR = path.join(process.cwd(), "data", "public");
 
@@ -84,4 +92,54 @@ export function getSearchIndex(): SearchRow[] {
     s.total,
     s.nivel ?? "",
   ]);
+}
+
+/**
+ * Índice de navegación: un único archivo para el buscador global y el
+ * explorador de /colegios.
+ *
+ * Se sirve desde una ruta estática (`/data/browse-index.json`) y NO se
+ * serializa dentro del HTML. Antes /colegios recibía las 22.569 filas como
+ * props de un componente de cliente y la página pesaba 1,85 MB; ahora el
+ * navegador se descarga el índice una sola vez, el CDN lo cachea y la página
+ * se queda en unas decenas de kilobytes.
+ *
+ * Los textos que se repiten (región, provincia, distrito, gestión, nivel) van
+ * en diccionarios y las filas guardan el índice: "Santiago de Surco" aparece
+ * una vez y no 195. El slug no viaja: el cliente lo recalcula con la misma
+ * función `slugify` que usó el ETL.
+ */
+export function getBrowseIndex(): BrowseIndex {
+  const dic = { r: [] as string[], p: [] as string[], d: [] as string[], g: [] as string[], n: [] as string[] };
+  const mapas = { r: new Map<string, number>(), p: new Map<string, number>(), d: new Map<string, number>(), g: new Map<string, number>(), n: new Map<string, number>() };
+
+  const id = (clave: keyof typeof dic, valor: string): number => {
+    const m = mapas[clave];
+    let i = m.get(valor);
+    if (i === undefined) {
+      i = dic[clave].length;
+      dic[clave].push(valor);
+      m.set(valor, i);
+    }
+    return i;
+  };
+
+  const filas: BrowseRow[] = Object.values(allDetail()).map((s) => {
+    const anios = Object.keys(s.anios).filter((a) => (s.anios[a]?.total ?? 0) > 0);
+    const ultimo = anios.length ? anios.sort()[anios.length - 1] : "";
+    return [
+      s.nombre,
+      s.cm,
+      id("d", s.distrito),
+      id("p", s.provincia),
+      id("r", s.departamento),
+      id("g", s.gestion),
+      id("n", s.nivel ?? ""),
+      s.total,
+      ultimo,
+    ];
+  });
+
+  filas.sort((a, b) => b[7] - a[7]);
+  return { dic, filas };
 }

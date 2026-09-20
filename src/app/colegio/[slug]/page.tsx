@@ -1,13 +1,16 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { DataSourceBadge } from "@/components/DataSourceBadge";
 import { MethodologyNote } from "@/components/MethodologyNote";
 import { MetricCard } from "@/components/MetricCard";
 import { ReportTrend } from "@/components/ReportTrend";
+import { ShareButton } from "@/components/ShareButton";
 import { ViolenceBreakdown } from "@/components/ViolenceBreakdown";
 import { getMeta, getPrerenderSlugs, getSchool } from "@/lib/data/provider";
-import { dec, nf } from "@/lib/format";
+import { dec, nf, valorLegible } from "@/lib/format";
+import { bajada, tarjetaEnlace } from "@/lib/ui";
 
 export const dynamicParams = true;
 
@@ -29,9 +32,10 @@ export async function generateMetadata({
 
   const titulo = `${s.nombre} — ${s.distrito}`;
   const desc =
-    `Información pública sobre violencia escolar en ${s.nombre}, ${s.distrito}, ` +
-    `${s.departamento}. ${nf(s.total)} reportes registrados en SíseVe. ` +
-    `Código modular ${s.cm}.`;
+    `${s.nombre} (${s.distrito}, ${s.departamento}) registra ${nf(s.total)} reportes ` +
+    `en SíseVe entre ${Object.keys(s.anios).sort()[0]} y ` +
+    `${Object.keys(s.anios).sort().slice(-1)[0]}. Datos públicos de matrícula, nivel y ` +
+    `contexto, con el año de cada fuente.`;
 
   // No indexamos colegios sin datos útiles: un único reporte antiguo no sostiene
   // una página y sí ensucia el índice.
@@ -81,10 +85,12 @@ export default async function ColegioPage({
   ];
 
   const contexto: { label: string; valor: string; fuente: string; anio?: string | null }[] = [
-    { label: "Gestión", valor: s.gestion, fuente: "SíseVe", anio: ultimo },
-    { label: "Nivel educativo", valor: s.nivel, fuente: "SíseVe", anio: ultimo },
-    { label: "UGEL", valor: s.ugel, fuente: "SíseVe", anio: ultimo },
-    { label: "DRE", valor: s.dre, fuente: "SíseVe", anio: ultimo },
+    // Sin año: no son medidas anuales sino cómo identifica SíseVe al colegio en
+    // sus registros. Ponerles "2026" sugeriría una observación que no existe.
+    { label: "Gestión", valor: s.gestion, fuente: "SíseVe", anio: null },
+    { label: "Nivel educativo", valor: s.nivel, fuente: "SíseVe", anio: null },
+    { label: "UGEL", valor: s.ugel, fuente: "SíseVe", anio: null },
+    { label: "DRE", valor: s.dre, fuente: "SíseVe", anio: null },
   ];
   if (s.docentes != null)
     contexto.push({ label: "Docentes", valor: nf(s.docentes), fuente: "ESCALE", anio: s.anio_matricula });
@@ -105,18 +111,26 @@ export default async function ColegioPage({
   };
   for (const [clave, etiqueta] of Object.entries(ETIQUETAS)) {
     const c = s.contexto?.[clave];
-    if (c) contexto.push({ label: etiqueta, valor: String(c.v), fuente: c.f, anio: c.a });
+    if (c) contexto.push({ label: etiqueta, valor: valorLegible(c.v), fuente: c.f, anio: c.a });
   }
 
   return (
     <article className="mx-auto max-w-shell px-5 py-10">
-      <nav className="mb-6 text-[0.8rem] text-ink-3">
-        <Link href="/colegios" className="hover:text-accent">
-          Colegios
-        </Link>
-        <span aria-hidden> / </span>
-        <span>{s.distrito}</span>
-      </nav>
+      <Breadcrumbs
+        items={[
+          { label: "Inicio", href: "/" },
+          { label: "Colegios", href: "/colegios" },
+          {
+            label: s.departamento,
+            href: `/colegios?region=${encodeURIComponent(s.departamento)}`,
+          },
+          {
+            label: s.distrito,
+            href: `/colegios?region=${encodeURIComponent(s.departamento)}&distrito=${encodeURIComponent(s.distrito)}`,
+          },
+          { label: s.nombre },
+        ]}
+      />
 
       {/* ── Cabecera ──────────────────────────────────────────── */}
       <header className="border-b border-rule pb-7">
@@ -140,10 +154,20 @@ export default async function ColegioPage({
             </div>
           ))}
         </dl>
+
+        <div className="mt-6 flex flex-wrap items-center gap-3">
+          <Link
+            href={`/comparar?colegio=${encodeURIComponent(s.slug)}`}
+            className="inline-flex items-center gap-2 rounded-lg border border-accent bg-accent-soft px-3.5 py-2 text-[0.86rem] font-medium text-accent transition-colors hover:bg-accent hover:text-surface"
+          >
+            Comparar este colegio
+          </Link>
+          <ShareButton />
+        </div>
       </header>
 
       {/* ── Resumen ───────────────────────────────────────────── */}
-      <section className="py-8">
+      <section id="resumen" className="scroll-mt-28 py-8">
         <h2 className="sr-only">Resumen de datos</h2>
         <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
           <MetricCard
@@ -189,7 +213,7 @@ export default async function ColegioPage({
       </section>
 
       {/* ── Evolución ─────────────────────────────────────────── */}
-      <section className="border-t border-rule py-8">
+      <section id="trayectoria" className="scroll-mt-28 border-t border-rule py-8">
         <div className="mb-1 flex flex-wrap items-baseline justify-between gap-2">
           <h2 className="font-display text-display-m font-medium">Evolución</h2>
           <DataSourceBadge fuente="SíseVe" anio={`${anios[0]}–${ultimo}`} />
@@ -212,7 +236,7 @@ export default async function ColegioPage({
       </section>
 
       {/* ── Tipos ─────────────────────────────────────────────── */}
-      <section className="grid gap-8 border-t border-rule py-8 lg:grid-cols-2">
+      <section id="tipos" className="scroll-mt-28 grid gap-8 border-t border-rule py-8 lg:grid-cols-2">
         <div>
           <div className="mb-4 flex flex-wrap items-baseline justify-between gap-2">
             <h2 className="font-display text-display-m font-medium">Tipo de violencia</h2>
@@ -235,7 +259,7 @@ export default async function ColegioPage({
       </section>
 
       {/* ── Contexto ──────────────────────────────────────────── */}
-      <section className="border-t border-rule py-8">
+      <section id="contexto" className="scroll-mt-28 border-t border-rule py-8">
         <h2 className="mb-5 font-display text-display-m font-medium">Contexto del colegio</h2>
         <dl className="grid grid-cols-1 gap-x-8 gap-y-0 sm:grid-cols-2">
           {contexto.map((c) => (
@@ -265,6 +289,48 @@ export default async function ColegioPage({
           necesariamente que ocurra más violencia.
         </MethodologyNote>
       </div>
+
+      {/* ── Salidas ───────────────────────────────────────────── */}
+      <section className="mt-10 border-t border-rule pt-9">
+        <h2 className="font-display text-display-m font-medium">Explora más</h2>
+        <p className={bajada}>
+          Este colegio en su contexto, y el contexto sin este colegio.
+        </p>
+        <div className="mt-6 grid gap-4 sm:grid-cols-2">
+          <Link
+            href={`/colegios?region=${encodeURIComponent(s.departamento)}&distrito=${encodeURIComponent(s.distrito)}`}
+            className={tarjetaEnlace}
+          >
+            <p className="font-display text-[1.05rem] font-medium">
+              Otros colegios de {s.distrito}
+            </p>
+            <p className="mt-1.5 text-[0.86rem] leading-relaxed text-ink-2">
+              Los servicios educativos del distrito con reportes registrados.
+            </p>
+          </Link>
+          <Link
+            href={`/colegios?region=${encodeURIComponent(s.departamento)}&nivel=${encodeURIComponent(s.nivel)}&gestion=${encodeURIComponent(s.gestion)}`}
+            className={tarjetaEnlace}
+          >
+            <p className="font-display text-[1.05rem] font-medium">Colegios parecidos</p>
+            <p className="mt-1.5 text-[0.86rem] leading-relaxed text-ink-2">
+              Mismo nivel y misma gestión en {s.departamento}.
+            </p>
+          </Link>
+          <Link href="/datos" className={tarjetaEnlace}>
+            <p className="font-display text-[1.05rem] font-medium">Los datos del país</p>
+            <p className="mt-1.5 text-[0.86rem] leading-relaxed text-ink-2">
+              Qué se registra, cómo ha cambiado y qué no se puede concluir.
+            </p>
+          </Link>
+          <Link href="/metodologia" className={tarjetaEnlace}>
+            <p className="font-display text-[1.05rem] font-medium">Cómo leer esta ficha</p>
+            <p className="mt-1.5 text-[0.86rem] leading-relaxed text-ink-2">
+              Qué es un reporte, qué es una tasa y qué significa un cero.
+            </p>
+          </Link>
+        </div>
+      </section>
     </article>
   );
 }

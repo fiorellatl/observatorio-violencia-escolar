@@ -51,6 +51,19 @@ export interface ContextField {
   a?: string | null;
 }
 
+/**
+ * Fila del índice de navegación. Los textos repetidos viajan como índice a un
+ * diccionario, no como texto:
+ * [nombre, codMod, distritoId, provinciaId, regiónId, gestiónId, nivelId,
+ *  totalDeReportes, últimoAñoConReportes]
+ */
+export type BrowseRow = [string, string, number, number, number, number, number, number, string];
+
+export interface BrowseIndex {
+  dic: { r: string[]; p: string[]; d: string[]; g: string[]; n: string[] };
+  filas: BrowseRow[];
+}
+
 /** Fila compacta del índice: [nombre, distrito, región, codMod, total, nivel] */
 export type SearchRow = [string, string, string, string, number, string];
 

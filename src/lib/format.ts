@@ -41,3 +41,22 @@ export const titulo = (s: string): string =>
         : w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()
     )
     .join(" ");
+
+/**
+ * Normaliza un valor de contexto para mostrarlo.
+ *
+ * Identicole y el Censo Escolar devuelven algunos valores en mayúsculas y sin
+ * tildes ("SI", "NO"). Mostrarlos tal cual rompe la lectura de una ficha que
+ * por lo demás está escrita en prosa. Solo se toca la forma: el valor sigue
+ * siendo el que declaró la fuente.
+ */
+const VALORES: Record<string, string> = { SI: "Sí", NO: "No", "S/I": "Sin información" };
+
+export const valorLegible = (v: string | number): string => {
+  const s = String(v).trim();
+  if (VALORES[s.toUpperCase()]) return VALORES[s.toUpperCase()];
+  // Solo se retoca lo que viene íntegramente en mayúsculas; el resto ya viene
+  // escrito como corresponde y tocarlo estropearía siglas como "JEC" o "UGEL".
+  if (s.length > 3 && s === s.toUpperCase() && /[A-ZÁÉÍÓÚÑ]/.test(s)) return titulo(s);
+  return s;
+};
