@@ -83,6 +83,32 @@ export function getInstitution(slug: string): Institution | null {
 }
 
 /**
+ * Valores válidos de cada filtro.
+ *
+ * 23 KB frente a los 14 MB de instituciones: existe para que el servidor
+ * pueda comprobar los parámetros de una URL al generar los metadatos sin
+ * cargar el índice entero en cada arranque en frío.
+ */
+export interface Facetas {
+  r: string[];
+  p: string[];
+  d: string[];
+  g: string[];
+  n: string[];
+}
+let _facetas: Facetas | null = null;
+
+export function getFacetas(): Facetas {
+  return (_facetas ??= read<Facetas>("facetas.json"));
+}
+
+/** Devuelve el valor solo si existe en los datos; si no, cadena vacía. */
+export function facetaValida(clave: keyof Facetas, valor: string): string {
+  if (!valor) return "";
+  return getFacetas()[clave].includes(valor) ? valor : "";
+}
+
+/**
  * Un slug de servicio que fue absorbido por una institución.
  *
  * Las URLs de servicio ya estaban indexadas y compartidas, así que no se

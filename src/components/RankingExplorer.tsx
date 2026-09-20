@@ -3,9 +3,10 @@
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { ShareButton } from "@/components/ShareButton";
 import { dec, nf, slugify } from "@/lib/format";
 import { boton, campo, meta as clsMeta } from "@/lib/ui";
-import { COLOR_VIOLENCIA, color } from "@/lib/viz/colors";
+import { COLOR_SERIE, COLOR_VIOLENCIA, color } from "@/lib/viz/colors";
 import type { RankingIndex, RankingRow } from "@/lib/types";
 
 /**
@@ -20,33 +21,35 @@ import type { RankingIndex, RankingRow } from "@/lib/types";
  *   1. El título nombra la métrica, nunca una cualidad del colegio.
  *   2. Conteo y tasa son dos ordenaciones que jamás se mezclan.
  *   3. La jerarquía de la fila la marcan el nombre y los reportes; la
- *      posición va pequeña y la tasa, tercera. "89,3 por 1.000" no le dice
+ *      posición acompaña y la tasa va tercera. "89,3 por 1.000" no le dice
  *      nada a nadie a primera vista, y ponerlo grande solo aparenta rigor.
- *   4. El cambio se cuenta en reportes ("+24 respecto a 2025"), no en puestos:
+ *   4. El cambio se cuenta en reportes ("+24 respecto a 2024"), no en puestos:
  *      "subió 1.062 posiciones" es cierto y no significa nada.
  *
- * LÍMITE DEL DATO QUE LA INTERFAZ RESPETA
- * Hay un solo padrón con el número de alumnos, y NO es del mismo año que los
- * reportes del corte transversal. La tasa se ofrece en un único año y, allí
- * donde aparece, declara los dos años de los que está hecha. Extenderla al
- * resto de años sería dividir reportes de 2022 por alumnos de 2026: un número
- * con aspecto de tasa que no describe a ninguna población real.
+ * POR QUÉ ESTÁ COMPUESTO COMO UNA TARJETA
+ * Esta página se comparte por captura de pantalla, no por enlace. Una captura
+ * recortada de la versión anterior no decía de qué año era, de qué territorio
+ * ni de dónde salía. Ahora el ranking vive dentro de una pieza que se
+ * autoexplica —marca, titular, año, universo, filas y procedencia— para que
+ * el recorte siga siendo cierto fuera de aquí. Los controles quedan fuera de
+ * esa pieza: son para operar, no para mirar.
  *
- * Que los dos años no coincidan sigue siendo una limitación abierta, no una
- * decisión: está documentada en pantalla en vez de disimulada.
+ * Y la URL lleva el estado completo, así que el enlace reconstruye
+ * exactamente la misma tabla que se capturó.
  */
 
 type Metrica = "reportes" | "tasa";
 type Tipo = "todos" | "fisica" | "psicologica" | "sexual";
 
 const TIPOS: { v: Tipo; label: string; corto: string; pos: number }[] = [
-  { v: "todos", label: "Todos los reportes", corto: "", pos: 0 },
+  { v: "todos", label: "Todos", corto: "", pos: 0 },
   { v: "fisica", label: "Físicos", corto: "de violencia física", pos: 1 },
   { v: "psicologica", label: "Psicológicos", corto: "de violencia psicológica", pos: 2 },
   { v: "sexual", label: "Sexuales", corto: "de violencia sexual", pos: 3 },
 ];
 
 const POR_PAGINA = 20;
+const DESTACADOS = 3;
 
 type Puesto = {
   fila: RankingRow;
@@ -60,21 +63,23 @@ type Puesto = {
   alumnos: number;
 };
 
-/** Trayectoria mínima del colegio. Sin ejes: es una forma, no un gráfico. */
+/** Trayectoria mínima del colegio. Sin ejes: es una firma, no un gráfico. */
 function Sparkline({
   valores,
   anios,
   activo,
+  tono,
 }: {
   valores: number[];
   anios: string[];
   activo: string;
+  tono: string;
 }) {
   const max = Math.max(...valores, 1);
-  const w = 74;
-  const h = 22;
+  const w = 88;
+  const h = 26;
   const paso = valores.length > 1 ? w / (valores.length - 1) : w;
-  const puntos = valores.map((v, i) => [i * paso, h - (v / max) * (h - 3) - 1.5] as const);
+  const puntos = valores.map((v, i) => [i * paso, h - (v / max) * (h - 4) - 2] as const);
   const d = puntos.map((p, i) => `${i === 0 ? "M" : "L"}${p[0].toFixed(1)},${p[1].toFixed(1)}`).join(" ");
   const iActivo = anios.indexOf(activo);
 
@@ -85,19 +90,26 @@ function Sparkline({
       viewBox={`0 0 ${w} ${h}`}
       className="overflow-visible"
       role="img"
-      aria-label={anios.map((a, i) => `${a}: ${valores[i]}`).join(", ")}
+      aria-label={`Trayectoria: ${anios.map((a, i) => `${a}, ${valores[i]} reportes`).join("; ")}`}
     >
-      <path d={d} fill="none" stroke="var(--viz-slate)" strokeWidth="1.25" strokeLinejoin="round" />
+      {/* Relleno tenue bajo la línea: da cuerpo sin añadir un segundo dato. */}
+      <path
+        d={`${d} L${w},${h} L0,${h} Z`}
+        fill={tono}
+        fillOpacity={0.08}
+        stroke="none"
+      />
+      <path d={d} fill="none" stroke={tono} strokeWidth="1.5" strokeLinejoin="round" strokeOpacity={0.55} />
       {puntos.map((p, i) => (
         <circle
           key={anios[i]}
           cx={p[0]}
           cy={p[1]}
-          r={i === iActivo ? 2.6 : 1.4}
-          fill={i === iActivo ? "var(--viz-blue)" : "var(--viz-mute)"}
+          r={i === iActivo ? 3 : 1.5}
+          fill={i === iActivo ? tono : "var(--viz-mute)"}
         >
           <title>
-            {anios[i]}: {valores[i]} {valores[i] === 1 ? "reporte" : "reportes"}
+            {anios[i]} · {valores[i]} {valores[i] === 1 ? "reporte" : "reportes"}
           </title>
         </circle>
       ))}
@@ -113,6 +125,7 @@ export function RankingExplorer() {
   const [idx, setIdx] = useState<RankingIndex | null>(null);
   const [error, setError] = useState(false);
   const [pagina, setPagina] = useState(0);
+  const [panel, setPanel] = useState(false);
 
   useEffect(() => {
     let vivo = true;
@@ -141,6 +154,11 @@ export function RankingExplorer() {
   /** Solo hay padrón para un año: fuera de él, no hay tasa. */
   const hayTasa = !!idx && anio === idx.anio_tasa;
   const esParcial = !!idx && anio === idx.anio_parcial;
+  const esPrincipal = !!idx && anio === idx.anio_principal;
+
+  /** El color del tipo elegido tiñe la pieza. "Todos" usa el azul de la
+      serie "reportes", el mismo de los gráficos de evolución. */
+  const tono = tipo === "todos" ? color(COLOR_SERIE.reportes) : color(COLOR_VIOLENCIA[tipo]);
 
   const poner = useCallback(
     (cambios: Record<string, string>) => {
@@ -166,29 +184,51 @@ export function RankingExplorer() {
     if (idx && metrica === "tasa" && anio !== idx.anio_tasa) poner({ anio: idx.anio_tasa });
   }, [idx, metrica, anio, poner]);
 
+  /**
+   * Filtros que EXISTEN de verdad en los datos.
+   *
+   * Un valor que no está en el diccionario no filtra nada —`indexOf` da -1—,
+   * y antes la pieza lo anunciaba igual: con `?gestion=Privada` (el valor real
+   * es "Privado") la tarjeta decía "Lima · Privada" sobre una lista que
+   * incluía colegios públicos. En una página hecha para compartirse, eso es
+   * una captura que miente. Lo que no se pudo aplicar no se nombra, y se avisa.
+   */
+  const filtros = useMemo(() => {
+    const out: { clave: string; valor: string; id: number; pos: number }[] = [];
+    const ignorados: string[] = [];
+    if (!idx) return { out, ignorados };
+    const campos: [string, string[], number][] = [
+      ["region", idx.dic.r, 4],
+      ["provincia", idx.dic.p, 3],
+      ["distrito", idx.dic.d, 2],
+      ["gestion", idx.dic.g, 5],
+      ["nivel", idx.dic.n, 6],
+    ];
+    for (const [clave, dic, pos] of campos) {
+      const v = q(clave);
+      if (!v) continue;
+      const id = dic.indexOf(v);
+      if (id >= 0) out.push({ clave, valor: v, id, pos });
+      else ignorados.push(v);
+    }
+    return { out, ignorados };
+  }, [idx, q]);
+
   const candidatos = useMemo(() => {
     if (!idx) return [];
-    const b = (dic: string[], v: string) => (v ? dic.indexOf(v) : -1);
-    const r = b(idx.dic.r, q("region"));
-    const pr = b(idx.dic.p, q("provincia"));
-    const d = b(idx.dic.d, q("distrito"));
-    const g = b(idx.dic.g, q("gestion"));
-    const n = b(idx.dic.n, q("nivel"));
-    return idx.filas.filter(
-      (f) =>
-        (r < 0 || f[4] === r) &&
-        (pr < 0 || f[3] === pr) &&
-        (d < 0 || f[2] === d) &&
-        (g < 0 || f[5] === g) &&
-        (n < 0 || f[6].includes(n))
+    return idx.filas.filter((f) =>
+      filtros.out.every(({ id, pos }) => {
+        const v = f[pos];
+        return Array.isArray(v) ? v.includes(id) : v === id;
+      })
     );
-  }, [idx, q]);
+  }, [idx, filtros]);
 
   /** Id del nivel filtrado, o -1. Decide si se leen los conteos de la
       institución o los del servicio de ese nivel. */
   const nivelFiltrado = useMemo(
-    () => (idx && q("nivel") ? idx.dic.n.indexOf(q("nivel")) : -1),
-    [idx, q]
+    () => filtros.out.find((f) => f.clave === "nivel")?.id ?? -1,
+    [filtros]
   );
 
   const anioPrevio = useMemo(() => {
@@ -248,29 +288,10 @@ export function RankingExplorer() {
     };
   }, [idx, candidatos, anio, posTipo, metrica, verCeros, hayTasa, anioPrevio, nivelFiltrado]);
 
-  /**
-   * Posición del año anterior. Solo se calcula si el universo comparado es el
-   * mismo: con otros filtros, "subió N puestos" compararía dos tablas
-   * distintas y sería falso.
-   */
-  const posicionPrevia = useMemo(() => {
-    if (!idx || metrica !== "reportes" || !anioPrevio) return null;
-    const lista = candidatos
-      .map((f) => {
-        const pn = nivelFiltrado >= 0 ? f[9]?.[String(nivelFiltrado)] : undefined;
-        return { cm: f[1], v: (pn ? pn[1] : f[8])[anioPrevio]?.[posTipo] ?? 0, n: f[0] };
-      })
-      .filter((x) => x.v > 0)
-      .sort((a, b) => b.v - a.v || a.n.localeCompare(b.n, "es"));
-    const m = new Map<string, number>();
-    lista.forEach((x, k) => m.set(x.cm, k + 1));
-    return m;
-  }, [idx, candidatos, anioPrevio, posTipo, metrica, nivelFiltrado]);
-
   const total = puestos.length;
   const visibles = puestos.slice(pagina * POR_PAGINA, (pagina + 1) * POR_PAGINA);
   const paginas = Math.ceil(total / POR_PAGINA);
-  const filtrosActivos = ["region", "provincia", "distrito", "gestion", "nivel"].filter((k) => q(k)).length;
+  const filtrosActivos = filtros.out.length;
 
   /** Parámetros que definen este universo, tal cual los leerá la ficha. */
   const contexto = (() => {
@@ -278,6 +299,15 @@ export function RankingExplorer() {
     if (!c.get("anio")) c.set("anio", anio);
     c.set("de", "rankings");
     return c.toString();
+  })();
+
+  /** El territorio, dicho en una línea. Es el subtítulo de la pieza. */
+  const territorio = (() => {
+    const de = (k: string) => filtros.out.find((f) => f.clave === k)?.valor ?? "";
+    const t = [de("distrito"), de("provincia"), de("region")].filter(Boolean);
+    const lugar = t.length ? t.join(", ") : "Perú";
+    const rasgos = [de("gestion"), de("nivel")].filter(Boolean);
+    return rasgos.length ? `${lugar} · ${rasgos.join(" · ")}` : `${lugar} · todos los colegios`;
   })();
 
   const descargar = () => {
@@ -308,11 +338,15 @@ export function RankingExplorer() {
       </div>
     );
   }
-  if (!idx) return <div className="h-96 animate-pulse rounded-lg border border-rule bg-surface" />;
+  if (!idx) return <div className="h-[36rem] animate-pulse rounded-xl border border-rule bg-surface" />;
 
   const Sel = ({ k, label, pos, dic }: { k: string; label: string; pos: number; dic: string[] }) => {
     const vistos = new Set<number>();
-    for (const f of candidatos) vistos.add(f[pos] as number);
+    for (const f of candidatos) {
+      const v = f[pos];
+      if (Array.isArray(v)) for (const x of v) vistos.add(x);
+      else vistos.add(v as number);
+    }
     const opts = q(k) ? dic.filter(Boolean) : [...vistos].map((i) => dic[i]).filter(Boolean);
     return (
       <div>
@@ -340,360 +374,415 @@ export function RankingExplorer() {
   const titulo =
     metrica === "tasa"
       ? `Colegios con mayor tasa de reportes ${suf}`.trim()
-      : `Colegios con más reportes ${suf} registrados`.replace("  ", " ");
+      : `Colegios con más reportes ${suf} registrados`.replace(/\s{2,}/g, " ");
+
+  /* ── Una fila del ranking ──────────────────────────────────────────── */
+  const Fila = ({ p, posicion, destacado }: { p: Puesto; posicion: number; destacado: boolean }) => {
+    const distrito = idx.dic.d[p.fila[2]];
+    const provincia = idx.dic.p[p.fila[3]];
+    const region = idx.dic.r[p.fila[4]];
+    const gestion = idx.dic.g[p.fila[5]];
+    const niveles = p.fila[6].map((k) => idx.dic.n[k]).filter(Boolean).join(" · ");
+    const delta = p.conteo - p.previo;
+    const serie = idx.anios.map((a) => p.conteos[a]?.[posTipo] ?? 0);
+    const href = `/colegio/${slugify(p.fila[0], distrito, p.fila[1])}?${contexto}`;
+
+    return (
+      <li className="border-b border-rule-2 last:border-b-0">
+        <Link
+          href={href}
+          className="group flex items-start gap-3 py-4 transition-colors duration-150 ease-suave hover:bg-accent-soft/40 sm:gap-5 sm:py-5"
+        >
+          {/* Posición: grande en el podio, discreta después. */}
+          <span
+            aria-hidden
+            // Ancho fijo en rem y no en em: el podio y el resto usan tamaños
+            // de letra muy distintos, y con `em` los nombres arrancarían en
+            // columnas diferentes.
+            className={`w-[2.6rem] shrink-0 sm:w-[3.4rem] ${
+              destacado
+                ? "cifra text-[2.1rem] leading-none sm:text-[2.9rem]"
+                : "tabular pt-1.5 pr-2 text-right font-mono text-[0.84rem] text-ink-3"
+            }`}
+            style={destacado ? { color: tono } : undefined}
+          >
+            {destacado ? String(posicion).padStart(2, "0") : posicion}
+          </span>
+          <span className="sr-only">Puesto {posicion}.</span>
+
+          <span className="min-w-0 flex-1">
+            <span
+              className={`block font-medium leading-snug text-ink group-hover:text-accent ${
+                destacado ? "text-[1.15rem] sm:text-[1.4rem]" : "text-[1.02rem]"
+              }`}
+            >
+              {p.fila[0]}
+            </span>
+            <span className="mt-1 block text-[0.8rem] leading-relaxed text-ink-3">
+              {distrito}
+              {provincia && provincia !== distrito ? ` · ${provincia}` : ""} · {region}
+              <span className="block sm:inline">
+                <span aria-hidden className="hidden sm:inline">
+                  {" · "}
+                </span>
+                {niveles ? `${niveles} · ` : ""}
+                {gestion}
+              </span>
+            </span>
+
+            {/* Cifras en móvil: bajo el nombre. */}
+            <span className="mt-2.5 flex items-baseline gap-4 sm:hidden">
+              <span className="cifra text-[1.6rem]" style={{ color: destacado ? tono : "var(--ink)" }}>
+                {metrica === "tasa" && p.tasa != null ? dec(p.tasa, 1) : nf(p.conteo)}
+              </span>
+              <span className={clsMeta}>{metrica === "tasa" ? "por 1.000" : "reportes"}</span>
+              {anioPrevio && delta !== 0 ? (
+                <span className="tabular text-[0.8rem] text-ink-3">
+                  <span aria-hidden>{delta > 0 ? "↑" : "↓"}</span> {delta > 0 ? "+" : ""}
+                  {nf(delta)} vs. {anioPrevio}
+                </span>
+              ) : null}
+            </span>
+          </span>
+
+          {/* Cifras en pantalla ancha. */}
+          <span className="hidden shrink-0 items-start gap-7 sm:flex">
+            <span className="block w-[5.5rem] text-right">
+              <span
+                className={`cifra block ${destacado ? "text-[2.1rem]" : "text-[1.7rem]"}`}
+                style={{ color: destacado ? tono : "var(--ink)" }}
+              >
+                {metrica === "tasa" && p.tasa != null ? dec(p.tasa, 1) : nf(p.conteo)}
+              </span>
+              <span className={`${clsMeta} mt-1 block`}>
+                {metrica === "tasa" ? "por 1.000" : "reportes"}
+              </span>
+              {anioPrevio ? (
+                <span className="tabular mt-1.5 block text-[0.78rem] text-ink-3">
+                  {delta === 0 ? (
+                    `igual que ${anioPrevio}`
+                  ) : (
+                    <>
+                      <span aria-hidden>{delta > 0 ? "↑" : "↓"}</span> {delta > 0 ? "+" : ""}
+                      {nf(delta)} vs. {anioPrevio}
+                    </>
+                  )}
+                </span>
+              ) : null}
+            </span>
+
+            <span className="hidden w-[4rem] text-right lg:block">
+              <span className="tabular block text-[1.02rem] text-ink-2">
+                {p.alumnos ? nf(p.alumnos) : "—"}
+              </span>
+              <span className={`${clsMeta} mt-1 block`}># alumnos</span>
+            </span>
+
+            <span className="hidden w-[5.5rem] shrink-0 pt-0.5 lg:block">
+              <Sparkline valores={serie} anios={idx.anios} activo={anio} tono={tono} />
+              <span className={`${clsMeta} mt-1 block`}>
+                {idx.anios[0]}–{idx.anios[idx.anios.length - 1]}
+              </span>
+            </span>
+          </span>
+        </Link>
+      </li>
+    );
+  };
 
   return (
     <div>
-      {/* ── Año y contexto del universo ─────────────────────────── */}
-      <div className="border-y border-rule py-6">
-        <div className="flex flex-wrap items-end justify-between gap-5">
-          <div>
-            <label htmlFor="r-anio" className={`${clsMeta} block`}>
-              Año
-            </label>
-            <div className="mt-2 flex items-baseline gap-3">
-              <select
-                id="r-anio"
-                value={anio}
-                disabled={metrica === "tasa"}
-                onChange={(e) => poner({ anio: e.target.value })}
-                className="cifra border-0 bg-transparent p-0 text-cifra-l text-ink outline-none disabled:opacity-60"
-              >
-                {[...idx.anios].reverse().map((a) => (
-                  <option key={a} value={a}>
-                    {a}
-                  </option>
-                ))}
-              </select>
-              {esParcial ? (
-                <span className="rounded border border-rule bg-surface px-2 py-1 text-[0.78rem] text-ink-2">
-                  año en curso
-                </span>
-              ) : null}
-            </div>
-            {esParcial ? (
-              <p className="mt-2 text-[0.8rem] text-ink-3">
-                Datos registrados hasta agosto. No es comparable con un año completo.
-              </p>
-            ) : null}
-            {metrica === "tasa" ? (
-              <p className="mt-2 max-w-[38ch] text-[0.8rem] text-ink-3">
-                La tasa solo existe en {idx.anio_tasa}: es el año del padrón con el número
-                de alumnos.
-              </p>
-            ) : null}
-          </div>
-
-          <dl className="flex flex-wrap gap-x-9 gap-y-4">
-            {[
-              ["Colegios con reportes", nf(universo.conReportes)],
-              ["Reportes registrados", nf(universo.reportes)],
-              ["En esta tabla", nf(total)],
-            ].map(([k, v]) => (
-              <div key={k}>
-                <dt className={clsMeta}>{k}</dt>
-                <dd className="cifra mt-1.5 text-cifra-m text-ink">{v}</dd>
-              </div>
+      {/* ══ CONTROLES ═══════════════════════════════════════════════════
+          Fuera de la pieza compartible a propósito: operan el ranking, no
+          forman parte de lo que se cuenta. */}
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <label htmlFor="r-anio" className="sr-only">
+            Año
+          </label>
+          <select
+            id="r-anio"
+            value={anio}
+            disabled={metrica === "tasa"}
+            onChange={(e) => poner({ anio: e.target.value })}
+            className="cifra rounded border border-rule bg-surface px-3 py-1.5 text-[1.1rem] text-ink outline-none transition-colors duration-150 ease-suave hover:border-ink-3 focus:border-accent disabled:opacity-60"
+          >
+            {[...idx.anios].reverse().map((a) => (
+              <option key={a} value={a}>
+                {a}
+              </option>
             ))}
-          </dl>
+          </select>
+
+          <div
+            role="group"
+            aria-label="Métrica"
+            className="flex overflow-hidden rounded border border-rule"
+          >
+            {(
+              [
+                ["reportes", "Reportes"],
+                ["tasa", "Tasa"],
+              ] as [Metrica, string][]
+            ).map(([v, t]) => (
+              <button
+                key={v}
+                type="button"
+                aria-pressed={metrica === v}
+                onClick={() => poner({ metrica: v === "reportes" ? "" : v })}
+                className={`px-3 py-2 text-[0.84rem] transition-colors duration-150 ease-suave ${
+                  metrica === v
+                    ? "bg-surface font-medium text-ink"
+                    : "text-ink-3 hover:bg-surface hover:text-ink-2"
+                }`}
+              >
+                {t}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setPanel((x) => !x)}
+            aria-expanded={panel}
+            aria-controls="panel-filtros"
+            className={`${boton} ${filtrosActivos ? "border-ink-3 text-ink" : ""}`}
+          >
+            Filtros
+            {filtrosActivos ? (
+              <span
+                className="tabular rounded-full px-1.5 text-[0.72rem] font-medium text-paper"
+                style={{ background: tono }}
+              >
+                {filtrosActivos}
+              </span>
+            ) : null}
+          </button>
+          <ShareButton
+            etiqueta="Compartir"
+            soloIconoEnMovil
+            titulo={`${titulo} · ${anio} · ${territorio}`}
+          />
         </div>
       </div>
 
-      {/* ── Modo ────────────────────────────────────────────────── */}
-      <div className="mt-7 grid gap-4 sm:grid-cols-2">
-        {(
-          [
-            ["reportes", "Más reportes registrados",
-             "La métrica principal. Ordena por cantidad de reportes registrados; el número absoluto puede estar relacionado con el tamaño del colegio. No necesita denominador."],
-            ["tasa", "Mayor tasa de reportes · secundaria",
-             `Divide los reportes de ${idx.anio_tasa} entre los alumnos de ${idx.anio_padron} —no hay padrón de ${idx.anio_tasa}—. Solo con al menos ${nf(idx.matricula_minima)} alumnos.`],
-          ] as [Metrica, string, string][]
-        ).map(([v, t, desc]) => (
-          <button
-            key={v}
-            type="button"
-            aria-pressed={metrica === v}
-            onClick={() => poner({ metrica: v === "reportes" ? "" : v })}
-            className={`rounded-lg border p-4 text-left transition-colors duration-150 ease-suave ${
-              metrica === v
-                ? "border-ink bg-surface"
-                : "border-rule bg-transparent hover:border-ink-3"
-            }`}
-          >
-            <span
-              className={`block text-[0.98rem] font-medium ${
-                metrica === v ? "text-ink" : "text-ink-2"
-              }`}
-            >
-              {t}
-            </span>
-            <span className="mt-1.5 block text-[0.82rem] leading-relaxed text-ink-3">{desc}</span>
-          </button>
-        ))}
-      </div>
-
-      {/* ── Tipo de reporte ─────────────────────────────────────── */}
-      <fieldset className="mt-6">
-        <legend className={`${clsMeta} mb-2.5`}>Tipo de reporte</legend>
-        <div className="flex flex-wrap gap-2">
+      {/* Los tipos van en una tira propia que se desplaza en horizontal: en un
+          teléfono, envolverlos en dos filas empuja la pieza fuera de la
+          primera pantalla, que es justo lo que hay que ver. */}
+      <fieldset className="-mx-5 mt-3 flex items-center gap-1.5 overflow-x-auto px-5 pb-1 [scrollbar-width:none] sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0">
+          <legend className="sr-only">Tipo de reporte</legend>
           {TIPOS.map((t) => {
             const c = t.v === "todos" ? null : color(COLOR_VIOLENCIA[t.v]);
+            const sel = tipo === t.v;
             return (
               <button
                 key={t.v}
                 type="button"
-                aria-pressed={tipo === t.v}
+                aria-pressed={sel}
                 onClick={() => poner({ tipo: t.v === "todos" ? "" : t.v })}
-                className={`inline-flex items-center gap-2 rounded border px-3 py-1.5 text-[0.85rem] transition-colors duration-150 ease-suave ${
-                  tipo === t.v
+                className={`inline-flex shrink-0 items-center gap-1.5 rounded border px-2.5 py-1.5 text-[0.82rem] transition-colors duration-150 ease-suave ${
+                  sel
                     ? "border-ink bg-surface font-medium text-ink"
-                    : "border-rule text-ink-2 hover:border-ink-3"
+                    : "border-rule text-ink-3 hover:border-ink-3 hover:text-ink-2"
                 }`}
               >
                 {c ? (
-                  <span aria-hidden className="h-2.5 w-2.5 rounded-sm" style={{ background: c }} />
+                  <span
+                    aria-hidden
+                    className="h-2 w-2 rounded-sm"
+                    style={{ background: c, opacity: sel ? 1 : 0.55 }}
+                  />
                 ) : null}
                 {t.label}
               </button>
             );
           })}
-        </div>
       </fieldset>
 
-      {/* ── Territorio ──────────────────────────────────────────── */}
-      <div className="mt-5 grid gap-3 sm:grid-cols-3 lg:grid-cols-5">
-        <Sel k="region" label="Región" pos={4} dic={idx.dic.r} />
-        <Sel k="provincia" label="Provincia" pos={3} dic={idx.dic.p} />
-        <Sel k="distrito" label="Distrito" pos={2} dic={idx.dic.d} />
-        <Sel k="gestion" label="Gestión" pos={5} dic={idx.dic.g} />
-        <Sel k="nivel" label="Nivel" pos={6} dic={idx.dic.n} />
-      </div>
+      {panel ? (
+        <div id="panel-filtros" className="mt-3 rounded-lg border border-rule bg-surface p-4 sm:p-5">
+          <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-5">
+            <Sel k="region" label="Región" pos={4} dic={idx.dic.r} />
+            <Sel k="provincia" label="Provincia" pos={3} dic={idx.dic.p} />
+            <Sel k="distrito" label="Distrito" pos={2} dic={idx.dic.d} />
+            <Sel k="gestion" label="Gestión" pos={5} dic={idx.dic.g} />
+            <Sel k="nivel" label="Nivel" pos={6} dic={idx.dic.n} />
+          </div>
 
-      <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
-        <div className="flex flex-wrap items-center gap-4">
-          {metrica === "tasa" ? (
-            <label className="flex cursor-pointer items-center gap-2.5 text-[0.85rem] text-ink-2">
-              <input
-                type="checkbox"
-                checked={verCeros}
-                onChange={(e) => poner({ ceros: e.target.checked ? "1" : "" })}
-                className="h-4 w-4 accent-[var(--accent)]"
-              />
-              Incluir colegios con 0 reportes
-              {cerosOcultos > 0 ? <span className="tabular text-ink-3">({nf(cerosOcultos)})</span> : null}
-            </label>
-          ) : null}
-          {filtrosActivos > 0 ? (
-            <span className="text-[0.82rem] text-ink-3">
-              {filtrosActivos} {filtrosActivos === 1 ? "filtro activo" : "filtros activos"}
-            </span>
-          ) : null}
+          <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-rule-2 pt-4">
+            <div className="flex flex-wrap items-center gap-4">
+              {metrica === "tasa" ? (
+                <label className="flex cursor-pointer items-center gap-2.5 text-[0.85rem] text-ink-2">
+                  <input
+                    type="checkbox"
+                    checked={verCeros}
+                    onChange={(e) => poner({ ceros: e.target.checked ? "1" : "" })}
+                    className="h-4 w-4 accent-[var(--accent)]"
+                  />
+                  Incluir colegios con 0 reportes
+                  {cerosOcultos > 0 ? (
+                    <span className="tabular text-ink-3">({nf(cerosOcultos)})</span>
+                  ) : null}
+                </label>
+              ) : null}
+              {q("nivel") ? (
+                <p className="max-w-[40ch] text-[0.78rem] leading-snug text-ink-3">
+                  Con un nivel elegido, cada fila muestra los reportes de ese nivel, no el
+                  total del colegio.
+                </p>
+              ) : null}
+            </div>
+            <div className="flex gap-2">
+              {params.toString() ? (
+                <button
+                  type="button"
+                  onClick={() => router.replace(pathname, { scroll: false })}
+                  className={boton}
+                >
+                  Quitar filtros
+                </button>
+              ) : null}
+              <button type="button" onClick={descargar} className={boton} disabled={total === 0}>
+                Descargar CSV
+              </button>
+            </div>
+          </div>
         </div>
-        <div className="flex gap-2">
-          {params.toString() ? (
-            <button type="button" onClick={() => router.replace(pathname, { scroll: false })} className={boton}>
-              Quitar filtros
-            </button>
-          ) : null}
-          <button type="button" onClick={descargar} className={boton} disabled={total === 0}>
-            Descargar CSV
-          </button>
-        </div>
-      </div>
-
-      {/* ── Título dinámico ─────────────────────────────────────── */}
-      <h2 className="mt-10 font-display text-display-m font-medium text-balance">
-        {titulo}
-        <span className="text-ink-3"> · {anio}</span>
-      </h2>
-      {metrica === "tasa" && sinTasa > 0 ? (
-        <p className="mt-2 max-w-prose text-[0.85rem] leading-relaxed text-ink-2">
-          {nf(sinTasa)} colegios del filtro quedan fuera porque no conocemos su número de
-          alumnos o tienen menos de {nf(idx.matricula_minima)}.
-        </p>
       ) : null}
 
-      {/* ── Filas ───────────────────────────────────────────────── */}
-      {total === 0 ? (
-        <div className="mt-6 rounded-lg border border-dashed border-rule p-6">
-          <p className="text-[0.92rem] font-medium text-ink-2">Ningún colegio cumple</p>
-          <p className="mt-1.5 max-w-prose text-[0.85rem] text-ink-3">
-            Prueba quitando un filtro o cambiando de año.
+      {/* ══ LA PIEZA ════════════════════════════════════════════════════
+          Todo lo necesario para que una captura se explique sola. */}
+      <section
+        aria-label="Ranking"
+        className="mt-6 overflow-hidden rounded-xl border border-rule bg-surface"
+      >
+        <div
+          aria-hidden
+          className="h-1 w-full"
+          style={{ background: tono }}
+        />
+
+        <div className="px-5 pt-6 sm:px-8 sm:pt-8">
+          <p className="flex items-center gap-2 text-[0.78rem] font-medium tracking-tight text-ink-3">
+            <span aria-hidden className="h-2.5 w-2.5 rounded-sm bg-accent" />
+            Observatorio Escolar
           </p>
+
+          <h2 className="mt-4 max-w-[16ch] font-display text-[clamp(1.9rem,4.6vw,3.1rem)] font-semibold leading-[1.06] tracking-[-0.032em] text-balance">
+            {titulo}
+          </h2>
+
+          <div className="mt-5 flex flex-wrap items-end gap-x-5 gap-y-3 border-b border-rule pb-5">
+            <p className="cifra text-[clamp(2.4rem,6vw,3.6rem)]" style={{ color: tono }}>
+              {anio}
+            </p>
+            <p className="pb-1 text-[0.82rem] leading-snug text-ink-3">
+              {esParcial ? (
+                <>
+                  año en curso
+                  <span className="block">datos hasta agosto</span>
+                </>
+              ) : esPrincipal ? (
+                <>
+                  último año
+                  <span className="block">completo</span>
+                </>
+              ) : (
+                <>
+                  año
+                  <span className="block">completo</span>
+                </>
+              )}
+            </p>
+
+            <dl className="ml-auto flex gap-x-7 gap-y-2 pb-0.5">
+              <div>
+                <dd className="cifra text-[1.35rem] text-ink">{nf(universo.conReportes)}</dd>
+                <dt className={clsMeta}>colegios</dt>
+              </div>
+              <div>
+                <dd className="cifra text-[1.35rem] text-ink">{nf(universo.reportes)}</dd>
+                <dt className={clsMeta}>reportes registrados</dt>
+              </div>
+            </dl>
+          </div>
+
+          <p className="mt-4 text-[0.92rem] text-ink-2">{territorio}</p>
+          {filtros.ignorados.length ? (
+            <p className="mt-1.5 max-w-prose text-[0.8rem] leading-relaxed text-warn">
+              No se aplicó {filtros.ignorados.map((v) => `«${v}»`).join(", ")}: no es un
+              valor de estos datos. La tabla muestra el universo sin ese filtro.
+            </p>
+          ) : null}
+          {metrica === "tasa" ? (
+            <p className="mt-1.5 max-w-prose text-[0.8rem] leading-relaxed text-ink-3">
+              Métrica secundaria. Solo existe en {idx.anio_tasa}, el año con censo de
+              alumnos, y a partir de {nf(idx.matricula_minima)} alumnos.
+              {sinTasa > 0 ? ` ${nf(sinTasa)} colegios quedan fuera por eso.` : ""}
+            </p>
+          ) : null}
         </div>
-      ) : (
-        <>
-          <ol className="mt-6 border-t border-rule">
+
+        {/* ── Filas ──────────────────────────────────────────────── */}
+        {total === 0 ? (
+          <div className="px-5 py-10 sm:px-8">
+            <p className="text-[0.95rem] font-medium text-ink-2">Ningún colegio cumple</p>
+            <p className="mt-1.5 max-w-prose text-[0.85rem] text-ink-3">
+              Prueba quitando un filtro o cambiando de año.
+            </p>
+          </div>
+        ) : (
+          <ol className="mt-2 px-5 sm:px-8">
             {visibles.map((p, i) => {
               const posicion = pagina * POR_PAGINA + i + 1;
-              const distrito = idx.dic.d[p.fila[2]];
-              const provincia = idx.dic.p[p.fila[3]];
-              const region = idx.dic.r[p.fila[4]];
-              const gestion = idx.dic.g[p.fila[5]];
-              const nivel = p.fila[6].map((k) => idx.dic.n[k]).filter(Boolean).join(" · ");
-              const alumnos = p.alumnos;
-              const prevPos = posicionPrevia?.get(p.fila[1]) ?? null;
-              const delta = p.conteo - p.previo;
-              const serie = idx.anios.map((a) => p.conteos[a]?.[posTipo] ?? 0);
-              // El contexto viaja con el enlace: la ficha necesita saber de qué
-              // universo viene para ofrecer el anterior y el siguiente correctos.
-              const href = `/colegio/${slugify(p.fila[0], distrito, p.fila[1])}?${contexto}`;
-
               return (
-                <li key={`${p.fila[1]}-${i}`} className="border-b border-rule-2">
-                  <Link
-                    href={href}
-                    className="group block px-1 py-5 transition-colors duration-150 ease-suave hover:bg-accent-soft/50"
-                  >
-                    <div className="flex gap-4 sm:gap-6">
-                      <span className="tabular w-7 shrink-0 pt-1 font-mono text-[0.82rem] text-ink-3 sm:w-9">
-                        {posicion}
-                      </span>
-
-                      <div className="min-w-0 flex-1">
-                        <p className="text-[1.05rem] font-medium leading-snug text-ink group-hover:text-accent">
-                          {p.fila[0]}
-                        </p>
-                        <p className="mt-1 text-[0.8rem] text-ink-3">
-                          {distrito}
-                          {provincia && provincia !== distrito ? ` · ${provincia}` : ""} · {region}
-                        </p>
-                        <p className="text-[0.8rem] text-ink-3">
-                          {nivel} · {gestion}
-                        </p>
-
-                        {/* Cifras en móvil: bajo el nombre, en columna. */}
-                        <dl className="mt-3.5 flex flex-wrap gap-x-7 gap-y-2 sm:hidden">
-                          <div>
-                            <dd className="cifra text-[1.5rem] text-ink">{nf(p.conteo)}</dd>
-                            <dt className={clsMeta}>reportes</dt>
-                          </div>
-                          <div>
-                            <dd className="cifra text-[1.5rem] text-ink">
-                              {alumnos ? nf(alumnos) : "—"}
-                            </dd>
-                            <dt className={clsMeta}># alumnos</dt>
-                          </div>
-                          <div>
-                            <dd className="tabular text-[1.05rem] text-ink-2">
-                              {p.tasa != null ? dec(p.tasa, 1) : "—"}
-                            </dd>
-                            <dt className={clsMeta}>
-                              {p.tasa != null ? "por 1.000" : hayTasa ? "sin # alumnos" : "sin dato"}
-                            </dt>
-                          </div>
-                        </dl>
-
-                        {anioPrevio ? (
-                          <p className="mt-3 text-[0.84rem] text-ink-2">
-                            <span className="tabular">
-                              {nf(p.conteo)} en {anio} · {nf(p.previo)} en {anioPrevio}
-                            </span>
-                            {delta !== 0 ? (
-                              <span className="tabular ml-2 text-ink-3">
-                                <span aria-hidden>{delta > 0 ? "↑" : "↓"}</span>{" "}
-                                {delta > 0 ? "+" : ""}
-                                {nf(delta)} reportes
-                              </span>
-                            ) : (
-                              <span className="ml-2 text-ink-3">sin cambio</span>
-                            )}
-                          </p>
-                        ) : null}
-
-                        {prevPos ? (
-                          <p className="mt-1 text-[0.78rem] text-ink-3">
-                            Posición en {anioPrevio}: {nf(prevPos)}
-                          </p>
-                        ) : null}
-                      </div>
-
-                      {/* Cifras en pantalla ancha: columnas a la derecha. */}
-                      <dl className="hidden shrink-0 items-start gap-8 sm:flex">
-                        <div className="w-[4.5rem] text-right">
-                          <dd className="cifra text-[1.85rem] text-ink">{nf(p.conteo)}</dd>
-                          <dt className={`${clsMeta} mt-1 block`}>reportes</dt>
-                        </div>
-                        <div className="w-[4.5rem] text-right">
-                          <dd className="cifra text-[1.5rem] text-ink-2">
-                            {alumnos ? nf(alumnos) : "—"}
-                          </dd>
-                          <dt className={`${clsMeta} mt-1 block`}># alumnos</dt>
-                        </div>
-                        <div className="w-[5rem] text-right">
-                          <dd
-                            className="tabular text-[1.05rem] text-ink-2"
-                            title={`Reportes de ${idx.anio_tasa} divididos entre los alumnos de ${idx.anio_padron}: los dos años no coinciden porque solo existe un padrón. Permite comparar colegios de distintos tamaños. No representa personas afectadas ni casos únicos.`}
-                          >
-                            {p.tasa != null ? dec(p.tasa, 1) : "—"}
-                          </dd>
-                          <dt className={`${clsMeta} mt-1 block leading-tight`}>
-                            {p.tasa != null
-                              ? `rep. ${idx.anio_tasa} / 1.000 alum. ${idx.anio_padron}`
-                              : hayTasa
-                                ? "sin # alumnos"
-                                : "sin dato"}
-                          </dt>
-                        </div>
-                        <div className="hidden w-[4.6rem] shrink-0 pt-1 lg:block">
-                          <Sparkline valores={serie} anios={idx.anios} activo={anio} />
-                          <span className={`${clsMeta} mt-1 block`}>
-                            {idx.anios[0]}–{idx.anios[idx.anios.length - 1]}
-                          </span>
-                        </div>
-                      </dl>
-                    </div>
-
-                    <span className="mt-3 inline-flex items-baseline gap-1.5 text-[0.84rem] font-medium text-accent sm:mt-2">
-                      Ver colegio
-                      <span
-                        aria-hidden
-                        className="transition-transform duration-150 ease-suave group-hover:translate-x-1"
-                      >
-                        →
-                      </span>
-                    </span>
-                  </Link>
-                </li>
+                <Fila
+                  key={`${p.fila[1]}-${i}`}
+                  p={p}
+                  posicion={posicion}
+                  destacado={posicion <= DESTACADOS}
+                />
               );
             })}
           </ol>
+        )}
 
-          {paginas > 1 ? (
-            <div className="mt-6 flex items-center justify-between gap-4">
-              <button
-                type="button"
-                onClick={() => setPagina((x) => Math.max(0, x - 1))}
-                disabled={pagina === 0}
-                className={`${boton} disabled:opacity-40`}
-              >
-                ← Anterior
-              </button>
-              <p className="tabular text-[0.84rem] text-ink-3">
-                {pagina + 1} de {nf(paginas)}
-              </p>
-              <button
-                type="button"
-                onClick={() => setPagina((x) => Math.min(paginas - 1, x + 1))}
-                disabled={pagina >= paginas - 1}
-                className={`${boton} disabled:opacity-40`}
-              >
-                Siguiente →
-              </button>
-            </div>
-          ) : null}
-        </>
-      )}
+        <p className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 border-t border-rule px-5 py-3.5 text-[0.76rem] text-ink-3 sm:px-8">
+          <span>
+            SíseVe · {anio}
+            {esParcial ? " (hasta agosto)" : ""}
+            {metrica === "tasa" ? ` · alumnos: Censo Educativo ${idx.anio_padron}` : ""}
+          </span>
+          <span className="font-medium text-ink-2">observatorioescolar.netlify.app</span>
+        </p>
+      </section>
 
-      <p className="mt-7 border-t border-rule pt-5 text-[0.78rem] leading-relaxed text-ink-3">
-        Reportes: SíseVe · {anio}
-        {esParcial ? " (hasta agosto)" : ""}.{" "}
-        {hayTasa
-          ? `Número de alumnos: ESCALE · ${idx.anio_padron}. La tasa divide reportes de ${idx.anio_tasa} entre alumnos de ${idx.anio_padron}: son años distintos porque no existe un padrón de ${idx.anio_tasa}.`
-          : `Sin tasa para ${anio}: el padrón con el número de alumnos corresponde a ${idx.anio_tasa}.`}{" "}
-        La trayectoria muestra {idx.anios[0]}–{idx.anios[idx.anios.length - 1]}; 2020 y 2021
-        quedan fuera porque los colegios estuvieron cerrados.
-      </p>
+      {paginas > 1 ? (
+        <div className="mt-5 flex items-center justify-between gap-4">
+          <button
+            type="button"
+            onClick={() => setPagina((x) => Math.max(0, x - 1))}
+            disabled={pagina === 0}
+            className={`${boton} disabled:opacity-40`}
+          >
+            ← Anterior
+          </button>
+          <p className="tabular text-[0.84rem] text-ink-3">
+            {nf(pagina * POR_PAGINA + 1)}–{nf(Math.min((pagina + 1) * POR_PAGINA, total))} de{" "}
+            {nf(total)}
+          </p>
+          <button
+            type="button"
+            onClick={() => setPagina((x) => Math.min(paginas - 1, x + 1))}
+            disabled={pagina >= paginas - 1}
+            className={`${boton} disabled:opacity-40`}
+          >
+            Siguiente →
+          </button>
+        </div>
+      ) : null}
     </div>
   );
 }

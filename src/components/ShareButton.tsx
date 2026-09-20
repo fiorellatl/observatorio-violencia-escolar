@@ -18,12 +18,16 @@ export function ShareButton({
   etiqueta = "Compartir",
   titulo,
   acento = false,
+  soloIconoEnMovil = false,
 }: {
   etiqueta?: string;
   /** Si se pasa y el navegador trae la hoja de compartir nativa, se usa esa:
       en un móvil es lo que la gente espera, y lleva a WhatsApp en un toque. */
   titulo?: string;
   acento?: boolean;
+  /** En barras estrechas, el rótulo se oculta y queda el icono. El nombre
+      accesible se mantiene: un botón sin texto no es un botón sin nombre. */
+  soloIconoEnMovil?: boolean;
 }) {
   const [estado, setEstado] = useState<"listo" | "copiado" | "fallo">("listo");
   const [url, setUrl] = useState("");
@@ -70,7 +74,12 @@ export function ShareButton({
 
   return (
     <div className="inline-flex flex-col items-start gap-1.5">
-      <button type="button" onClick={copiar} className={acento ? botonAcento : boton}>
+      <button
+        type="button"
+        onClick={copiar}
+        aria-label={etiqueta}
+        className={acento ? botonAcento : boton}
+      >
         <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden>
           <path
             d="M6.5 9.5L9.5 6.5M6 4.5L7.5 3a2.8 2.8 0 014 4L10 8.5M10 11.5L8.5 13a2.8 2.8 0 01-4-4L6 7.5"
@@ -79,7 +88,9 @@ export function ShareButton({
             strokeLinecap="round"
           />
         </svg>
-        {estado === "copiado" ? "Enlace copiado" : etiqueta}
+        <span className={soloIconoEnMovil ? "hidden sm:inline" : undefined}>
+          {estado === "copiado" ? "Enlace copiado" : etiqueta}
+        </span>
       </button>
 
       {/* Se anuncia a lectores de pantalla sin robar el foco. */}

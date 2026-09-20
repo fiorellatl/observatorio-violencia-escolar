@@ -183,6 +183,20 @@ def main():
 
     (PUB / "institutions.json").write_text(
         json.dumps(instituciones, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
+    # Valores validos de cada filtro. Es un fichero diminuto y existe para que
+    # el servidor pueda comprobar los parametros de una URL sin cargar los 14 MB
+    # de instituciones: sin esto, /rankings?gestion=Privada anunciaba en el
+    # titulo un filtro que no se habia aplicado.
+    facetas = {
+        "r": sorted({i["departamento"] for i in instituciones.values()}),
+        "p": sorted({i["provincia"] for i in instituciones.values()}),
+        "d": sorted({i["distrito"] for i in instituciones.values()}),
+        "g": sorted({i["gestion"] for i in instituciones.values()}),
+        "n": sorted({n for i in instituciones.values() for n in i["niveles"]}),
+    }
+    (PUB / "facetas.json").write_text(
+        json.dumps(facetas, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
+
     (PUB / "service-redirects.json").write_text(
         json.dumps(redirecciones, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
 
