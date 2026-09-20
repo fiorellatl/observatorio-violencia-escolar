@@ -1,27 +1,31 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { IBM_Plex_Mono, IBM_Plex_Sans } from "next/font/google";
+import { Archivo, JetBrains_Mono } from "next/font/google";
 import { CommandPalette } from "@/components/CommandPalette";
 import { getMeta } from "@/lib/data/provider";
 import { shell } from "@/lib/ui";
 import "./globals.css";
 
 /**
- * Una sola familia para todo el producto.
+ * Dos familias con trabajos distintos.
  *
- * Antes los titulares y las cifras iban en Newsreader, una serif. El carácter
- * editorial ya no depende de la forma de la letra sino del sistema: tamaños
- * con saltos grandes, tracking negativo en los títulos, pesos contrastados,
- * aire y filetes finos. Una sola familia también significa una petición menos
- * y ninguna discordancia entre un titular y la cifra que lo acompaña.
+ * Archivo para todo lo que se lee: es una grotesca de caja alta y ancha que
+ * aguanta el peso 700 a 130 px sin volverse decorativa, que es lo que pide un
+ * titular a esa escala. JetBrains Mono para los metadatos —fuente, año,
+ * unidad, código modular—, en versalita y con tracking abierto: no compite
+ * con el texto, lo etiqueta.
+ *
+ * Nada de serif. El carácter no está en la forma de la letra sino en el
+ * sistema: saltos de tamaño grandes, tracking negativo en los titulares y
+ * bloques oscuros a sangre.
  */
-const sans = IBM_Plex_Sans({
+const sans = Archivo({
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
   variable: "--font-sans",
   display: "swap",
 });
-const mono = IBM_Plex_Mono({
+const mono = JetBrains_Mono({
   subsets: ["latin"],
   weight: ["400", "500"],
   variable: "--font-mono",
@@ -73,8 +77,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           Saltar al contenido
         </a>
 
-        <header className="sticky top-0 z-40 border-b border-rule bg-paper/92 backdrop-blur-sm">
-          <div className={`${shell} flex h-14 items-center gap-5 sm:h-16`}>
+        {/* ── Cabecera ────────────────────────────────────────────
+            Barra de noche a sangre. La marca va en versalita monoespaciada,
+            no en el peso grande de un logotipo: el titular de cada página es
+            lo que tiene que dominar, y una cabecera que compita con él
+            convierte todas las pantallas en la misma pantalla. */}
+        <header className="noche sticky top-0 z-40 border-b border-noche-rule">
+          <div className={`${shell} flex h-14 items-center gap-6 sm:h-[4.1rem]`}>
             <Link
               href="/"
               className="group flex shrink-0 items-center gap-2.5"
@@ -82,49 +91,39 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             >
               <span
                 aria-hidden
-                className="h-3 w-3 shrink-0 rounded-sm bg-accent transition-transform duration-150 ease-suave group-hover:scale-90"
+                className="h-2.5 w-2.5 shrink-0 rounded-sm bg-menta transition-transform duration-150 ease-suave group-hover:scale-90"
               />
-              <span className="font-display text-[1.02rem] font-medium leading-none tracking-tight sm:text-[1.1rem]">
+              <span className="font-mono text-[0.7rem] uppercase tracking-[0.18em] text-noche-ink">
                 Observatorio Escolar
               </span>
             </Link>
 
-            <nav aria-label="Principal" className="ml-auto hidden items-center gap-1 lg:flex">
-              {PRINCIPAL.map((n) => (
+            <nav aria-label="Principal" className="ml-auto hidden items-center gap-6 lg:flex">
+              {[...PRINCIPAL, ...SECUNDARIA].map((n) => (
                 <Link
                   key={n.href}
                   href={n.href}
-                  className="rounded px-2.5 py-1.5 text-[0.88rem] text-ink-2 transition-colors duration-150 ease-suave hover:bg-surface hover:text-ink"
-                >
-                  {n.label}
-                </Link>
-              ))}
-              <span aria-hidden className="mx-1.5 h-4 w-px bg-rule" />
-              {SECUNDARIA.map((n) => (
-                <Link
-                  key={n.href}
-                  href={n.href}
-                  className="rounded px-2.5 py-1.5 text-[0.88rem] text-ink-3 transition-colors duration-150 ease-suave hover:bg-surface hover:text-ink"
+                  className="font-mono text-[0.69rem] uppercase tracking-[0.09em] text-noche-ink-3 transition-colors duration-150 ease-suave hover:text-menta"
                 >
                   {n.label}
                 </Link>
               ))}
             </nav>
 
-            <div className="ml-auto shrink-0 lg:ml-3">
+            <div className="ml-auto shrink-0 lg:ml-0">
               <CommandPalette />
             </div>
           </div>
 
           {/* En móvil la navegación baja a su propia tira. No se esconde tras
-              un menú: son cuatro destinos y caben. */}
+              un menú: son seis destinos y caben desplazándose. */}
           <nav aria-label="Principal" className={`${shell} pb-2 lg:hidden`}>
-            <ul className="-mx-1.5 flex gap-0.5 overflow-x-auto whitespace-nowrap text-[0.84rem] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            <ul className="-mx-2 flex gap-5 overflow-x-auto whitespace-nowrap px-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
               {[...PRINCIPAL, ...SECUNDARIA].map((n) => (
                 <li key={n.href}>
                   <Link
                     href={n.href}
-                    className="block rounded px-2.5 py-1.5 text-ink-2 transition-colors hover:bg-surface hover:text-ink"
+                    className="block font-mono text-[0.69rem] uppercase tracking-[0.09em] text-noche-ink-3 transition-colors hover:text-menta"
                   >
                     {n.label}
                   </Link>
@@ -138,17 +137,17 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           {children}
         </main>
 
-        <footer className="mt-24 border-t border-rule">
-          <div className={`${shell} py-14`}>
-            <div className="grid gap-10 lg:grid-cols-12">
+        <footer className="noche mt-24">
+          <div className={`${shell} py-16`}>
+            <div className="grid gap-12 lg:grid-cols-12">
               <div className="lg:col-span-5">
-                <p className="flex items-center gap-2.5 font-display text-[1.1rem] font-medium">
-                  <span aria-hidden className="h-3 w-3 shrink-0 rounded-sm bg-accent" />
+                <p className="flex items-center gap-2.5 font-mono text-[0.7rem] uppercase tracking-[0.18em] text-noche-ink">
+                  <span aria-hidden className="h-2.5 w-2.5 shrink-0 rounded-sm bg-menta" />
                   Observatorio Escolar
                 </p>
-                <p className="mt-4 max-w-prose text-cuerpo-s leading-relaxed text-ink-2">
+                <p className="mt-6 max-w-prose text-[0.95rem] leading-relaxed text-noche-ink-2">
                   Los reportes de SíseVe son{" "}
-                  <strong className="font-semibold text-ink">alertas registradas</strong>, no
+                  <strong className="font-semibold text-noche-ink">alertas registradas</strong>, no
                   casos confirmados, y puede existir más de un reporte sobre un mismo hecho.
                   Este sitio trabaja solo con datos agregados y no publica información
                   individual de estudiantes.
@@ -156,11 +155,14 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               </div>
 
               <nav aria-label="Pie" className="lg:col-span-3">
-                <p className="meta">Explorar</p>
-                <ul className="mt-4 space-y-2 text-[0.88rem]">
+                <p className="meta-noche">Explorar</p>
+                <ul className="mt-5 space-y-2.5 text-[0.9rem]">
                   {[...PRINCIPAL, ...SECUNDARIA].map((n) => (
                     <li key={n.href}>
-                      <Link href={n.href} className="text-ink-2 transition-colors hover:text-accent">
+                      <Link
+                        href={n.href}
+                        className="text-noche-ink-2 transition-colors hover:text-menta"
+                      >
                         {n.label}
                       </Link>
                     </li>
@@ -169,27 +171,29 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               </nav>
 
               <div className="lg:col-span-4">
-                <p className="meta">Fuentes y actualización</p>
-                <dl className="mt-4 space-y-2.5">
+                <p className="meta-noche">Fuentes y actualización</p>
+                <dl className="mt-5 space-y-3">
                   {fuentes.map((f) => (
                     <div
                       key={f.nombre}
-                      className="flex items-baseline justify-between gap-4 border-b border-rule-3 pb-2"
+                      className="flex items-baseline justify-between gap-4 border-b border-noche-rule pb-2.5"
                     >
-                      <dt className="text-[0.86rem] text-ink-2">{f.nombre.split("–")[0].trim()}</dt>
-                      <dd className="tabular shrink-0 font-mono text-[0.76rem] text-ink-3">
+                      <dt className="text-[0.88rem] text-noche-ink-2">
+                        {f.nombre.split("–")[0].trim()}
+                      </dt>
+                      <dd className="tabular shrink-0 font-mono text-[0.72rem] text-noche-ink-3">
                         {f.anio}
                       </dd>
                     </div>
                   ))}
                 </dl>
-                <p className="mt-3 text-[0.78rem] leading-snug text-ink-3">
+                <p className="mt-4 text-[0.8rem] leading-relaxed text-noche-ink-3">
                   Cada variable conserva el año de su fuente. No todas coinciden, y la
                   interfaz lo dice dato por dato.
                 </p>
                 <a
                   href="https://github.com/fiorellatl/observatorio-violencia-escolar"
-                  className="mt-4 inline-block text-[0.84rem] text-ink-2 transition-colors hover:text-accent"
+                  className="mt-5 inline-block text-[0.85rem] font-medium text-menta transition-opacity hover:opacity-80"
                   rel="noopener noreferrer"
                   target="_blank"
                 >
@@ -198,7 +202,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               </div>
             </div>
 
-            <p className="meta mt-12 border-t border-rule-2 pt-6">
+            <p className="mt-14 border-t border-noche-rule pt-6 font-mono text-[0.66rem] uppercase tracking-[0.1em] text-noche-ink-4">
               Datos públicos del Ministerio de Educación del Perú · Capa pública generada el{" "}
               <span className="tabular">{meta.generado}</span>
             </p>

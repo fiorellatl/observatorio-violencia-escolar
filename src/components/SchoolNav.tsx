@@ -56,13 +56,16 @@ export function SchoolNav({
   distrito,
   departamento,
   compacto = false,
+  tono = "papel",
 }: {
   cm: string;
   distrito: string;
   departamento: string;
   /** Variante de pie: sin la línea de contexto, solo las dos salidas. */
   compacto?: boolean;
+  tono?: "papel" | "noche";
 }) {
+  const noche = tono === "noche";
   const params = useSearchParams();
   const router = useRouter();
   const de = params.get("de");
@@ -248,37 +251,42 @@ export function SchoolNav({
   if (fallo || !universo) {
     // Nunca se afirma un universo que no se pudo comprobar.
     return compacto ? null : (
-      <div className="flex flex-wrap items-center gap-x-5 gap-y-2 border-y border-rule py-3 text-[0.84rem]">
-        <span className="text-ink-3">Explorar colegios</span>
-        <Link href="/colegios" className="font-medium text-accent hover:underline">
+      <div className={`flex flex-wrap items-center gap-x-5 gap-y-2 border-y py-3 text-[0.84rem] ${noche ? "border-noche-rule" : "border-rule"}`}>
+        <span className={noche ? "text-noche-ink-3" : "text-ink-3"}>Explorar colegios</span>
+        <Link href="/colegios" className={`font-medium hover:underline ${noche ? "text-menta" : "text-accent"}`}>
           Ver el explorador →
         </Link>
       </div>
     );
   }
 
-  const flecha =
-    "group flex min-w-0 flex-1 items-center gap-2.5 rounded px-2 py-2.5 transition-colors duration-150 ease-suave hover:bg-accent-soft/60";
+  const flecha = `group flex min-w-0 flex-1 items-center gap-2.5 rounded px-2 py-2.5 transition-colors duration-150 ease-suave ${
+    noche ? "hover:bg-noche-2" : "hover:bg-accent-soft/60"
+  }`;
 
   return (
     <nav
       aria-label="Navegación entre colegios"
-      className={compacto ? "border-t border-rule pt-3" : "border-y border-rule py-1.5"}
+      className={
+        compacto
+          ? `border-t pt-3 ${noche ? "border-noche-rule" : "border-rule"}`
+          : `border-y py-1.5 ${noche ? "border-noche-rule" : "border-rule"}`
+      }
     >
       {!compacto ? (
         <div className="flex flex-wrap items-baseline justify-between gap-x-5 gap-y-1 px-2 py-1.5">
-          <p className="min-w-0 truncate text-[0.8rem] text-ink-3">
-            <span className="tabular font-medium text-ink-2">
+          <p className={`min-w-0 truncate font-mono text-[0.68rem] uppercase tracking-[0.1em] ${noche ? "text-noche-ink-4" : "text-ink-3"}`}>
+            <span className={`tabular ${noche ? "text-menta" : "text-ink-2"}`}>
               {nf(universo.indice + 1)} de {nf(universo.total)}
             </span>
-            <span aria-hidden className="mx-2 text-rule">
+            <span aria-hidden className={`mx-2 ${noche ? "text-noche-rule-2" : "text-rule"}`}>
               ·
             </span>
             {universo.etiqueta}
           </p>
           <Link
             href={universo.volver}
-            className="shrink-0 text-[0.8rem] font-medium text-accent hover:underline"
+            className={`shrink-0 font-mono text-[0.68rem] uppercase tracking-[0.1em] hover:underline ${noche ? "text-menta" : "text-accent"}`}
           >
             {universo.volverLabel} →
           </Link>
@@ -295,19 +303,21 @@ export function SchoolNav({
           >
             <span
               aria-hidden
-              className="shrink-0 text-[1.05rem] text-ink-3 transition-transform duration-150 ease-suave group-hover:-translate-x-0.5 group-hover:text-accent"
+              className={`shrink-0 text-[1.05rem] transition-transform duration-150 ease-suave group-hover:-translate-x-0.5 ${
+                noche ? "text-noche-ink-4 group-hover:text-menta" : "text-ink-3 group-hover:text-accent"
+              }`}
             >
               ‹
             </span>
             <span className="min-w-0">
-              <span className="meta block">Anterior</span>
-              <span className="mt-0.5 block truncate text-[0.88rem] font-medium leading-snug text-ink-2 group-hover:text-accent">
+              <span className={`${noche ? "meta-noche" : "meta"} block`}>Anterior</span>
+              <span className={`mt-0.5 block truncate text-[0.9rem] font-medium leading-snug ${noche ? "text-noche-ink group-hover:text-menta" : "text-ink-2 group-hover:text-accent"}`}>
                 {universo.anterior.nombre}
               </span>
             </span>
           </Link>
         ) : (
-          <span className="flex-1 px-2 py-2.5 text-[0.82rem] text-ink-4">Primero de la lista</span>
+          <span className={`flex-1 px-2 py-2.5 text-[0.82rem] ${noche ? "text-noche-ink-4" : "text-ink-4"}`}>Primero de la lista</span>
         )}
 
         {universo.siguiente ? (
@@ -318,20 +328,22 @@ export function SchoolNav({
             rel="next"
           >
             <span className="min-w-0">
-              <span className="meta block">Siguiente</span>
-              <span className="mt-0.5 block truncate text-[0.88rem] font-medium leading-snug text-ink-2 group-hover:text-accent">
+              <span className={`${noche ? "meta-noche" : "meta"} block`}>Siguiente</span>
+              <span className={`mt-0.5 block truncate text-[0.9rem] font-medium leading-snug ${noche ? "text-noche-ink group-hover:text-menta" : "text-ink-2 group-hover:text-accent"}`}>
                 {universo.siguiente.nombre}
               </span>
             </span>
             <span
               aria-hidden
-              className="shrink-0 text-[1.05rem] text-ink-3 transition-transform duration-150 ease-suave group-hover:translate-x-0.5 group-hover:text-accent"
+              className={`shrink-0 text-[1.05rem] transition-transform duration-150 ease-suave group-hover:translate-x-0.5 ${
+                noche ? "text-noche-ink-4 group-hover:text-menta" : "text-ink-3 group-hover:text-accent"
+              }`}
             >
               ›
             </span>
           </Link>
         ) : (
-          <span className="flex-1 px-2 py-2.5 text-right text-[0.82rem] text-ink-4">
+          <span className={`flex-1 px-2 py-2.5 text-right text-[0.82rem] ${noche ? "text-noche-ink-4" : "text-ink-4"}`}>
             Último de la lista
           </span>
         )}

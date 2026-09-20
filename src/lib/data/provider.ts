@@ -78,6 +78,11 @@ function allInstitutions(): Record<string, Institution> {
   return (_inst ??= read<Record<string, Institution>>("institutions.json"));
 }
 
+/** Cuántos colegios —instituciones, no servicios— hay en la capa pública. */
+export function getInstitutionCount(): number {
+  return Object.keys(allInstitutions()).length;
+}
+
 export function getInstitution(slug: string): Institution | null {
   return allInstitutions()[slug] ?? null;
 }

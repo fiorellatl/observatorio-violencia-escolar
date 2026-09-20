@@ -16,9 +16,28 @@
 
 :root {
   /* ── superficies ─────────────────────────────────────────── */
-  --paper: #f2f2ef;          /* documento, ligeramente más cálido que antes */
+  --paper: #f4f5f2;          /* documento */
   --surface: #fbfbf9;        /* elevada, apenas distinguible */
   --surface-2: #ffffff;      /* diálogos y flotantes */
+
+  /* ── LA NOCHE ─────────────────────────────────────────────
+     El bloque oscuro no es "modo oscuro": es un material del sistema.
+     Cabecera, portadas de sección y cierres van sobre él, y el papel
+     claro queda para el contenido denso. El contraste entre los dos
+     bloques es lo que da ritmo a la página; sin él, todo pesa igual.
+     Existe en los dos esquemas de color: no se invierte. */
+  --noche: #0e1110;
+  --noche-2: #141816;        /* hover sobre noche */
+  --noche-rule: #232725;
+  --noche-rule-2: #2c312e;
+  --noche-ink: #f7f8f5;
+  --noche-ink-2: #a7aea8;
+  --noche-ink-3: #8b938d;
+  --noche-ink-4: #5f6762;
+
+  /* Acento sobre la noche. El verde pino del papel se apaga sobre negro;
+     la menta es el mismo gesto con la luminosidad que el fondo exige. */
+  --menta: #57e3ae;
 
   /* ── tinta: cuatro niveles, cada uno con un trabajo ───────── */
   --ink: #15171a;            /* titulares y cifras */
@@ -28,7 +47,7 @@
 
   /* ── filetes: el elemento estructural principal ───────────── */
   --rule: #d9dbd5;
-  --rule-2: #e8e9e4;
+  --rule-2: #e2e4df;
   --rule-3: #f0f1ec;
 
   --accent: #1d6a58;
@@ -120,6 +139,9 @@
   :root:not([data-theme="light"]) {
     --paper: #121412;
     --surface: #191b19;
+    /* La noche es un material, no un tema: mantiene su valor. */
+    --noche: #0a0c0b;
+    --noche-2: #101312;
     --surface-2: #1f211f;
     --ink: #f1f2ee;
     --ink-2: #b6bab5;
@@ -193,18 +215,45 @@ body {
 .cifra {
   font-family: var(--font-sans), system-ui, sans-serif;
   font-variant-numeric: tabular-nums lining-nums;
-  font-weight: 600;
-  letter-spacing: -0.035em;
+  font-weight: 700;
+  letter-spacing: -0.048em;
   line-height: 0.95;
 }
 
-/* Versalita de metadato. Se repite tanto que merece clase propia. */
+/* Versalita de metadato. Se repite tanto que merece clase propia: es la voz
+   con la que el producto dice de dónde viene un dato. */
 .meta {
   font-family: var(--font-mono), ui-monospace, monospace;
-  font-size: 0.68rem;
-  letter-spacing: 0.09em;
+  font-size: 0.66rem;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--ink-3);
+}
+
+/* La misma versalita sobre la noche. */
+.meta-noche {
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 0.66rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--menta);
+}
+
+/* Bloque oscuro a sangre: se sale de la cáscara y ocupa todo el ancho de la
+   ventana, aunque su contenido siga alineado con el resto de la página. Sin
+   esto, la portada oscura parecería una tarjeta y no un cambio de material. */
+.noche {
+  background: var(--noche);
+  color: var(--noche-ink);
+}
+
+/* Titular a escala. El tamaño sale del ancho disponible, no de un breakpoint:
+   a 132 px en pantalla ancha y sin romperse en un teléfono. */
+.titular {
+  font-weight: 700;
+  line-height: 0.86;
+  letter-spacing: -0.055em;
+  text-wrap: balance;
 }
 
 ::selection {

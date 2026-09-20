@@ -3,8 +3,9 @@ import { Suspense } from "react";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { MethodologyNote } from "@/components/MethodologyNote";
 import { SchoolExplorer } from "@/components/SchoolExplorer";
-import { getMeta } from "@/lib/data/provider";
+import { getInstitutionCount, getMeta } from "@/lib/data/provider";
 import { nf } from "@/lib/format";
+import { shell } from "@/lib/ui";
 
 export const metadata: Metadata = {
   title: "Explora colegios",
@@ -15,21 +16,32 @@ export const metadata: Metadata = {
 
 export default function ColegiosPage() {
   const meta = getMeta();
+  const colegios = getInstitutionCount();
 
   return (
-    <div className="mx-auto max-w-shell px-5 py-8 sm:py-10">
-      <Breadcrumbs items={[{ label: "Inicio", href: "/" }, { label: "Colegios" }]} />
+    <>
+      {/* ── Portada, sobre la noche ──────────────────────────────
+          A sangre, no dentro de la cáscara: el bloque oscuro tiene que leerse
+          como un cambio de material y no como una tarjeta grande. */}
+      <section className="noche">
+        <div className={`${shell} pb-14 pt-8 sm:pb-16 sm:pt-10`}>
+          <Breadcrumbs
+            items={[{ label: "Inicio", href: "/" }, { label: "Colegios" }]}
+            tono="noche"
+          />
 
-      <h1 className="mt-6 max-w-[20ch] font-display text-display-xl font-medium text-balance">
-        Explora colegios
-      </h1>
-      <p className="mt-5 max-w-prose text-[1.02rem] leading-relaxed text-ink-2">
-        Hay {nf(meta.colegios)} servicios educativos con al menos un reporte registrado en
-        SíseVe entre {meta.anio_min} y {meta.anio_max}. Filtra por dónde queda, por gestión
-        o por nivel, o escribe el nombre.
-      </p>
+          <p className="meta-noche mt-8">Explorador</p>
+          <h1 className="titular mt-4 text-display-xl text-noche-ink">Colegios</h1>
+          <p className="mt-7 max-w-[56ch] text-[1.05rem] leading-relaxed text-noche-ink-2">
+            {nf(colegios)} instituciones con al menos un reporte registrado en SíseVe entre{" "}
+            {meta.anio_min} y {meta.anio_max}. Busca por nombre o filtra por territorio,
+            gestión y nivel.{" "}
+            <strong className="font-semibold text-noche-ink">No es un ranking.</strong>
+          </p>
+        </div>
+      </section>
 
-      <div className="mt-8">
+      <div className={`${shell} py-10 sm:py-12`}>
         {/* `useSearchParams` obliga a un límite de Suspense: sin él, toda la
             página pasaría a renderizarse en cliente y perdería el prerenderizado. */}
         <Suspense
@@ -39,16 +51,15 @@ export default function ColegiosPage() {
         >
           <SchoolExplorer />
         </Suspense>
-      </div>
 
-      <div className="mt-8 max-w-prose">
-        <MethodologyNote>
-          Un mismo colegio puede aparecer varias veces: el Estado asigna un código modular a
-          cada nivel, así que la primaria y la secundaria son registros distintos. Si un
-          colegio no aparece, puede ser que no tenga ningún reporte registrado. Eso no
-          significa que no ocurra violencia: significa que nadie la reportó en SíseVe.
-        </MethodologyNote>
+        <div className="mt-10 max-w-prose">
+          <MethodologyNote>
+            Cada colegio aparece una sola vez, con todos sus niveles sumados. Si un colegio
+            no aparece, puede ser que no tenga ningún reporte registrado. Eso no significa
+            que no ocurra violencia: significa que nadie la reportó en SíseVe.
+          </MethodologyNote>
+        </div>
       </div>
-    </div>
+    </>
   );
 }

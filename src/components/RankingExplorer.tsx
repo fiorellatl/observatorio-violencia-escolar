@@ -656,68 +656,86 @@ export function RankingExplorer() {
           Todo lo necesario para que una captura se explique sola. */}
       <section
         aria-label="Ranking"
-        className="mt-6 overflow-hidden rounded-xl border border-rule bg-surface"
+        className="mt-5 overflow-hidden rounded-xl border border-rule bg-surface"
       >
-        <div
-          aria-hidden
-          className="h-1 w-full"
-          style={{ background: tono }}
-        />
+        {/* ── Portada, sobre la noche ────────────────────────────
+            El bloque oscuro es lo que convierte la tabla en una pieza: separa
+            lo que se afirma —métrica, año, universo— de las filas que lo
+            sostienen, y hace que un recorte siga leyéndose como algo emitido
+            por alguien y no como una captura de una hoja de cálculo. */}
+        <div className="noche px-5 pb-8 pt-8 sm:px-10 sm:pb-10 sm:pt-10">
+          <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2">
+            <p className="flex items-center gap-2.5 font-mono text-[0.68rem] uppercase tracking-[0.18em] text-noche-ink">
+              <span aria-hidden className="h-2 w-2 rounded-sm bg-menta" />
+              Observatorio Escolar
+            </p>
+            <p className="font-mono text-[0.66rem] uppercase tracking-[0.12em] text-noche-ink-4">
+              Ranking descriptivo
+            </p>
+          </div>
 
-        <div className="px-5 pt-6 sm:px-8 sm:pt-8">
-          <p className="flex items-center gap-2 text-[0.78rem] font-medium tracking-tight text-ink-3">
-            <span aria-hidden className="h-2.5 w-2.5 rounded-sm bg-accent" />
-            Observatorio Escolar
+          <p className="meta-noche mt-8">
+            {metrica === "tasa" ? "Tasa de reportes" : "Reportes registrados"}
+            {tipo === "todos" ? "" : ` · ${TIPOS.find((x) => x.v === tipo)!.label}`}
           </p>
 
-          <h2 className="mt-4 max-w-[16ch] font-display text-[clamp(1.9rem,4.6vw,3.1rem)] font-semibold leading-[1.06] tracking-[-0.032em] text-balance">
+          {/* display-l y no display-xl: "Colegios con más reportes registrados"
+              son cinco palabras largas, y a 6 rem ocupan tres líneas que se
+              comen la pieza entera. La escala grande es para un titular corto. */}
+          <h2 className="titular mt-4 max-w-[17ch] text-display-l text-noche-ink">
             {titulo}
           </h2>
 
-          <div className="mt-5 flex flex-wrap items-end gap-x-5 gap-y-3 border-b border-rule pb-5">
-            <p className="cifra text-[clamp(2.4rem,6vw,3.6rem)]" style={{ color: tono }}>
-              {anio}
-            </p>
-            <p className="pb-1 text-[0.82rem] leading-snug text-ink-3">
-              {esParcial ? (
-                <>
-                  año en curso
-                  <span className="block">datos hasta agosto</span>
-                </>
-              ) : esPrincipal ? (
-                <>
-                  último año
-                  <span className="block">completo</span>
-                </>
-              ) : (
-                <>
-                  año
-                  <span className="block">completo</span>
-                </>
-              )}
-            </p>
+          <div className="mt-9 flex flex-wrap items-end gap-x-8 gap-y-5 border-t border-noche-rule pt-7">
+            <div className="flex items-end gap-4">
+              <p className="cifra text-[clamp(3.2rem,8vw,5rem)] text-menta">{anio}</p>
+              <p className="pb-1.5 font-mono text-[0.66rem] uppercase leading-relaxed tracking-[0.1em] text-noche-ink-3">
+                {esParcial ? (
+                  <>
+                    año en curso
+                    <span className="block">hasta agosto</span>
+                  </>
+                ) : esPrincipal ? (
+                  <>
+                    último año
+                    <span className="block">completo</span>
+                  </>
+                ) : (
+                  <>
+                    año
+                    <span className="block">completo</span>
+                  </>
+                )}
+              </p>
+            </div>
 
-            <dl className="ml-auto flex gap-x-7 gap-y-2 pb-0.5">
+            <dl className="ml-auto flex gap-x-10 gap-y-3">
               <div>
-                <dd className="cifra text-[1.35rem] text-ink">{nf(universo.conReportes)}</dd>
-                <dt className={clsMeta}>colegios</dt>
+                <dd className="cifra text-cifra-m text-noche-ink">{nf(universo.conReportes)}</dd>
+                <dt className="mt-1.5 font-mono text-[0.62rem] uppercase tracking-[0.1em] text-noche-ink-4">
+                  colegios
+                </dt>
               </div>
               <div>
-                <dd className="cifra text-[1.35rem] text-ink">{nf(universo.reportes)}</dd>
-                <dt className={clsMeta}>reportes registrados</dt>
+                <dd className="cifra text-cifra-m text-noche-ink">{nf(universo.reportes)}</dd>
+                <dt className="mt-1.5 font-mono text-[0.62rem] uppercase tracking-[0.1em] text-noche-ink-4">
+                  reportes registrados
+                </dt>
               </div>
             </dl>
           </div>
 
-          <p className="mt-4 text-[0.92rem] text-ink-2">{territorio}</p>
+          <p className="mt-6 font-mono text-[0.72rem] uppercase tracking-[0.1em] text-noche-ink-2">
+            {territorio}
+          </p>
           {filtros.ignorados.length ? (
-            <p className="mt-1.5 max-w-prose text-[0.8rem] leading-relaxed text-warn">
+            <p className="mt-2 max-w-prose text-[0.82rem] leading-relaxed text-menta">
               No se aplicó {filtros.ignorados.map((v) => `«${v}»`).join(", ")}: no es un
               valor de estos datos. La tabla muestra el universo sin ese filtro.
             </p>
           ) : null}
           {metrica === "tasa" ? (
-            <p className="mt-1.5 max-w-prose text-[0.8rem] leading-relaxed text-ink-3">
+            <p className="mt-2 max-w-prose text-[0.82rem] leading-relaxed text-noche-ink-3">
               Métrica secundaria. Solo existe en {idx.anio_tasa}, el año con censo de
               alumnos, y a partir de {nf(idx.matricula_minima)} alumnos.
               {sinTasa > 0 ? ` ${nf(sinTasa)} colegios quedan fuera por eso.` : ""}
@@ -727,14 +745,14 @@ export function RankingExplorer() {
 
         {/* ── Filas ──────────────────────────────────────────────── */}
         {total === 0 ? (
-          <div className="px-5 py-10 sm:px-8">
+          <div className="px-5 py-12 sm:px-10">
             <p className="text-[0.95rem] font-medium text-ink-2">Ningún colegio cumple</p>
             <p className="mt-1.5 max-w-prose text-[0.85rem] text-ink-3">
               Prueba quitando un filtro o cambiando de año.
             </p>
           </div>
         ) : (
-          <ol className="mt-2 px-5 sm:px-8">
+          <ol className="px-5 sm:px-10">
             {visibles.map((p, i) => {
               const posicion = pagina * POR_PAGINA + i + 1;
               return (
@@ -749,13 +767,13 @@ export function RankingExplorer() {
           </ol>
         )}
 
-        <p className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 border-t border-rule px-5 py-3.5 text-[0.76rem] text-ink-3 sm:px-8">
+        <p className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 border-t border-rule px-5 py-4 font-mono text-[0.66rem] uppercase tracking-[0.09em] text-ink-3 sm:px-10">
           <span>
-            SíseVe · {anio}
-            {esParcial ? " (hasta agosto)" : ""}
-            {metrica === "tasa" ? ` · alumnos: Censo Educativo ${idx.anio_padron}` : ""}
+            Fuente SíseVe · {anio}
+            {esParcial ? " · hasta agosto" : ""}
+            {metrica === "tasa" ? ` · alumnos Censo Educativo ${idx.anio_padron}` : ""}
           </span>
-          <span className="font-medium text-ink-2">observatorioescolar.netlify.app</span>
+          <span className="text-ink-2">observatorioescolar.netlify.app</span>
         </p>
       </section>
 

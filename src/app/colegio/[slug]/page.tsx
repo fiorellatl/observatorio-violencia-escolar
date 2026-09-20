@@ -20,6 +20,7 @@ import {
 } from "@/lib/data/provider";
 import { dec, nf, valorLegible } from "@/lib/format";
 import { COLOR_SERIE, color } from "@/lib/viz/colors";
+import { shell } from "@/lib/ui";
 
 export const dynamicParams = true;
 
@@ -153,173 +154,172 @@ export default async function ColegioPage({
   const seccion = "scroll-mt-24 border-t border-rule py-10 sm:py-14";
 
   return (
-    <article className="mx-auto max-w-shell px-5 pb-20 sm:px-7">
-      <div className="pt-4">
-        <Breadcrumbs
-          items={[
-            { label: "Inicio", href: "/" },
-            { label: "Colegios", href: "/colegios" },
-            {
-              label: s.departamento,
-              href: `/colegios?region=${encodeURIComponent(s.departamento)}&de=colegios`,
-            },
-            { label: s.nombre },
-          ]}
-        />
-      </div>
+    <article className="pb-20">
+      {/* ══ PORTADA, SOBRE LA NOCHE ═══════════════════════
+          Identidad, cifra del año y contexto medible van juntos sobre el
+          material oscuro; el análisis —evolución, tipos, agresor— baja al
+          papel, que es donde se lee un gráfico denso sin fatiga. */}
+      <section className="noche">
+        <div className={`${shell} pb-2 pt-6`}>
+          <Breadcrumbs
+            tono="noche"
+            items={[
+              { label: "Inicio", href: "/" },
+              { label: "Colegios", href: "/colegios" },
+              {
+                label: s.departamento,
+                href: `/colegios?region=${encodeURIComponent(s.departamento)}&de=colegios`,
+              },
+              { label: s.nombre },
+            ]}
+          />
 
-      {/* ── Navegación por el universo de origen ───────────────── */}
-      <div className="mt-3">
-        <Suspense fallback={<div className="h-[4.6rem] border-y border-rule" />}>
-          <SchoolNav {...navProps} />
-        </Suspense>
-      </div>
-
-      {/* ── Identidad + qué está pasando ───────────────────────── */}
-      <header className="grid gap-x-12 gap-y-10 border-b border-rule py-10 sm:py-14 lg:grid-cols-12">
-        <div className="lg:col-span-7">
-          <h1 className="max-w-[18ch] font-display text-display-xl font-semibold text-balance">
-            {s.nombre}
-          </h1>
-          <p className="mt-4 text-[1.05rem] text-ink-2">
-            {s.distrito}
-            <span aria-hidden className="mx-2 text-rule">
-              ·
-            </span>
-            {s.provincia}
-            <span aria-hidden className="mx-2 text-rule">
-              ·
-            </span>
-            {s.departamento}
-          </p>
-
-          <dl className="mt-6 flex flex-wrap items-center gap-2 text-[0.82rem]">
-            {[s.gestion, ...s.niveles].filter(Boolean).map((v, i) => (
-              <div key={`${v}-${i}`} className="rounded-full border border-rule px-3 py-1">
-                <dt className="sr-only">{i === 0 ? "Gestión" : "Nivel"}</dt>
-                <dd className="text-ink-2">{v}</dd>
-              </div>
-            ))}
-          </dl>
-
-          <div className="mt-7 flex flex-wrap items-center gap-2.5">
-            <Link
-              href={`/comparar?colegio=${encodeURIComponent(s.slug)}`}
-              className="inline-flex items-center gap-2 rounded border border-accent bg-accent px-3.5 py-2 text-[0.86rem] font-medium text-paper transition-colors duration-150 ease-suave hover:border-accent-2 hover:bg-accent-2"
-            >
-              Comparar este colegio
-            </Link>
-            <ShareButton titulo={`${s.nombre} — Observatorio Escolar`} />
+          <div className="mt-3">
+            <Suspense fallback={<div className="h-[4.6rem] border-y border-noche-rule" />}>
+              <SchoolNav {...navProps} tono="noche" />
+            </Suspense>
           </div>
         </div>
 
-        {/* La cifra del año principal es el elemento más grande de la página
-            después del nombre. El filete va en el azul de la serie "reportes":
-            el mismo con el que se dibuja la evolución. */}
-        <div className="flex flex-col justify-between gap-9 lg:col-span-5">
-          <div>
-            <div aria-hidden className="h-[3px] w-14 rounded-sm" style={{ background: azul }} />
-            <p className="meta mt-4">Reportes registrados</p>
-            <p className="cifra mt-2.5 text-cifra-xl text-ink">{nf(delPrincipal?.total ?? 0)}</p>
-            <p className="mt-3 flex flex-wrap items-baseline gap-x-3 gap-y-1 text-[0.9rem] text-ink-2">
-              <span className="tabular font-medium">
-                {principal} <span className="font-normal text-ink-3">· último año completo</span>
-              </span>
+        <div className={`${shell} grid gap-x-12 gap-y-10 pb-12 pt-10 sm:pt-12 lg:grid-cols-12`}>
+          <div className="lg:col-span-7">
+            <h1 className="titular max-w-[16ch] text-display-xl text-noche-ink">{s.nombre}</h1>
+
+            <p className="mt-7 flex flex-wrap items-center gap-x-3 gap-y-2 font-mono text-[0.68rem] uppercase tracking-[0.1em] text-noche-ink-2">
+              {[`${s.distrito} · ${s.departamento}`, s.gestion, ...s.niveles, `CM ${s.cm}`]
+                .filter(Boolean)
+                .map((v, k, arr) => (
+                  <span key={`${v}-${k}`} className="flex items-center gap-3">
+                    {v}
+                    {k < arr.length - 1 ? (
+                      <span aria-hidden className="text-noche-rule-2">
+                        /
+                      </span>
+                    ) : null}
+                  </span>
+                ))}
+            </p>
+
+            <div className="mt-8 flex flex-wrap items-center gap-2.5">
+              <Link
+                href={`/comparar?colegio=${encodeURIComponent(s.slug)}`}
+                className="inline-flex items-center gap-2 rounded-full border border-menta px-4 py-2 text-[0.85rem] font-medium text-menta transition-colors duration-150 ease-suave hover:bg-menta hover:text-noche"
+              >
+                Comparar este colegio
+              </Link>
+              <Link
+                href={`/colegios?region=${encodeURIComponent(s.departamento)}&distrito=${encodeURIComponent(s.distrito)}&de=colegios`}
+                className="inline-flex items-center gap-2 rounded-full border border-noche-rule-2 px-4 py-2 text-[0.85rem] text-noche-ink-2 transition-colors duration-150 ease-suave hover:border-menta hover:text-menta"
+              >
+                Otros colegios de {s.distrito}
+              </Link>
+            </div>
+          </div>
+
+          {/* La cifra del año principal: el elemento más grande después del
+              nombre. La menta la marca como el dato que la página afirma. */}
+          <div className="lg:col-span-5">
+            <p className="meta-noche">Reportes registrados en {principal}</p>
+            <p className="cifra mt-4 text-[clamp(4rem,11vw,7rem)] text-noche-ink">
+              {nf(delPrincipal?.total ?? 0)}
+            </p>
+            <p className="mt-4 flex flex-wrap items-baseline gap-x-4 gap-y-1 text-[0.9rem] text-noche-ink-2">
+              <span className="tabular">último año completo</span>
               {delta != null && previo ? (
-                <span className="tabular text-ink-3">
+                <span className="tabular text-menta">
                   <span aria-hidden>{delta > 0 ? "↑" : delta < 0 ? "↓" : "="}</span>{" "}
                   {delta === 0
-                    ? `sin cambio respecto a ${previo}`
-                    : `${delta > 0 ? "+" : ""}${nf(delta)} respecto a ${previo}`}
+                    ? `sin cambio vs. ${previo}`
+                    : `${delta > 0 ? "+" : ""}${nf(delta)} vs. ${previo}`}
                 </span>
               ) : null}
             </p>
-            <p className="mt-2 text-[0.8rem] text-ink-3">
-              <span className="tabular">{nf(s.total)}</span> reportes en total desde {primero}
-              {s.servicios.length > 1 ? `, sumando sus ${nf(s.servicios.length)} niveles` : ""} ·
-              SíseVe
+            <p className="mt-2 font-mono text-[0.66rem] uppercase tracking-[0.1em] text-noche-ink-4">
+              <span className="tabular">{nf(s.total)}</span> en total desde {primero}
+              {s.servicios.length > 1 ? ` · ${nf(s.servicios.length)} niveles` : ""}
             </p>
+
+            {puesto ? (
+              <div className="mt-8 border-t border-noche-rule pt-6">
+                <p className="flex items-baseline gap-3">
+                  <span className="cifra text-cifra-l text-menta">#{nf(puesto.pos)}</span>
+                  <span className="text-[0.9rem] text-noche-ink-2">
+                    de {nf(puesto.universo)} colegios
+                  </span>
+                </p>
+                <p className="mt-2 font-mono text-[0.66rem] uppercase tracking-[0.1em] text-noche-ink-4">
+                  Reportes registrados · {principal} · todo el país
+                </p>
+                <Link
+                  href={`/rankings?anio=${principal}`}
+                  className="mt-3 inline-flex items-baseline gap-1.5 text-[0.85rem] font-medium text-menta hover:underline"
+                >
+                  Ver el ranking
+                  <span aria-hidden>→</span>
+                </Link>
+              </div>
+            ) : null}
           </div>
-
-          {puesto ? (
-            <div className="border-t border-rule pt-6">
-              <p className="meta">Posición en el ranking</p>
-              <p className="mt-2.5 flex items-baseline gap-2.5">
-                <span className="cifra text-cifra-l text-ink">#{nf(puesto.pos)}</span>
-                <span className="text-[0.92rem] text-ink-3">de {nf(puesto.universo)} colegios</span>
-              </p>
-              <p className="mt-2 text-[0.84rem] text-ink-2">
-                Reportes registrados · {principal} · todo el país
-              </p>
-              <p className="mt-2 max-w-[42ch] text-[0.78rem] leading-relaxed text-ink-3">
-                Es una posición dentro de este universo, no una calificación del colegio.
-                Con otro año o territorio, cambia.
-              </p>
-              <Link
-                href={`/rankings?anio=${principal}`}
-                className="mt-3 inline-flex items-baseline gap-1.5 text-[0.86rem] font-medium text-accent hover:underline"
-              >
-                Ver el ranking
-                <span aria-hidden>→</span>
-              </Link>
-            </div>
-          ) : null}
         </div>
-      </header>
 
-      {/* ── Contexto medible: todo secundario, todo con su año ─── */}
-      <section id="resumen" className="scroll-mt-24 py-10 sm:py-12">
-        <h2 className="sr-only">Otros datos del colegio</h2>
-        <MetricBand
-          metricas={[
-            {
-              label: `Reportes en ${meta.anio_parcial}`,
-              valor: nf(enCurso?.total ?? 0),
-              fuente: "SíseVe",
-              anio: `${meta.anio_parcial} · en curso`,
-              nota: `Hasta el ${meta.corte}. No comparable con un año completo.`,
-            },
-            {
-              label: "# Alumnos",
-              valor: s.matricula != null ? nf(s.matricula) : null,
-              unidad: "alumnos",
-              fuente: "Censo Educativo",
-              anio: s.anio_matricula,
-              nota:
-                s.matricula != null && s.servicios.length > 1
-                  ? `Suma de sus ${nf(s.servicios.length)} niveles.`
-                  : undefined,
-              ausente: s.servicios.some((x) => x.matricula)
-                ? "Algún nivel no está en el censo: no se puede sumar"
-                : "El censo educativo no trae este colegio",
-            },
-            {
-              label: "Pensión mensual",
-              valor: conPension?.pension != null ? `S/ ${nf(conPension.pension)}` : null,
-              fuente: "Identicole",
-              anio: conPension?.anio_pension,
-              nota:
-                conPension && s.servicios.length > 1 ? `Declarada para ${conPension.nivel.toLowerCase()}.` : undefined,
-              ausente: s.gestion?.startsWith("Públic")
-                ? "No aplica: es un colegio público"
-                : "Sin consultar todavía",
-            },
-            {
-              label: "Reportes por 1.000 alumnos",
-              valor: s.tasa_2024 != null ? dec(s.tasa_2024, 1) : null,
-              fuente: "SíseVe / Censo Educativo",
-              anio: s.tasa_2024 != null ? t : null,
-              nota: `Métrica secundaria. Reportes de ${t} ÷ alumnos de ${s.anio_matricula}.`,
-              ausente: !s.matricula_completa
-                ? "Falta el número de alumnos de algún nivel: la tasa saldría inflada"
-                : s.matricula == null
-                  ? "Sin denominador del mismo año"
-                  : `Menos de ${nf(meta.matricula_minima)} alumnos: no sería fiable`,
-            },
-          ]}
-        />
+        {/* Contexto medible: todo secundario, todo con su año. */}
+        <div className={shell}>
+          <h2 className="sr-only">Otros datos del colegio</h2>
+          <MetricBand
+            tono="noche"
+            metricas={[
+              {
+                label: `Reportes en ${meta.anio_parcial}`,
+                valor: nf(enCurso?.total ?? 0),
+                fuente: "SíseVe",
+                anio: `${meta.anio_parcial} · en curso`,
+                nota: `Hasta el ${meta.corte}. No comparable con un año completo.`,
+              },
+              {
+                label: "# Alumnos",
+                valor: s.matricula != null ? nf(s.matricula) : null,
+                unidad: "alumnos",
+                fuente: "Censo Educativo",
+                anio: s.anio_matricula,
+                nota:
+                  s.matricula != null && s.servicios.length > 1
+                    ? `Suma de sus ${nf(s.servicios.length)} niveles.`
+                    : undefined,
+                ausente: s.servicios.some((x) => x.matricula)
+                  ? "Algún nivel no está en el censo: no se puede sumar"
+                  : "El censo educativo no trae este colegio",
+              },
+              {
+                label: "Pensión mensual",
+                valor: conPension?.pension != null ? `S/ ${nf(conPension.pension)}` : null,
+                fuente: "Identicole",
+                anio: conPension?.anio_pension,
+                nota:
+                  conPension && s.servicios.length > 1
+                    ? `Declarada para ${conPension.nivel.toLowerCase()}.`
+                    : undefined,
+                ausente: s.gestion?.startsWith("Públic")
+                  ? "No aplica: es un colegio público"
+                  : "Sin consultar todavía",
+              },
+              {
+                label: "Reportes por 1.000 alumnos",
+                valor: s.tasa_2024 != null ? dec(s.tasa_2024, 1) : null,
+                fuente: "SíseVe / Censo",
+                anio: s.tasa_2024 != null ? t : null,
+                nota: `Métrica secundaria. Reportes de ${t} ÷ alumnos de ${s.anio_matricula}.`,
+                ausente: !s.matricula_completa
+                  ? "Falta el número de alumnos de algún nivel: la tasa saldría inflada"
+                  : s.matricula == null
+                    ? "Sin denominador del mismo año"
+                    : `Menos de ${nf(meta.matricula_minima)} alumnos: no sería fiable`,
+              },
+            ]}
+          />
+        </div>
       </section>
 
+      <div className={shell}>
       {/* ── Señal reciente ─────────────────────────────────────── */}
       <section id="senal" className={seccion}>
         <div className="grid gap-8 lg:grid-cols-12">
@@ -465,6 +465,7 @@ export default async function ColegioPage({
         >
           Colegios {s.gestion.toLowerCase()}s en {s.departamento} →
         </Link>
+      </div>
       </div>
     </article>
   );

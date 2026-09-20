@@ -122,7 +122,8 @@ export function CommandPalette() {
         type="button"
         onClick={() => setAbierto(true)}
         onMouseEnter={pedir}
-        className="flex items-center gap-2 rounded-lg border border-rule bg-surface px-3 py-1.5 text-[0.82rem] text-ink-3 transition-colors hover:border-accent hover:text-ink-2"
+        // Vive en la barra de noche: se estiliza contra ese fondo, no contra el papel.
+        className="flex items-center gap-2 rounded-full border border-noche-rule-2 px-3.5 py-1.5 text-[0.8rem] text-noche-ink-3 transition-colors duration-150 ease-suave hover:border-menta hover:text-menta"
         aria-label="Buscar un colegio"
       >
         <svg width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden>
@@ -130,7 +131,7 @@ export function CommandPalette() {
           <path d="M10.5 10.5L14 14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
         </svg>
         <span>Buscar colegio</span>
-        <kbd className="hidden rounded border border-rule px-1.5 py-0.5 font-mono text-[0.65rem] text-ink-3 sm:inline">
+        <kbd className="hidden font-mono text-[0.68rem] tracking-[0.08em] text-noche-ink-4 sm:inline">
           ⌘K
         </kbd>
       </button>

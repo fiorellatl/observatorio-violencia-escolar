@@ -4,7 +4,7 @@ import { DataSourceBadge } from "@/components/DataSourceBadge";
 import { MethodologyNote } from "@/components/MethodologyNote";
 import { ReportTrend } from "@/components/ReportTrend";
 import { SearchBox } from "@/components/SearchBox";
-import { getMeta, getNational } from "@/lib/data/provider";
+import { getInstitutionCount, getMeta, getNational } from "@/lib/data/provider";
 import { nf } from "@/lib/format";
 import { enlace, h2, panel, shell } from "@/lib/ui";
 
@@ -15,6 +15,9 @@ export const metadata: Metadata = {
 export default function Home() {
   const meta = getMeta();
   const nacional = getNational();
+  // La unidad pública es la institución, no el servicio educativo: la portada
+  // tiene que contar lo mismo que cuentan el buscador y el ranking.
+  const colegios = getInstitutionCount();
 
   const comparables = nacional.filter((n) => !n.pandemia && n.anio !== meta.anio_parcial);
   const ultimo = comparables[comparables.length - 1];
@@ -36,7 +39,7 @@ export default function Home() {
       anio: ultimo?.anio,
     },
     {
-      valor: nf(meta.colegios),
+      valor: nf(colegios),
       titulo: "colegios con al menos un reporte",
       detalle: `entre ${meta.anio_min} y ${meta.anio_max}`,
       fuente: "SíseVe",
@@ -53,67 +56,93 @@ export default function Home() {
 
   return (
     <>
-      {/* ── Portada ─────────────────────────────────────────────── */}
-      <section className={`${shell} pb-16 pt-14 sm:pb-24 sm:pt-24`}>
-        <div className="grid gap-12 lg:grid-cols-12 lg:gap-10">
-          <div className="lg:col-span-7">
-            <p className="meta surgir">Observatorio de datos públicos · Perú</p>
-            <h1 className="surgir mt-5 max-w-[15ch] font-display text-display-xxl font-medium text-balance">
-              ¿Qué se sabe de la violencia en los colegios del Perú?
-            </h1>
-            <p className="surgir mt-7 max-w-prose text-cuerpo leading-relaxed text-ink-2">
-              El Estado registra cada alerta de violencia escolar en un sistema
-              llamado SíseVe. Aquí puedes consultar esos registros colegio por
-              colegio, cruzarlos con el número de alumnos y el contexto de cada
-              institución, y ver con qué año y qué fuente viene cada dato.
-            </p>
+      {/* ══ PORTADA, SOBRE LA NOCHE ═══════════════════════
+          La pregunta ocupa la pantalla entera y el buscador va inmediatamente
+          debajo, con el filete de menta: entrar aquí es buscar un colegio.
+          Las tres cifras cierran el bloque como una franja divida por filetes,
+          sin tarjetas. */}
+      <section className="noche">
+        <div className={`${shell} pb-14 pt-16 sm:pb-16 sm:pt-24`}>
+          <p className="meta-noche surgir">
+            Datos públicos SíseVe · {meta.anio_min}–{meta.anio_max}
+          </p>
 
-            <div className="surgir mt-9 max-w-xl">
-              <SearchBox placeholder="Busca un colegio, distrito o código modular" />
-              <p className="mt-2.5 text-[0.8rem] text-ink-3">
-                {nf(meta.colegios)} colegios con reportes registrados. También puedes
-                abrir el buscador con{" "}
-                <kbd className="rounded border border-rule px-1.5 py-0.5 font-mono text-[0.72rem]">
-                  ⌘K
-                </kbd>
-                .
+          <h1 className="titular surgir mt-6 max-w-[12ch] text-display-xxl text-noche-ink">
+            ¿Qué sabemos de cada colegio
+            <span className="text-menta">?</span>
+          </h1>
+
+          <p className="surgir mt-8 max-w-[52ch] text-[1.08rem] leading-relaxed text-noche-ink-2">
+            {nf(meta.reportes)} reportes registrados en {nf(colegios)} colegios. Un
+            reporte es una alerta registrada en SíseVe, no un caso confirmado.
+          </p>
+
+          <div className="surgir mt-12">
+            <SearchBox
+              tono="noche"
+              placeholder="nombre del colegio, distrito o código modular"
+            />
+          </div>
+        </div>
+
+        {/* Tres cifras, sin tarjetas: las separan filetes. */}
+        <dl className={`${shell} grid border-t border-noche-rule sm:grid-cols-3`}>
+          {cifras.map((c, i) => (
+            <div
+              key={c.titulo}
+              className={`border-noche-rule px-1 py-8 sm:px-7 sm:py-9 ${
+                i < 2 ? "border-b sm:border-b-0 sm:border-r" : ""
+              } ${i === 0 ? "sm:pl-0" : ""}`}
+            >
+              <dd className="cifra text-[clamp(2.6rem,5.5vw,3.6rem)] text-noche-ink">
+                {c.valor}
+              </dd>
+              <dt className="mt-3 text-[0.95rem] text-noche-ink-2">{c.titulo}</dt>
+              <p className="mt-1.5 font-mono text-[0.62rem] uppercase tracking-[0.1em] text-noche-ink-4">
+                {c.detalle}
               </p>
             </div>
+          ))}
+        </dl>
 
-            <p className="mt-8">
-              <Link
-                href="/datos"
-                className="group inline-flex items-baseline gap-2 font-display text-[1.15rem] font-medium text-accent"
+        {/* Las dos puertas de entrada, a sangre. */}
+        <div className="grid border-t border-noche-rule sm:grid-cols-2">
+          {[
+            {
+              n: "01",
+              href: "/colegios",
+              t: "Quiero buscar un colegio",
+              d: "Ficha completa: reportes, número de alumnos, evolución y contexto.",
+            },
+            {
+              n: "02",
+              href: "/datos",
+              t: "Quiero explorar los datos",
+              d: "Qué se registra, cómo ha cambiado y qué no puede leerse ahí.",
+            },
+          ].map((x, i) => (
+            <Link
+              key={x.href}
+              href={x.href}
+              className={`group flex flex-col gap-3 px-5 py-10 transition-colors duration-150 ease-suave hover:bg-noche-2 sm:px-10 sm:py-14 ${
+                i === 0 ? "border-b border-noche-rule sm:border-b-0 sm:border-r" : ""
+              }`}
+            >
+              <span className="meta-noche">{x.n}</span>
+              <span className="text-[clamp(1.5rem,3vw,2.15rem)] font-bold leading-tight tracking-[-0.04em] text-noche-ink">
+                {x.t}
+              </span>
+              <span className="max-w-[38ch] text-[0.92rem] leading-relaxed text-noche-ink-3">
+                {x.d}
+              </span>
+              <span
+                aria-hidden
+                className="mt-1 text-menta transition-transform duration-150 ease-suave group-hover:translate-x-1"
               >
-                O explora los datos del país
-                <span
-                  aria-hidden
-                  className="transition-transform duration-150 ease-suave group-hover:translate-x-1"
-                >
-                  →
-                </span>
-              </Link>
-            </p>
-          </div>
-
-          {/* La serie no es adorno: es el dato que enmarca todo lo demás. */}
-          <div className="lg:col-span-5 lg:pt-16">
-            <div className={`${panel} p-5`}>
-              <div className="flex items-baseline justify-between gap-3">
-                <h2 className="font-display text-[1.05rem] font-medium">
-                  Reportes registrados por año
-                </h2>
-                <DataSourceBadge fuente="SíseVe" anio={`${meta.anio_min}–${meta.anio_max}`} />
-              </div>
-              <div className="mt-5">
-                <ReportTrend data={serie} alto={210} />
-              </div>
-              <p className="mt-3 text-[0.78rem] leading-snug text-ink-3">
-                La franja marca {meta.anios_pandemia.join(" y ")}, con los colegios
-                cerrados. {meta.anio_parcial} llega solo hasta agosto.
-              </p>
-            </div>
-          </div>
+                →
+              </span>
+            </Link>
+          ))}
         </div>
       </section>
 
