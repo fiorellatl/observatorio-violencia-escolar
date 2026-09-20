@@ -286,7 +286,10 @@ export default function DatosPage() {
           <div className={panelPad}>
             <div className="flex flex-wrap items-baseline justify-between gap-2">
               <h3 className={h3}>Número de alumnos y tasa de reportes</h3>
-              <DataSourceBadge fuente="SíseVe / ESCALE" anio={t} />
+              <DataSourceBadge
+                fuente="SíseVe / ESCALE"
+                anio={`rep. ${t} · alum. ${meta.fuentes.matricula?.anio ?? "—"}`}
+              />
             </div>
             <p className={entradilla}>
               Cada punto representa un colegio. Comparamos su número de alumnos con la cantidad de
@@ -296,12 +299,16 @@ export default function DatosPage() {
             {cross.length > 0 ? (
               <>
                 <div className="mt-6">
-                  <ScatterPanel anio={t} matriculaMinima={meta.matricula_minima} />
+                  <ScatterPanel
+                    anio={t}
+                    anioPadron={meta.fuentes.matricula?.anio ?? "—"}
+                    matriculaMinima={meta.matricula_minima}
+                  />
                 </div>
                 <FichaTecnica
                   n={`${nf(cross.length)} colegios`}
                   anio={t}
-                  variables="# alumnos · reportes"
+                  variables={`reportes ${t} · alumnos ${meta.fuentes.matricula?.anio}`}
                   cobertura="Lima Metropolitana"
                 />
                 <div className="mt-4 space-y-3">

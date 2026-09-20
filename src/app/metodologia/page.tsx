@@ -78,7 +78,7 @@ export default function MetodologiaPage() {
           calculamos:
         </p>
         <p className="tabular rounded-lg border border-rule bg-surface px-4 py-3 font-mono text-[0.9rem] text-ink">
-          reportes ÷ # alumnos × 1,000
+          reportes de {meta.anio_transversal} ÷ alumnos de {meta.fuentes.matricula?.anio} × 1,000
         </p>
         <p>
           Donde todavía no tenemos el número de alumnos, mostramos el conteo y decimos que falta

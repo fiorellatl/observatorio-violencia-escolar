@@ -26,10 +26,14 @@ import type { RankingIndex, RankingRow } from "@/lib/types";
  *      "subió 1.062 posiciones" es cierto y no significa nada.
  *
  * LÍMITE DEL DATO QUE LA INTERFAZ RESPETA
- * Hay un solo padrón con el número de alumnos. La tasa se muestra ÚNICAMENTE
- * en el año que le corresponde a ese padrón; en cualquier otro año dice "sin
- * dato". Dividir los reportes de 2022 por los alumnos de 2026 daría un número
+ * Hay un solo padrón con el número de alumnos, y NO es del mismo año que los
+ * reportes del corte transversal. La tasa se ofrece en un único año y, allí
+ * donde aparece, declara los dos años de los que está hecha. Extenderla al
+ * resto de años sería dividir reportes de 2022 por alumnos de 2026: un número
  * con aspecto de tasa que no describe a ninguna población real.
+ *
+ * Que los dos años no coincidan sigue siendo una limitación abierta, no una
+ * decisión: está documentada en pantalla en vez de disimulada.
  */
 
 type Metrica = "reportes" | "tasa";
@@ -374,7 +378,7 @@ export function RankingExplorer() {
             ["reportes", "Más reportes registrados",
              "Ordena por cantidad de reportes registrados. El número absoluto puede estar relacionado con el tamaño del colegio."],
             ["tasa", "Mayor tasa de reportes",
-             `Permite comparar colegios de distinto tamaño cuando conocemos su número de alumnos. Solo ${idx.anio_tasa}, y solo con al menos ${nf(idx.matricula_minima)} alumnos.`],
+             `Divide los reportes de ${idx.anio_tasa} entre los alumnos de ${idx.anio_padron} —no hay padrón de ${idx.anio_tasa}—. Solo con al menos ${nf(idx.matricula_minima)} alumnos.`],
           ] as [Metrica, string, string][]
         ).map(([v, t, desc]) => (
           <button
@@ -589,13 +593,13 @@ export function RankingExplorer() {
                         <div className="w-[5rem] text-right">
                           <dd
                             className="tabular text-[1.05rem] text-ink-2"
-                            title="Permite comparar colegios de distintos tamaños. No representa personas afectadas ni casos únicos."
+                            title={`Reportes de ${idx.anio_tasa} divididos entre los alumnos de ${idx.anio_padron}: los dos años no coinciden porque solo existe un padrón. Permite comparar colegios de distintos tamaños. No representa personas afectadas ni casos únicos.`}
                           >
                             {p.tasa != null ? dec(p.tasa, 1) : "—"}
                           </dd>
                           <dt className={`${clsMeta} mt-1 block leading-tight`}>
                             {p.tasa != null
-                              ? "reportes / 1.000 alumnos"
+                              ? `rep. ${idx.anio_tasa} / 1.000 alum. ${idx.anio_padron}`
                               : hayTasa
                                 ? "sin # alumnos"
                                 : "sin dato"}
@@ -655,7 +659,7 @@ export function RankingExplorer() {
         Reportes: SíseVe · {anio}
         {esParcial ? " (hasta agosto)" : ""}.{" "}
         {hayTasa
-          ? `Número de alumnos: ESCALE · ${idx.anio_tasa}.`
+          ? `Número de alumnos: ESCALE · ${idx.anio_padron}. La tasa divide reportes de ${idx.anio_tasa} entre alumnos de ${idx.anio_padron}: son años distintos porque no existe un padrón de ${idx.anio_tasa}.`
           : `Sin tasa para ${anio}: el padrón con el número de alumnos corresponde a ${idx.anio_tasa}.`}{" "}
         La trayectoria muestra {idx.anios[0]}–{idx.anios[idx.anios.length - 1]}; 2020 y 2021
         quedan fuera porque los colegios estuvieron cerrados.

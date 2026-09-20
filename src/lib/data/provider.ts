@@ -209,6 +209,7 @@ export function getRankingIndex(): RankingIndex {
   return {
     anios,
     anio_tasa: meta.anio_transversal,
+    anio_padron: meta.fuentes.matricula?.anio ?? "",
     anio_parcial: meta.anio_parcial,
     matricula_minima: meta.matricula_minima,
     dic,

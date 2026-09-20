@@ -190,13 +190,16 @@ export default async function ColegioPage({
               ausente: "El padrón de esta zona aún no está integrado",
             },
             {
-              label: "Reportes por 1.000 estudiantes",
+              label: "Reportes por 1.000 alumnos",
               valor: s.tasa_2024 != null ? dec(s.tasa_2024, 1) : null,
               fuente: "SíseVe / ESCALE",
-              anio: t,
+              // Los dos años van juntos porque NO coinciden: los reportes son
+              // del año transversal y el padrón es el único que existe. Poner
+              // solo uno de los dos escondería de qué está hecho el número.
+              anio: `rep. ${t} · alum. ${s.anio_matricula ?? "—"}`,
               nota:
                 s.tasa_2024 != null
-                  ? "Permite comparar colegios de distinto tamaño"
+                  ? `Reportes de ${t} divididos entre los alumnos de ${s.anio_matricula}. Permite comparar colegios de distinto tamaño.`
                   : undefined,
               ausente:
                 s.matricula == null

@@ -65,10 +65,13 @@ function percentil(orden: number[], p: number): number {
 
 export function ScatterPanel({
   anio,
+  anioPadron,
   matriculaMinima,
   alto = 400,
 }: {
   anio: string;
+  /** Año del padrón que aporta el denominador. No coincide con `anio`. */
+  anioPadron: string;
   matriculaMinima: number;
   alto?: number;
 }) {
@@ -228,6 +231,10 @@ export function ScatterPanel({
             No significa que 8 de cada 1.000 estudiantes hayan sufrido violencia, ni que
             sean 8 personas o 8 casos distintos: son reportes registrados en SíseVe.
           </p>
+          <p className="mt-2.5 text-[0.84rem] leading-relaxed text-ink-3">
+            Los dos años no coinciden: son reportes de {anio} divididos entre los alumnos
+            de {anioPadron}, porque no existe un padrón de {anio}.
+          </p>
         </div>
       </div>
 
@@ -378,7 +385,12 @@ export function ScatterPanel({
                           </dd>
                         </div>
                         <div className="flex items-baseline justify-between gap-3">
-                          <dt className="text-[0.8rem] text-ink-2">Tasa</dt>
+                          <dt className="text-[0.8rem] text-ink-2">
+                            Tasa
+                            <span className="ml-1 text-[0.68rem] text-ink-3">
+                              rep. {anio} / alum. {anioPadron}
+                            </span>
+                          </dt>
                           <dd className="tabular text-[0.88rem] font-medium">
                             {dec(p.tasa, 1)}{" "}
                             <span className="text-[0.74rem] font-normal text-ink-3">

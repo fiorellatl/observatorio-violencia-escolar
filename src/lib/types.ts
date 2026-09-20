@@ -138,8 +138,11 @@ export type RankingRow = [
 export interface RankingIndex {
   /** Años ofrecidos. Excluye la pandemia: no es comparable. */
   anios: string[];
-  /** Único año con tasa. Solo hay un padrón de matrícula. */
+  /** Año de los REPORTES con los que se calcula la tasa. */
   anio_tasa: string;
+  /** Año del PADRÓN que aporta el denominador. Puede no coincidir, y si no
+      coincide la interfaz tiene que decirlo. */
+  anio_padron: string;
   anio_parcial: string;
   matricula_minima: number;
   dic: { r: string[]; p: string[]; d: string[]; g: string[]; n: string[] };
