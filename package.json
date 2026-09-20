@@ -5,10 +5,12 @@
   "description": "Herramienta pública para explorar qué información existe sobre violencia escolar en los colegios del Perú",
   "scripts": {
     "dev": "next dev",
+    "prebuild": "node scripts/validate-public.mjs",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "validate": "node scripts/validate-public.mjs"
   },
   "dependencies": {
     "next": "^15.5.24",

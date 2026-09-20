@@ -29,7 +29,6 @@ import openpyxl
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 OUT = ROOT / "data" / "public"
-PADRON = ROOT / "data" / "processed" / "padron_lima_dist.json"
 
 # columnas que jamas se leen de la fuente
 PROHIBIDAS = {
@@ -46,6 +45,14 @@ ANIO_TRANSVERSAL = "2024"          # unico anio con reportes + matricula + pensi
 # la fuente trae codigos modulares con 1-4 alumnos registrados que producen
 # tasas de 1,000 a 4,500 por mil. No son colegios violentos: son denominadores rotos.
 MATRICULA_MINIMA = 100
+# Orden pedagogico, para que la institucion se presente de menor a mayor.
+ORDEN_NIVEL = {
+    "Inicial no escolarizado": 0, "Inicial - Cuna": 1, "Inicial - Cuna-Jardín": 2,
+    "Inicial - Jardín": 3, "Primaria": 4, "Secundaria": 5,
+    "Básica Especial - Inicial": 6, "Básica Especial - Primaria": 7,
+    "Básica Alternativa - Inicial e Intermedio": 8,
+    "Básica Alternativa - Avanzado": 9, "CETPRO": 10,
+}
 VIOLENCIA = {"Psicológica": "psicologica", "Física": "fisica", "Sexual": "sexual"}
 BULLYING = {"Acoso escolar": "bullying", "Ciber acoso": "ciberacoso"}
 
@@ -71,15 +78,40 @@ def titulo(s: str) -> str:
     return " ".join(out)
 
 
-def cargar_matricula():
-    """codigo modular -> matricula y docentes, del padron de ESCALE (solo Lima)."""
-    if not PADRON.exists():
-        return {}
-    # el padron descargado no trae estadistica; se completa en una pasada aparte.
-    est = ROOT / "data" / "processed" / "escale_estadistica.json"
-    if not est.exists():
-        return {}
-    return {k: v for k, v in json.loads(est.read_text(encoding="utf-8")).items()}
+def cargar_padron():
+    """
+    Padron nacional de ESCALE: codigo modular -> servicio educativo.
+
+    El padron identifica un servicio por `codMod + anexo`; SiseVe solo trae
+    CODIGO_MODULAR, sin anexo. Cuando un codigo modular corresponde a varios
+    servicios no hay forma de saber a cual pertenece cada reporte, asi que se
+    elige uno (activo, anexo 0, con matricula) y el resultado queda marcado con
+    `anexo_ambiguo`. Marcarlo importa: sin la marca, una atribucion dudosa se
+    leeria como un dato limpio.
+    """
+    f = ROOT / "data" / "processed" / "padron_nacional.json"
+    if not f.exists():
+        return {}, 0
+
+    porcm = defaultdict(list)
+    for s in json.loads(f.read_text(encoding="utf-8")).values():
+        porcm[s["cm"]].append(s)
+
+    def prioridad(s):
+        return (s.get("estado") != "Activo",
+                s.get("anexo") != "0",
+                not s.get("matricula"))
+
+    out, ambiguos = {}, 0
+    for cm, servicios in porcm.items():
+        servicios.sort(key=prioridad)
+        elegido = dict(servicios[0])
+        if len(servicios) > 1:
+            elegido["anexo_ambiguo"] = True
+            elegido["anexos"] = sorted(s["anexo"] for s in servicios)
+            ambiguos += 1
+        out[cm] = elegido
+    return out, ambiguos
 
 
 def cargar_identicole():
@@ -118,6 +150,74 @@ def cargar_identicole():
             "pension_2025": d.get("pension_2025"),
             "anio_pension": anios.get("siagie"),
             "contexto": ctx,
+        }
+    return out
+
+
+def construir_instituciones(fichas):
+    """
+    Agrupa servicios educativos en instituciones por `codinst`.
+
+    `codinst` es el identificador oficial de institucion educativa del padron.
+    No se usa `codlocal` (agrupa edificios: un CEBA y el colegio regular que
+    comparten local son instituciones distintas) ni coincidencia de nombres.
+    Un servicio sin `codinst` se queda solo: preferimos no agrupar antes que
+    agrupar mal.
+
+    REGLAS DE AGREGACION
+      reportes    se suman; son eventos disjuntos
+      matricula   se suma; cada nivel tiene una poblacion distinta
+      tasa        se recalcula desde numerador y denominador sumados,
+                  nunca promediando tasas
+      tasa        SOLO si todos los servicios tienen denominador valido: si
+                  falta uno, el numerador incluiria alumnos que el denominador
+                  no cuenta y la tasa saldria inflada
+      pension     NO se suma; se expone por servicio
+      contexto    NO se duplica; vive en el servicio
+    """
+    grupos = defaultdict(list)
+    for f in fichas.values():
+        if f.get("codinst"):
+            grupos[f["codinst"]].append(f)
+
+    out = {}
+    for ci, servicios in grupos.items():
+        servicios.sort(key=lambda s: ORDEN_NIVEL.get(s["nivel"], 99))
+        cab = servicios[0]
+
+        anios = defaultdict(lambda: defaultdict(int))
+        for s in servicios:
+            for anio, c in s["anios"].items():
+                for k, v in c.items():
+                    anios[anio][k] += v
+
+        mats = [s.get("matricula") for s in servicios]
+        completa = all(m for m in mats)
+        matricula = sum(mats) if completa else None
+
+        tasa = None
+        if matricula and matricula >= MATRICULA_MINIMA:
+            tasa = round(anios.get(ANIO_TRANSVERSAL, {}).get("total", 0)
+                         / matricula * 1000, 2)
+
+        out[ci] = {
+            "codinst": ci,
+            "nombre": cab["nombre"],
+            "distrito": cab["distrito"],
+            "provincia": cab["provincia"],
+            "departamento": cab["departamento"],
+            "gestion": cab["gestion"],
+            "dre": cab["dre"],
+            "ugel": cab["ugel"],
+            "area": cab.get("area"),
+            "niveles": [s["nivel"] for s in servicios],
+            "servicios": [s["slug"] for s in servicios],
+            "total": sum(s["total"] for s in servicios),
+            "anios": {a: dict(c) for a, c in sorted(anios.items())},
+            "matricula": matricula,
+            "matricula_completa": completa,
+            "anio_matricula": cab.get("anio_matricula"),
+            "tasa_2024": tasa,
         }
     return out
 
@@ -190,9 +290,11 @@ def main():
     for (cm, anio), c in agg.items():
         por_colegio[cm][anio] = dict(c)
 
-    # ---- matricula, si esta disponible ----
-    mat = cargar_matricula()
-    print(f"{len(mat):,} colegios con matricula de ESCALE")
+    # ---- padron: matricula, codinst, area, coordenadas ----
+    mat, ambiguos = cargar_padron()
+    con_mat = sum(1 for v in mat.values() if v.get("matricula"))
+    print(f"{len(mat):,} servicios en el padron · {con_mat:,} con matricula · "
+          f"{ambiguos:,} codigos modulares con mas de un anexo")
     ident = cargar_identicole()
     con_pension = sum(1 for v in ident.values() if v["pension_2025"] or v["pension_2024"])
     print(f"{len(ident):,} fichas de Identicole · {con_pension:,} con pension")
@@ -206,9 +308,9 @@ def main():
         m = mat.get(cm)
 
         tasa = None
-        if m and (m.get("talumno") or 0) >= MATRICULA_MINIMA:
+        if m and (m.get("matricula") or 0) >= MATRICULA_MINIMA:
             r24 = anios.get(ANIO_TRANSVERSAL, {}).get("total", 0)
-            tasa = round(r24 / m["talumno"] * 1000, 2)
+            tasa = round(r24 / m["matricula"] * 1000, 2)
 
         indice.append({
             "s": slug, "n": e["nombre"], "cm": cm, "d": e["distrito"],
@@ -222,11 +324,19 @@ def main():
             "anio_pension": ic.get("anio_pension") if ic.get("pension_2025")
                             else ("2024" if ic.get("pension_2024") else None),
             "contexto": ic.get("contexto") or {},
-            "matricula": (m or {}).get("talumno"),
-            "docentes": (m or {}).get("tdocente"),
-            "secciones": (m or {}).get("tseccion"),
-            "anio_matricula": (m or {}).get("anio"),
+            "matricula": (m or {}).get("matricula"),
+            "docentes": (m or {}).get("docentes"),
+            "secciones": (m or {}).get("secciones"),
+            "anio_matricula": (m or {}).get("anio_estadistica"),
             "tasa_2024": tasa,
+            # --- identidad del servicio y de la institucion ---
+            "anexo": (m or {}).get("anexo"),
+            "anexo_ambiguo": (m or {}).get("anexo_ambiguo", False),
+            "codinst": (m or {}).get("codinst"),
+            "codlocal": (m or {}).get("codlocal"),
+            "area": (m or {}).get("area"),
+            "lat": (m or {}).get("lat"),
+            "lon": (m or {}).get("lon"),
         }
 
     indice.sort(key=lambda x: -x["t"])
@@ -243,6 +353,11 @@ def main():
         "tasa": f["tasa_2024"], "pension": f.get("pension"),
     } for f in fichas.values() if f["matricula"] and f["tasa_2024"] is not None]
 
+    # ---- diccionario institucional ----
+    instituciones = construir_instituciones(fichas)
+    multi = [i for i in instituciones.values() if len(i["servicios"]) > 1]
+    print(f"\n{len(instituciones):,} instituciones · {len(multi):,} con mas de un nivel")
+
     meta = {
         "corte": "2026-08-31",
         "generado": __import__("datetime").date.today().isoformat(),
@@ -258,6 +373,8 @@ def main():
                          "via": "Solicitud de acceso a la información pública"},
             "matricula": {"nombre": "Padrón de IIEE – ESCALE", "anio": "2026",
                           "via": "API pública escale.minedu.gob.pe/padron/rest"},
+            "institucion": {"nombre": "Padrón de IIEE – ESCALE (codinst)", "anio": "2026",
+                            "via": "API pública escale.minedu.gob.pe/padron/rest"},
             "contexto": {"nombre": "Identicole – MINEDU", "anio": "2021–2026",
                          "via": "Ficha pública por código modular"},
         },
@@ -280,7 +397,7 @@ def main():
 
     for nombre, obj in [("meta", meta), ("schools_index", indice),
                         ("schools_detail", fichas), ("national", serie),
-                        ("cross_2024", cross)]:
+                        ("cross_2024", cross), ("institutions", instituciones)]:
         p = OUT / f"{nombre}.json"
         p.write_text(json.dumps(obj, ensure_ascii=False, separators=(",", ":")),
                      encoding="utf-8")
