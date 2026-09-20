@@ -9,7 +9,7 @@ import { entradilla, panelPad, panelEnlace, h3 } from "@/lib/ui";
 export const metadata: Metadata = {
   title: "Comparar colegios",
   description:
-    "Compara hasta tres colegios por reportes registrados, matrícula, tasa por 1,000 estudiantes y contexto institucional.",
+    "Compara hasta tres colegios por reportes registrados, nútrícula, tasa por 1,000 estudiantes y contexto institucional.",
   alternates: { canonical: "/comparar" },
 };
 
@@ -47,7 +47,7 @@ export default function CompararPage() {
           </p>
           <p className={entradilla}>
             Comparar exige algo que todavía no está terminado: un denominador para cada
-            colegio. Sin matrícula no hay tasa, y sin tasa comparar dos colegios de tamaños
+            colegio. Sin el número de alumnos no hay tasa, y sin tasa comparar dos colegios de tamaños
             distintos por su número de reportes diría más sobre cuántos estudiantes tienen
             que sobre cualquier otra cosa.
           </p>
@@ -60,7 +60,7 @@ export default function CompararPage() {
             </div>
             <div>
               <dt className="font-mono text-[0.68rem] uppercase tracking-wider text-ink-3">
-                Con matrícula conocida
+                Con # alumnos conocido
               </dt>
               <dd className="tabular mt-1 text-[1.05rem] font-medium">
                 Lima Metropolitana

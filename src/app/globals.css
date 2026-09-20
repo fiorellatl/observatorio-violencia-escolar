@@ -35,13 +35,59 @@
   --accent-2: #14503f;
   --accent-soft: #e4efeb;
 
-  /* Categóricos. Identifican categorías; no valoran.
-     Validados para deuteranopía y protanopía (ΔE OKLab ≥ 8). */
-  --data-1: #2f6fb8;
-  --data-2: #d9762f;
-  --data-3: #3f8f6e;
-  --data-4: #8a6bb1;
-  --data-5: #a85b6d;
+  /* ── COLOR DE DATOS ───────────────────────────────────────
+     Separado de la interfaz a propósito: el acento, los grises y los
+     filetes pueden cambiar sin tocar el significado de un gráfico.
+     Los siete tonos se separan en matiz Y en luminosidad, para que
+     sigan distinguiéndose en gris y bajo daltonismo. Ninguno es rojo:
+     el color identifica categorías, no las califica. */
+  --viz-blue: #2a5f9e;
+  --viz-blue-soft: #e3ecf6;
+  --viz-blue-strong: #1d4878;
+
+  --viz-teal: #18808a;
+  --viz-teal-soft: #ddeff0;
+  --viz-teal-strong: #10626a;
+
+  --viz-amber: #b07d14;
+  --viz-amber-soft: #f6eeda;
+  --viz-amber-strong: #8a610e;
+
+  --viz-coral: #c05a3e;
+  --viz-coral-soft: #f8e7e1;
+  --viz-coral-strong: #9a442d;
+
+  --viz-violet: #6b4e96;
+  --viz-violet-soft: #ece7f4;
+  --viz-violet-strong: #523a75;
+
+  --viz-green: #46855a;
+  --viz-green-soft: #e4f0e7;
+  --viz-green-strong: #346543;
+
+  --viz-slate: #63707c;
+  --viz-slate-soft: #e9ecee;
+  --viz-slate-strong: #49545e;
+
+  /* Elemento fuera del filtro: presente como contexto, sin competir. */
+  --viz-mute: #c9cdd1;
+
+  /* Escala secuencial de un solo matiz, para variables continuas.
+     No existe escala divergente: ninguna variable tiene un centro con
+     significado que la justifique. */
+  --viz-seq-1: #dbe6f2;
+  --viz-seq-2: #a9c3de;
+  --viz-seq-3: #6e97c4;
+  --viz-seq-4: #3f6fa6;
+  --viz-seq-5: #234b78;
+
+  /* Alias heredados. Se conservan para no romper nada que aún los use;
+     lo nuevo entra por --viz-*. */
+  --data-1: var(--viz-blue);
+  --data-2: var(--viz-coral);
+  --data-3: var(--viz-teal);
+  --data-4: var(--viz-violet);
+  --data-5: var(--viz-amber);
 
   /* Estados. `warn` avisa de un límite del dato, nunca de un colegio. */
   --warn: #9a6516;
@@ -85,11 +131,38 @@
     --accent: #4fae94;
     --accent-2: #6cc4ac;
     --accent-soft: #14302a;
-    --data-1: #4a8fd4;
-    --data-2: #e0873f;
-    --data-3: #4fa585;
-    --data-4: #9d80c4;
-    --data-5: #bd7285;
+    --viz-blue: #5b95d6;
+    --viz-blue-soft: #16273a;
+    --viz-blue-strong: #7fb0e3;
+    --viz-teal: #3aa8b2;
+    --viz-teal-soft: #0f2a2d;
+    --viz-teal-strong: #5cc2cb;
+    --viz-amber: #d3a23f;
+    --viz-amber-soft: #2e2512;
+    --viz-amber-strong: #e5ba62;
+    --viz-coral: #d97e63;
+    --viz-coral-soft: #331d16;
+    --viz-coral-strong: #e89b83;
+    --viz-violet: #9b81c9;
+    --viz-violet-soft: #221a33;
+    --viz-violet-strong: #b7a1dc;
+    --viz-green: #6cae7f;
+    --viz-green-soft: #16291b;
+    --viz-green-strong: #8bc79c;
+    --viz-slate: #8c99a5;
+    --viz-slate-soft: #1e2429;
+    --viz-slate-strong: #a8b3bd;
+    --viz-mute: #3a4046;
+    --viz-seq-1: #1c2c3e;
+    --viz-seq-2: #2c4c6e;
+    --viz-seq-3: #4372a0;
+    --viz-seq-4: #6b9acb;
+    --viz-seq-5: #9dc1e4;
+    --data-1: var(--viz-blue);
+    --data-2: var(--viz-coral);
+    --data-3: var(--viz-teal);
+    --data-4: var(--viz-violet);
+    --data-5: var(--viz-amber);
     --warn: #c99a4c;
     --warn-soft: #2a2317;
     color-scheme: dark;

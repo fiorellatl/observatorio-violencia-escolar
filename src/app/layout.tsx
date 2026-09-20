@@ -35,7 +35,7 @@ export const metadata: Metadata = {
     template: "%s — Observatorio Escolar",
   },
   description:
-    "Explora los reportes registrados en SíseVe y relaciónalos con información pública de matrícula, características del colegio y contexto educativo.",
+    "Explora los reportes registrados en SíseVe y relaciónalos con información pública del número de alumnos, características del colegio y contexto educativo.",
   openGraph: {
     type: "website",
     locale: "es_PE",

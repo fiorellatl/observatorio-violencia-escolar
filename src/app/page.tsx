@@ -64,7 +64,7 @@ export default function Home() {
             <p className="surgir mt-7 max-w-prose text-cuerpo leading-relaxed text-ink-2">
               El Estado registra cada alerta de violencia escolar en un sistema
               llamado SíseVe. Aquí puedes consultar esos registros colegio por
-              colegio, cruzarlos con la matrícula y el contexto de cada
+              colegio, cruzarlos con el número de alumnos y el contexto de cada
               institución, y ver con qué año y qué fuente viene cada dato.
             </p>
 
@@ -217,7 +217,7 @@ export default function Home() {
               </p>
               <p className="mt-3 max-w-prose text-cuerpo-s leading-relaxed text-ink-2">
                 Busca por nombre, distrito o código modular. Cada ficha muestra la
-                trayectoria de reportes, la matrícula cuando la conocemos y el contexto
+                trayectoria de reportes, el número de alumnos cuando lo conocemos y el contexto
                 que declara la institución, con el año de cada fuente.
               </p>
               <span className="mt-6 inline-flex items-baseline gap-2 text-[0.9rem] font-medium text-accent">

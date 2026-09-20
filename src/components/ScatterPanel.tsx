@@ -404,7 +404,7 @@ export function ScatterPanel({
 
               <Scatter
                 data={puntos}
-                fill="var(--data-1)"
+                fill="var(--viz-blue)"
                 fillOpacity={0.4}
                 stroke="var(--surface)"
                 strokeWidth={0.5}

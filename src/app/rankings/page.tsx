@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
+import Link from "next/link";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { MethodologyNote } from "@/components/MethodologyNote";
 import { RankingExplorer } from "@/components/RankingExplorer";
@@ -27,7 +28,8 @@ export default function RankingsPage() {
         Colegios con más reportes registrados
       </h1>
       <p className="mt-5 max-w-prose text-cuerpo leading-relaxed text-ink-2">
-        Es una pregunta razonable y aquí se puede responder. Lo que esta tabla{" "}
+        ¿Qué colegios registraron más reportes en SíseVe? Explora los resultados por año,
+        tipo de reporte y territorio. Lo que esta tabla{" "}
         <strong className="font-semibold text-ink">no</strong> dice es qué colegio es más
         violento: dice cuál registró más reportes, que es otra cosa.
       </p>
@@ -38,9 +40,9 @@ export default function RankingsPage() {
           advierte que puede existir más de un reporte sobre un mismo caso.
         </MethodologyNote>
         <MethodologyNote>
-          El número de reportes puede estar influido por el tamaño de la matrícula y por
-          las prácticas de reporte de cada comunidad educativa. Un colegio donde denunciar
-          funciona registrará más que uno donde nadie se atreve.
+          El número de reportes puede estar influido por el número de alumnos y por las
+          prácticas de reporte de cada comunidad educativa. Un colegio sin reportes
+          registrados no significa necesariamente que no haya ocurrido violencia.
         </MethodologyNote>
       </div>
 
@@ -56,6 +58,13 @@ export default function RankingsPage() {
 
       <section className="mt-14 border-t border-rule pt-10">
         <h2 className="font-display text-display-m font-medium">Cómo leer esta tabla</h2>
+        <p className="mt-3 max-w-prose text-[0.9rem] leading-relaxed text-ink-2">
+          ¿Buscas en cambio dónde el registro <em>cambió</em> más de lo esperable?{" "}
+          <Link href="/senales" className="text-accent hover:underline">
+            Eso está en Señales
+          </Link>
+          .
+        </p>
         <div className="mt-5 grid gap-6 sm:grid-cols-2">
           <div>
             <p className="meta">Número de reportes</p>
@@ -66,12 +75,12 @@ export default function RankingsPage() {
             </p>
           </div>
           <div>
-            <p className="meta">Tasa por 1.000 estudiantes</p>
+            <p className="meta">Reportes por 1.000 alumnos</p>
             <p className="mt-2 max-w-prose text-[0.88rem] leading-relaxed text-ink-2">
-              Divide los reportes entre la matrícula. Permite comparar colegios de
-              distinto tamaño, pero solo existe donde conocemos la matrícula y hay al
-              menos {nf(meta.matricula_minima)} estudiantes: por debajo, un solo reporte
-              mueve la tasa decenas de puntos.
+              Divide los reportes entre el número de alumnos. Permite comparar colegios de
+              distinto tamaño, pero solo existe donde lo conocemos y hay al menos{" "}
+              {nf(meta.matricula_minima)} alumnos: por debajo, un solo reporte mueve la
+              tasa decenas de puntos. No representa personas afectadas ni casos únicos.
             </p>
           </div>
           <div>
@@ -84,7 +93,7 @@ export default function RankingsPage() {
           <div>
             <p className="meta">Por qué la tasa solo tiene un año</p>
             <p className="mt-2 max-w-prose text-[0.88rem] leading-relaxed text-ink-2">
-              Solo disponemos de un padrón de matrícula ({meta.fuentes.matricula?.anio}).
+              Solo disponemos de un padrón con el número de alumnos ({meta.fuentes.matricula?.anio}).
               Usarlo como denominador de 2022 o 2025 produciría una serie de tasas que no
               corresponde a ninguna población real, así que no la calculamos.
             </p>

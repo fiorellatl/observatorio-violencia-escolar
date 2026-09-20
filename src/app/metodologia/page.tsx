@@ -78,10 +78,10 @@ export default function MetodologiaPage() {
           calculamos:
         </p>
         <p className="tabular rounded-lg border border-rule bg-surface px-4 py-3 font-mono text-[0.9rem] text-ink">
-          reportes ÷ matrícula × 1,000
+          reportes ÷ # alumnos × 1,000
         </p>
         <p>
-          Donde todavía no tenemos matrícula, mostramos el conteo y decimos que falta
+          Donde todavía no tenemos el número de alumnos, mostramos el conteo y decimos que falta
           el denominador, en lugar de presentar una cifra que invita a una comparación
           injusta.
         </p>
@@ -113,7 +113,7 @@ export default function MetodologiaPage() {
       <Seccion titulo="¿Por qué cada dato tiene un año distinto?">
         <p>
           Porque cada fuente tiene su propia frecuencia de actualización. Los reportes
-          llegan hasta {meta.anio_max}; la matrícula del padrón corresponde a otro año;
+          llegan hasta {meta.anio_max}; el número de alumnos del padrón corresponde a otro año;
           las pensiones a otro. Mezclarlas sin decirlo sería presentar como simultáneo
           lo que no lo es.
         </p>
@@ -123,7 +123,7 @@ export default function MetodologiaPage() {
         </p>
         <p>
           Para el análisis transversal usamos {meta.anio_transversal}: es el año con
-          mejor intersección entre reportes, matrícula y variables de contexto.
+          mejor intersección entre reportes, # alumnos y variables de contexto.
         </p>
       </Seccion>
 

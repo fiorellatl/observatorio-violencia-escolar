@@ -10,6 +10,7 @@ import { ScatterXY } from "@/components/ScatterXY";
 import { ViolenceBreakdown } from "@/components/ViolenceBreakdown";
 import { getCross, getMeta, getNational } from "@/lib/data/provider";
 import { nf } from "@/lib/format";
+import { COLOR_ACTOR, COLOR_VIOLENCIA, color } from "@/lib/viz/colors";
 import { entradilla, meta as clsMeta, panelPad, panelEnlace, h3 } from "@/lib/ui";
 
 /**
@@ -111,15 +112,15 @@ export default function DatosPage() {
   const delAnio = nacional.find((n) => n.anio === t);
   const tipos = delAnio
     ? [
-        { label: "Psicológica", value: delAnio.psicologica ?? 0, color: "var(--data-1)" },
-        { label: "Física", value: delAnio.fisica ?? 0, color: "var(--data-2)" },
-        { label: "Sexual", value: delAnio.sexual ?? 0, color: "var(--data-3)" },
+        { label: "Psicológica", value: delAnio.psicologica ?? 0, color: color(COLOR_VIOLENCIA.psicologica) },
+        { label: "Física", value: delAnio.fisica ?? 0, color: color(COLOR_VIOLENCIA.fisica) },
+        { label: "Sexual", value: delAnio.sexual ?? 0, color: color(COLOR_VIOLENCIA.sexual) },
       ]
     : [];
   const actores = delAnio
     ? [
-        { label: "Entre estudiantes", value: delAnio.entre_escolares ?? 0, color: "var(--data-1)" },
-        { label: "De un adulto del colegio", value: delAnio.personal_ie ?? 0, color: "var(--data-2)" },
+        { label: "Entre estudiantes", value: delAnio.entre_escolares ?? 0, color: color(COLOR_ACTOR.entre_escolares) },
+        { label: "De un adulto del colegio", value: delAnio.personal_ie ?? 0, color: color(COLOR_ACTOR.personal_ie) },
       ]
     : [];
 
@@ -274,7 +275,7 @@ export default function DatosPage() {
             Podríamos sumar los reportes de cada región hoy mismo, pero ese mapa mostraría
             sobre todo dónde vive más gente: Lima tiene más reportes que Madre de Dios
             porque tiene muchísimos más estudiantes. Para decir algo sobre el territorio
-            hace falta la matrícula de cada región, que se está descargando del padrón de
+            hace falta el número de alumnos de cada región, que se está descargando del padrón de
             ESCALE. Hasta entonces preferimos el hueco antes que un mapa que se lea al
             revés.
           </Proximamente>
@@ -284,11 +285,11 @@ export default function DatosPage() {
         <Pregunta id="tamano" pregunta="¿Los colegios más grandes registran más reportes?">
           <div className={panelPad}>
             <div className="flex flex-wrap items-baseline justify-between gap-2">
-              <h3 className={h3}>Matrícula y tasa de reportes</h3>
+              <h3 className={h3}>Número de alumnos y tasa de reportes</h3>
               <DataSourceBadge fuente="SíseVe / ESCALE" anio={t} />
             </div>
             <p className={entradilla}>
-              Cada punto representa un colegio. Comparamos su matrícula con la cantidad de
+              Cada punto representa un colegio. Comparamos su número de alumnos con la cantidad de
               reportes registrados por cada 1.000 estudiantes durante {t}.
             </p>
 
@@ -300,14 +301,14 @@ export default function DatosPage() {
                 <FichaTecnica
                   n={`${nf(cross.length)} colegios`}
                   anio={t}
-                  variables="Matrícula, reportes"
+                  variables="# alumnos · reportes"
                   cobertura="Lima Metropolitana"
                 />
                 <div className="mt-4 space-y-3">
                   <MethodologyNote tono="aviso">
-                    La matrícula solo está descargada para Lima Metropolitana, así que este
+                    El número de alumnos solo está descargado para Lima Metropolitana, así que este
                     gráfico describe Lima y no el Perú. Y la tasa solo existe para {t}:
-                    hay un único padrón de matrícula, así que no se ofrece selector de año.
+                    hay un único padrón con el número de alumnos, así que no se ofrece selector de año.
                   </MethodologyNote>
                   <MethodologyNote tono="aviso">
                     Solo entran colegios con al menos {nf(meta.matricula_minima)}{" "}
@@ -320,7 +321,7 @@ export default function DatosPage() {
               <div className="mt-6 rounded-lg border border-dashed border-rule px-5 py-10 text-center">
                 <p className="text-[0.92rem] font-medium text-ink">Falta el denominador</p>
                 <p className="mx-auto mt-2 max-w-prose text-[0.86rem] leading-relaxed text-ink-3">
-                  Esta visualización necesita la matrícula por colegio, que se está
+                  Esta visualización necesita el número de alumnos por colegio, que se está
                   descargando del padrón de ESCALE.
                 </p>
               </div>
@@ -351,7 +352,7 @@ export default function DatosPage() {
                 <FichaTecnica
                   n={`${nf(conPension.length)} colegios privados`}
                   anio={`Reportes ${t} · Pensión 2025`}
-                  variables="Pensión, matrícula, reportes"
+                  variables="Pensión · # alumnos · reportes"
                   cobertura={`${nf(conPension.length)} de ${nf(privadosDelCorte)} privados`}
                 />
                 <div className="mt-4 space-y-3">

@@ -10,6 +10,7 @@ import { ShareButton } from "@/components/ShareButton";
 import { ViolenceBreakdown } from "@/components/ViolenceBreakdown";
 import { getMeta, getPrerenderSlugs, getSchool } from "@/lib/data/provider";
 import { dec, nf, valorLegible } from "@/lib/format";
+import { COLOR_ACTOR, COLOR_VIOLENCIA, color } from "@/lib/viz/colors";
 import { entradilla, panelEnlace } from "@/lib/ui";
 
 export const dynamicParams = true;
@@ -75,13 +76,13 @@ export default async function ColegioPage({
     anios.reduce((acc, a) => acc + (Number(s.anios[a][k]) || 0), 0);
 
   const tipos = [
-    { label: "Psicológica", value: suma("psicologica"), color: "var(--data-1)" },
-    { label: "Física", value: suma("fisica"), color: "var(--data-2)" },
-    { label: "Sexual", value: suma("sexual"), color: "var(--data-3)" },
+    { label: "Psicológica", value: suma("psicologica"), color: color(COLOR_VIOLENCIA.psicologica) },
+    { label: "Física", value: suma("fisica"), color: color(COLOR_VIOLENCIA.fisica) },
+    { label: "Sexual", value: suma("sexual"), color: color(COLOR_VIOLENCIA.sexual) },
   ];
   const actores = [
-    { label: "Entre estudiantes", value: suma("entre_escolares"), color: "var(--data-1)" },
-    { label: "De un adulto del colegio", value: suma("personal_ie"), color: "var(--data-2)" },
+    { label: "Entre estudiantes", value: suma("entre_escolares"), color: color(COLOR_ACTOR.entre_escolares) },
+    { label: "De un adulto del colegio", value: suma("personal_ie"), color: color(COLOR_ACTOR.personal_ie) },
   ];
 
   const contexto: { label: string; valor: string; fuente: string; anio?: string | null }[] = [
@@ -181,7 +182,7 @@ export default async function ColegioPage({
                 : `Ninguno ese año. ${nf(s.total)} en total desde ${anios[0]}`,
             },
             {
-              label: "Matrícula",
+              label: "# Alumnos",
               valor: s.matricula != null ? nf(s.matricula) : null,
               unidad: "estudiantes",
               fuente: "ESCALE",
@@ -199,8 +200,8 @@ export default async function ColegioPage({
                   : undefined,
               ausente:
                 s.matricula == null
-                  ? "Sin matrícula no hay denominador, y sin denominador no hay tasa"
-                  : `Matrícula menor a ${nf(meta.matricula_minima)}: la tasa no sería fiable`,
+                  ? "Sin el número de alumnos no hay denominador, y sin denominador no hay tasa"
+                  : `Menos de ${nf(meta.matricula_minima)} alumnos: la tasa no sería fiable`,
             },
             {
               label: "Pensión mensual",

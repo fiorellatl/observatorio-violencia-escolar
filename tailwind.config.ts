@@ -29,6 +29,17 @@ const config: Config = {
           4: "var(--data-4)",
           5: "var(--data-5)",
         },
+        // Color de datos. Vive aparte del color de interfaz: ver src/lib/viz/colors.ts
+        viz: {
+          blue: "var(--viz-blue)",
+          teal: "var(--viz-teal)",
+          amber: "var(--viz-amber)",
+          coral: "var(--viz-coral)",
+          violet: "var(--viz-violet)",
+          green: "var(--viz-green)",
+          slate: "var(--viz-slate)",
+          mute: "var(--viz-mute)",
+        },
       },
       fontFamily: {
         // `display` se conserva como token semantico —"esto es un titular"—

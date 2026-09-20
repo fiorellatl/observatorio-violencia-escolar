@@ -40,8 +40,8 @@ export function ReportTrend({ data, alto = 230 }: { data: TrendPoint[]; alto?: n
       <svg width="0" height="0" className="absolute">
         <defs>
           <pattern id="rayas" width="5" height="5" patternTransform="rotate(45)" patternUnits="userSpaceOnUse">
-            <rect width="5" height="5" fill="var(--data-1)" fillOpacity="0.18" />
-            <line x1="0" y1="0" x2="0" y2="5" stroke="var(--data-1)" strokeWidth="2.5" />
+            <rect width="5" height="5" fill="var(--viz-blue)" fillOpacity="0.18" />
+            <line x1="0" y1="0" x2="0" y2="5" stroke="var(--viz-blue)" strokeWidth="2.5" />
           </pattern>
         </defs>
       </svg>
@@ -111,7 +111,7 @@ export function ReportTrend({ data, alto = 230 }: { data: TrendPoint[]; alto?: n
                     ? "var(--ink-3)"
                     : d.parcial
                       ? "url(#rayas)"
-                      : "var(--data-1)"
+                      : "var(--viz-blue)"
                 }
                 fillOpacity={d.pandemia ? 0.55 : 1}
               />

@@ -114,7 +114,7 @@ export function ScatterXY({
           />
           <Scatter
             data={puntos}
-            fill="var(--data-1)"
+            fill="var(--viz-blue)"
             fillOpacity={0.45}
             stroke="var(--surface)"
             strokeWidth={0.5}

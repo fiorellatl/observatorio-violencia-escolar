@@ -115,7 +115,7 @@ export default function SenalesPage() {
             <p className="meta">Lo que no calculamos</p>
             <p className="mt-2 max-w-prose text-[0.9rem] leading-relaxed text-ink-2">
               Cambios de <strong className="font-semibold text-ink">tasa</strong> entre años.
-              Solo existe un padrón de matrícula, y dividir dos años por el mismo denominador
+              Solo existe un padrón con el número de alumnos, y dividir dos años por el mismo denominador
               produce una serie cuyas variaciones son idénticas a las de los conteos: no
               añade información y aparenta una precisión que no tenemos.
             </p>
