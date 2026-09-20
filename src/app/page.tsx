@@ -117,6 +117,58 @@ export default function Home() {
         </div>
       </section>
 
+      {/* ── Qué es un reporte ───────────────────────────────────── */}
+      <section className="border-t border-rule bg-surface">
+        <div className={`${shell} py-14 sm:py-20`}>
+          <div className="grid gap-10 lg:grid-cols-12">
+            <div className="lg:col-span-4">
+              <p className="meta">Antes de mirar cualquier cifra</p>
+              <h2 className="mt-4 max-w-[16ch] font-display text-display-l font-medium text-balance">
+                Un reporte no es un caso probado
+              </h2>
+            </div>
+
+            <div className="space-y-5 text-cuerpo leading-relaxed text-ink-2 lg:col-span-7 lg:col-start-6">
+              <p>
+                SíseVe es el portal del Ministerio de Educación donde cualquier persona
+                —un estudiante, su familia, un docente— puede registrar un hecho de
+                violencia escolar. Funciona desde 2013.
+              </p>
+              <p>
+                Lo que se registra son alertas. El propio Ministerio advierte que puede
+                existir más de un reporte sobre un mismo hecho, y que un reporte no
+                equivale a un caso confirmado ni a una víctima única.
+              </p>
+              <p>
+                Un colegio con muchos reportes puede ser, simplemente, un colegio donde
+                denunciar funciona. Por eso aquí no hay rankings de colegios
+                «peligrosos» ni «seguros».
+              </p>
+              <p>
+                Pero nos da una luz de cómo se está gestionando el bullying y la
+                violencia —física, psicológica, sexual— dentro de las instituciones
+                educativas de nuestro país.
+              </p>
+              <p>
+                Si bien son alertas, pasar por un proceso de denuncia no solo suele ser
+                un proceso burocrático engorroso, sino que revictimiza y tiene barreras:
+                de acceso, de jerarquía, de información. Por eso esta data podría y debe
+                ser solo la punta del iceberg de un problema sistematizado y profundo.
+              </p>
+              <p className="border-l-2 border-accent pl-5 text-ink">
+                Basta con ver un par de cifras para detenernos. ¿Podemos ver patrones?
+                ¿Nos pueden dar herramientas de prevención? ¿Los colegios de zonas
+                rurales son menos violentos o son lugares en donde denunciar no funciona?
+              </p>
+              <p>
+                Este portal busca transparentar esa información pero, sobre todo, busca
+                que nos hagamos más de esas preguntas.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* ── Los datos en contexto ───────────────────────────────── */}
       <section className="border-t border-rule">
         <div className={`${shell} py-14 sm:py-20`}>

@@ -145,3 +145,69 @@ export interface RankingIndex {
   dic: { r: string[]; p: string[]; d: string[]; g: string[]; n: string[] };
   filas: RankingRow[];
 }
+
+/** Colegio dentro de una señal. Todo agregado; nada individual. */
+export interface SignalSchool {
+  nombre: string;
+  cm: string;
+  slug: string;
+  distrito: string;
+  provincia: string;
+  region: string;
+  gestion: string;
+  nivel: string;
+  matricula?: number | null;
+  anio_matricula?: string | null;
+}
+
+export interface SignalCambio extends SignalSchool {
+  anterior: number;
+  actual: number;
+  cambio: number;
+  /** Probabilidad de ver un cambio así si nada hubiera cambiado. */
+  p: number;
+}
+
+export interface SignalComposicion extends SignalSchool {
+  p: number;
+  df: number;
+  antes: Record<string, number>;
+  ahora: Record<string, number>;
+  total_antes: number;
+  total_ahora: number;
+}
+
+export interface SignalReaparicion extends SignalSchool {
+  actual: number;
+  anios_sin: number;
+  ultimo_con: string;
+}
+
+export interface SignalPersistencia extends SignalSchool {
+  anios_con: number;
+  ventana: number;
+  total: number;
+}
+
+export interface SignalPar {
+  anio_anterior: string;
+  anio: string;
+  nacional_anterior: number;
+  nacional: number;
+  ratio_nacional: number;
+  theta: number;
+  probados: number;
+  probados_composicion: number;
+  /** Totales reales antes del recorte de las listas. */
+  totales: Record<string, number>;
+  aumento: SignalCambio[];
+  disminucion: SignalCambio[];
+  composicion: SignalComposicion[];
+  reaparicion: SignalReaparicion[];
+  persistencia: SignalPersistencia[];
+}
+
+export interface Signals {
+  pares: SignalPar[];
+  meta: { q_fdr: number; min_n: number; min_composicion: number; anios: string[] };
+}

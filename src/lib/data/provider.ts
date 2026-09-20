@@ -15,6 +15,7 @@ import type {
   BrowseRow,
   RankingIndex,
   RankingRow,
+  Signals,
   CrossRow,
   Meta,
   NationalYear,
@@ -213,4 +214,22 @@ export function getRankingIndex(): RankingIndex {
     dic,
     filas,
   };
+}
+
+/**
+ * Señales de cambio. Las genera `scripts/build_signals.py`; aquí solo se leen.
+ *
+ * Devuelve null si el archivo no existe todavía, para que la página pueda
+ * explicar que la detección aún no se ha ejecutado en vez de reventar.
+ */
+let _signals: Signals | null | undefined;
+
+export function getSignals(): Signals | null {
+  if (_signals === undefined) {
+    const p = path.join(DIR, "signals.json");
+    _signals = fs.existsSync(p)
+      ? (JSON.parse(fs.readFileSync(p, "utf-8")) as Signals)
+      : null;
+  }
+  return _signals;
 }
