@@ -631,6 +631,16 @@ export function RankingExplorer() {
                   valor:
                     metrica === "tasa" && p.tasa != null ? dec(p.tasa, 1) : nf(p.conteo),
                   tramo: tramoDe(p.conteo),
+                  // Contra el máximo de ESTA página: la escalera describe lo
+                  // que se está viendo, no el máximo nacional.
+                  peso: (() => {
+                    const v = metrica === "tasa" ? (p.tasa ?? 0) : p.conteo;
+                    const tope = Math.max(
+                      ...visibles.map((x) => (metrica === "tasa" ? (x.tasa ?? 0) : x.conteo)),
+                      1
+                    );
+                    return Math.min(1, Math.max(0, v / tope));
+                  })(),
                 })),
               })
             }

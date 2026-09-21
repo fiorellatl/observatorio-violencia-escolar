@@ -35,6 +35,15 @@ export interface FilaImagen {
   /** Ya formateado: conteo o tasa, según la métrica que muestre la tabla. */
   valor: string;
   tramo: TramoDistribucion | null;
+  /**
+   * Peso de la fila dentro de la página, de 0 a 1.
+   *
+   * El color por tramo dice dónde cae el colegio en el reparto NACIONAL, y en
+   * la primera página eso es siempre el mismo tramo: veinte indicadores
+   * idénticos que no informan de nada. El peso sí varía dentro de la página y
+   * convierte la columna en una escalera que se lee de un vistazo.
+   */
+  peso: number;
 }
 
 export interface DatosImagen {
@@ -52,6 +61,9 @@ export interface DatosImagen {
   /** Año en curso: se dice, porque no es comparable con uno cerrado. */
   parcial: boolean;
 }
+
+/** Canal izquierdo: barra de peso + número de puesto. */
+const GUTTER = 128;
 
 export async function dibujarRanking(d: DatosImagen): Promise<Blob> {
   const l = await crearLienzo();
@@ -102,7 +114,7 @@ export async function dibujarRanking(d: DatosImagen): Promise<Blob> {
   ctx.font = `500 21px ${mono}`;
   ctx.fillStyle = TINTA_3;
   ctx.letterSpacing = "2px";
-  ctx.fillText("COLEGIO", M + 90, y);
+  ctx.fillText("COLEGIO", M + GUTTER, y);
   const etiqueta = d.etiquetaValor.toUpperCase();
   ctx.fillText(etiqueta, ANCHO - M - ctx.measureText(etiqueta).width, y);
   ctx.letterSpacing = "0px";
@@ -120,16 +132,18 @@ export async function dibujarRanking(d: DatosImagen): Promise<Blob> {
     const fy = arriba + i * alto;
     const centro = fy + alto / 2;
 
-    // Indicador de reparto: mismo color que la fila en la web.
+    // Indicador doble: el COLOR es el tramo nacional —el mismo que tiñe la
+    // fila en la web— y el LARGO es el peso dentro de esta página. Así el
+    // indicador informa también cuando los veinte comparten tramo.
     if (f.tramo) {
       ctx.fillStyle = colorPorTramoHex(f.tramo);
-      ctx.fillRect(M, fy + 8, 7, alto - 16);
+      ctx.fillRect(M, fy + 10, 10 + f.peso * 40, alto - 20);
     }
 
     ctx.font = `500 26px ${mono}`;
     ctx.fillStyle = TINTA_3;
     ctx.textBaseline = "middle";
-    ctx.fillText(String(f.posicion).padStart(2, "0"), M + 26, centro);
+    ctx.fillText(String(f.posicion).padStart(2, "0"), M + 64, centro);
 
     // El valor se mide primero: el nombre ocupa lo que quede.
     ctx.font = `700 40px ${sans}`;
@@ -141,23 +155,23 @@ export async function dibujarRanking(d: DatosImagen): Promise<Blob> {
     // y el lugar es lo que distingue a dos colegios del mismo nombre. El
     // nombre manda, así que se le reserva el espacio primero y el lugar se
     // queda con lo que sobre —si no sobra nada, no se dibuja.
-    const disponible = ANCHO - M * 2 - 90 - anchoValor - 36;
+    const disponible = ANCHO - M * 2 - GUTTER - anchoValor - 36;
     ctx.font = `500 34px ${sans}`;
     const nombre = recortar(ctx, f.nombre, disponible);
     const anchoNombre = ctx.measureText(nombre).width;
     ctx.fillStyle = TINTA;
-    ctx.fillText(nombre, M + 90, centro);
+    ctx.fillText(nombre, M + GUTTER, centro);
 
     const sobra = disponible - anchoNombre - 18;
     if (f.lugar && sobra > 90) {
       ctx.font = `400 24px ${sans}`;
       ctx.fillStyle = TINTA_3;
-      ctx.fillText(recortar(ctx, f.lugar, sobra), M + 90 + anchoNombre + 18, centro);
+      ctx.fillText(recortar(ctx, f.lugar, sobra), M + GUTTER + anchoNombre + 18, centro);
     }
 
     ctx.textBaseline = "alphabetic";
     ctx.fillStyle = FILETE_2;
-    ctx.fillRect(M + 90, fy + alto - 1, ANCHO - M * 2 - 90, 1);
+    ctx.fillRect(M + GUTTER, fy + alto - 1, ANCHO - M * 2 - GUTTER, 1);
   });
 
   pie(l, "FUENTE SÍSEVE");
