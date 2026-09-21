@@ -5,6 +5,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { dec, nf } from "@/lib/format";
 import { boton, campo, meta as clsMeta } from "@/lib/ui";
+import { COLOR_VIOLENCIA, color } from "@/lib/viz/colors";
 import type {
   SignalCambio,
   SignalComposicion,
@@ -16,87 +17,145 @@ import type {
 } from "@/lib/types";
 
 /**
- * Explorador de señales.
+ * Explorador de señales — un radar de cambios, no una tabla.
  *
- * No es un ranking. Cada tarjeta dice qué cambió y entre qué años, sin nota,
- * sin posición y sin puntuación: el estadístico que las ordena por dentro no
- * se muestra como cifra del colegio, porque un número al lado de un nombre se
- * lee como calificación por mucho que la etiqueta diga otra cosa.
+ * El problema de la versión anterior no eran los datos sino el reparto de
+ * peso: cada tarjeta repetía en prosa lo que las cifras ya decían solas
+ * —«los reportes registrados aumentaron de 10 a 37 entre 2024 y 2025»— y
+ * enterraba el cambio bajo nombre, ubicación, nivel, gestión, fuente,
+ * matrícula y enlace. Leer veinte tarjetas costaba veinte párrafos.
  *
- * Y todas comparten la misma advertencia, que no es letra pequeña sino el
- * contenido: un cambio en el registro puede ser un cambio en lo que ocurre o
- * un cambio en la disposición a reportarlo, y estos datos no los separan.
+ * Ahora manda el cambio: 10 → 37, la diferencia y la proporción, con dos
+ * barras que se comparan de un vistazo. Lo demás baja de tamaño o se va al
+ * pie de la página. La frase desaparece porque las cifras la dicen mejor.
+ *
+ * NO ES UN RANKING. Ninguna tarjeta lleva posición ni puntuación: el
+ * estadístico que las ordena por dentro no se enseña como cifra del colegio,
+ * porque un número junto a un nombre se lee como nota diga lo que diga la
+ * etiqueta. Y la advertencia que las acompaña a todas no es letra pequeña
+ * sino el contenido: un cambio en el registro puede ser un cambio en lo que
+ * ocurre o un cambio en la disposición a reportarlo, y estos datos no los
+ * separan.
  */
 
 type TipoSenal = "aumento" | "disminucion" | "reaparicion" | "persistencia" | "composicion";
 
-const TIPOS: { v: TipoSenal; label: string; icono: string }[] = [
-  { v: "aumento", label: "Aumento inusual", icono: "↑" },
-  { v: "disminucion", label: "Disminución inusual", icono: "↓" },
-  { v: "reaparicion", label: "Reaparición", icono: "↗" },
-  { v: "persistencia", label: "Persistencia", icono: "→" },
-  { v: "composicion", label: "Cambio de composición", icono: "◇" },
+const TIPOS: { v: TipoSenal; label: string; corto: string; icono: string }[] = [
+  { v: "aumento", label: "Aumento inusual", corto: "Aumentos", icono: "↑" },
+  { v: "disminucion", label: "Disminución inusual", corto: "Disminuciones", icono: "↓" },
+  { v: "reaparicion", label: "Vuelve a registrar", corto: "Reapariciones", icono: "↗" },
+  { v: "persistencia", label: "Registro sostenido", corto: "Persistencia", icono: "→" },
+  { v: "composicion", label: "Cambia el tipo", corto: "Composición", icono: "◇" },
 ];
 
 const TOPE = 40;
 
-function Ubicacion({ s }: { s: SignalSchool }) {
-  return (
-    <p className="mt-1 text-[0.8rem] text-ink-3">
-      {s.distrito}, {s.region}
-      {s.nivel ? ` · ${s.nivel}` : ""} · {s.gestion}
-    </p>
-  );
-}
-
-function Pie({ s, extra }: { s: SignalSchool; extra?: string }) {
-  return (
-    <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-1.5 border-t border-rule-3 pt-3">
-      <span className={clsMeta}>SíseVe{extra ? ` · ${extra}` : ""}</span>
-      {s.matricula ? (
-        <span className="tabular text-[0.78rem] text-ink-3">
-          {nf(s.matricula)} estudiantes · ESCALE {s.anio_matricula}
-        </span>
-      ) : (
-        <span className="text-[0.78rem] text-ink-3">Sin número de alumnos conocido</span>
-      )}
-      <Link
-        href={`/colegio/${s.slug}`}
-        className="ml-auto text-[0.82rem] font-medium text-accent hover:underline"
+/**
+ * Dos barras comparadas. Es la pieza que sustituye a la frase: el ojo ve la
+ * diferencia antes de leer la cifra, y la cifra confirma lo que ya vio.
+ */
+function Comparacion({
+  antes,
+  ahora,
+  anioAntes,
+  anioAhora,
+}: {
+  antes: number;
+  ahora: number;
+  anioAntes: string;
+  anioAhora: string;
+}) {
+  const max = Math.max(antes, ahora, 1);
+  const fila = (v: number, anio: string, fuerte: boolean) => (
+    <div className="flex items-center gap-3">
+      <span className="tabular w-[2.6rem] shrink-0 font-mono text-[0.68rem] text-ink-3">
+        {anio}
+      </span>
+      <span className="h-2.5 min-w-[2px] flex-1 overflow-hidden rounded-sm bg-rule-2">
+        <span
+          className="block h-full rounded-sm transition-[width] duration-300 ease-suave"
+          style={{
+            width: `${Math.max((v / max) * 100, 1.5)}%`,
+            background: fuerte ? "var(--accent)" : "var(--viz-mute)",
+          }}
+        />
+      </span>
+      <span
+        className={`tabular w-[2.4rem] shrink-0 text-right text-[0.9rem] ${
+          fuerte ? "font-semibold text-ink" : "text-ink-3"
+        }`}
       >
-        Ver perfil →
-      </Link>
+        {nf(v)}
+      </span>
+    </div>
+  );
+
+  return (
+    <div className="space-y-1.5" role="img" aria-label={`${anioAntes}: ${antes} reportes; ${anioAhora}: ${ahora} reportes`}>
+      {fila(antes, anioAntes, false)}
+      {fila(ahora, anioAhora, true)}
     </div>
   );
 }
 
+/** Cinta de composición: la proporción de cada tipo dentro de un año. */
+function Cinta({ c }: { c: Record<string, number> }) {
+  const total = (c.fisica ?? 0) + (c.psicologica ?? 0) + (c.sexual ?? 0);
+  if (total === 0) return <span className="block h-2.5 rounded-sm bg-rule-2" />;
+  return (
+    <span className="flex h-2.5 overflow-hidden rounded-sm">
+      {(["psicologica", "fisica", "sexual"] as const).map((k) =>
+        (c[k] ?? 0) > 0 ? (
+          <span key={k} style={{ flex: c[k], background: color(COLOR_VIOLENCIA[k]) }} />
+        ) : null
+      )}
+    </span>
+  );
+}
+
+/** Marco común. La tarjeta entera es el enlace: no hay que buscar el CTA. */
 function Tarjeta({
-  icono,
-  etiqueta,
   s,
+  etiqueta,
+  icono,
   children,
-  extra,
 }: {
-  icono: string;
-  etiqueta: string;
   s: SignalSchool;
+  etiqueta: string;
+  icono: string;
   children: React.ReactNode;
-  extra?: string;
 }) {
   return (
-    <li className="rounded-lg border border-rule bg-surface p-5">
-      <div className="flex items-baseline gap-2">
-        <span aria-hidden className="text-ink-3">
-          {icono}
-        </span>
-        <span className={clsMeta}>{etiqueta}</span>
-      </div>
-      <h3 className="mt-2.5 font-display text-[1.12rem] font-medium leading-snug">
-        {s.nombre}
-      </h3>
-      <Ubicacion s={s} />
-      <div className="mt-3.5 text-[0.92rem] leading-relaxed text-ink-2">{children}</div>
-      <Pie s={s} extra={extra} />
+    <li>
+      <Link
+        href={`/colegio/${s.slug}`}
+        className="group flex h-full flex-col gap-3.5 rounded-lg border border-rule bg-surface p-5 transition-colors duration-150 ease-suave hover:border-ink-3 hover:bg-accent-soft/40"
+      >
+        <p className="flex items-center gap-2">
+          <span aria-hidden className="text-[0.95rem] text-accent">
+            {icono}
+          </span>
+          <span className={clsMeta}>{etiqueta}</span>
+        </p>
+
+        <p className="text-[1.08rem] font-semibold leading-snug tracking-[-0.02em] text-ink group-hover:text-accent">
+          {s.nombre}
+        </p>
+
+        {children}
+
+        <p className="mt-auto flex items-center justify-between gap-3 pt-1 text-[0.76rem] text-ink-3">
+          <span className="truncate">
+            {s.distrito} · {s.gestion}
+          </span>
+          <span
+            aria-hidden
+            className="shrink-0 text-accent transition-transform duration-150 ease-suave group-hover:translate-x-1"
+          >
+            →
+          </span>
+        </p>
+      </Link>
     </li>
   );
 }
@@ -108,6 +167,7 @@ export function SignalsExplorer() {
 
   const [datos, setDatos] = useState<Signals | null>(null);
   const [error, setError] = useState(false);
+  const [panel, setPanel] = useState(false);
 
   useEffect(() => {
     let vivo = true;
@@ -169,20 +229,25 @@ export function SignalsExplorer() {
     [q]
   );
 
-  const lista = useMemo(() => {
-    if (!par) return [] as SignalSchool[];
-    const bruto =
-      tipo === "aumento"
-        ? par.aumento
-        : tipo === "disminucion"
-          ? par.disminucion
-          : tipo === "reaparicion"
-            ? par.reaparicion
-            : tipo === "persistencia"
-              ? par.persistencia
-              : par.composicion;
-    return (bruto as SignalSchool[]).filter(pasa);
-  }, [par, tipo, pasa]);
+  const deTipo = useCallback(
+    (t: TipoSenal): SignalSchool[] => {
+      if (!par) return [];
+      const bruto =
+        t === "aumento"
+          ? par.aumento
+          : t === "disminucion"
+            ? par.disminucion
+            : t === "reaparicion"
+              ? par.reaparicion
+              : t === "persistencia"
+                ? par.persistencia
+                : par.composicion;
+      return bruto as SignalSchool[];
+    },
+    [par]
+  );
+
+  const lista = useMemo(() => deTipo(tipo).filter(pasa), [deTipo, tipo, pasa]);
 
   /** Opciones de los desplegables: lo que existe en el par seleccionado. */
   const opciones = useMemo(() => {
@@ -204,6 +269,10 @@ export function SignalsExplorer() {
       nivel: u((s) => s.nivel),
     };
   }, [par]);
+
+  const filtrosActivos = ["region", "provincia", "distrito", "gestion", "nivel"].filter((k) =>
+    q(k)
+  ).length;
 
   if (error) {
     return (
@@ -252,54 +321,31 @@ export function SignalsExplorer() {
   );
 
   const conteo = (t: TipoSenal) => {
-    const bruto =
-      t === "aumento"
-        ? par.aumento
-        : t === "disminucion"
-          ? par.disminucion
-          : t === "reaparicion"
-            ? par.reaparicion
-            : t === "persistencia"
-              ? par.persistencia
-              : par.composicion;
-    const n = (bruto as SignalSchool[]).filter(pasa).length;
+    const n = deTipo(t).filter(pasa).length;
     // Sin filtros territoriales, el total real puede superar la lista recortada.
-    const sinFiltro = !q("region") && !q("provincia") && !q("distrito") && !q("gestion") && !q("nivel");
-    return sinFiltro ? (par.totales?.[t] ?? n) : n;
+    return filtrosActivos === 0 ? (par.totales?.[t] ?? n) : n;
   };
+
+  const total = TIPOS.reduce((s, t) => s + conteo(t.v), 0);
+  const maxConteo = Math.max(...TIPOS.map((t) => conteo(t.v)), 1);
 
   return (
     <div>
-      <div className="rounded-lg border border-rule bg-surface p-4 sm:p-5">
-        <fieldset>
-          <legend className={`${clsMeta} mb-2`}>Tipo de señal</legend>
-          <div className="flex flex-wrap gap-2">
-            {TIPOS.map((t) => {
-              const n = conteo(t.v);
-              return (
-                <button
-                  key={t.v}
-                  type="button"
-                  aria-pressed={tipo === t.v}
-                  onClick={() => poner({ tipo: t.v === "aumento" ? "" : t.v })}
-                  className={`rounded border px-3 py-1.5 text-[0.85rem] transition-colors duration-150 ease-suave ${
-                    tipo === t.v
-                      ? "border-accent bg-accent-soft font-medium text-accent"
-                      : "border-rule bg-surface text-ink-2 hover:border-ink-3"
-                  }`}
-                >
-                  <span aria-hidden className="mr-1.5 text-ink-3">
-                    {t.icono}
-                  </span>
-                  {t.label}
-                  <span className="tabular ml-1.5 text-ink-3">{nf(n)}</span>
-                </button>
-              );
-            })}
-          </div>
-        </fieldset>
-
-        <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+      {/* ── Resumen: qué se detectó y de qué tipo ───────────────
+          Las barras no decoran: dicen de un vistazo que casi todo lo
+          detectado son aumentos, que es la primera pregunta de la página. */}
+      <div className="border-y border-rule py-6">
+        <div className="flex flex-wrap items-end justify-between gap-x-8 gap-y-4">
+          {/* "Señales" y no "cambios": la persistencia y la reaparición no son
+              cambios sino patrones definidos por una regla, y son la mayor
+              parte del total. Llamarlo cambios inflaría lo que la página
+              afirma haber detectado. */}
+          <p className="flex items-baseline gap-3">
+            <span className="cifra text-cifra-l text-ink">{nf(total)}</span>
+            <span className="text-[0.95rem] text-ink-2">
+              {total === 1 ? "señal" : "señales"} entre {par.anio_anterior} y {par.anio}
+            </span>
+          </p>
           <div>
             <label htmlFor="s-anio" className={`${clsMeta} block`}>
               Comparación
@@ -317,47 +363,107 @@ export function SignalsExplorer() {
               ))}
             </select>
           </div>
-          <Sel k="region" label="Región" opts={opciones.region} />
-          <Sel k="distrito" label="Distrito" opts={opciones.distrito} />
-          <Sel k="gestion" label="Gestión" opts={opciones.gestion} />
-          <Sel k="nivel" label="Nivel" opts={opciones.nivel} />
         </div>
 
-        <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-rule-2 pt-3.5">
-          <p className="text-[0.84rem] text-ink-2" role="status" aria-live="polite">
-            <span className="tabular font-medium text-ink">{nf(lista.length)}</span>{" "}
-            {lista.length === 1 ? "señal" : "señales"} · comparando {par.anio_anterior} con{" "}
-            {par.anio}
+        <fieldset className="mt-6">
+          <legend className="sr-only">Tipo de señal</legend>
+          <div className="grid gap-2 sm:grid-cols-3 lg:grid-cols-5">
+            {TIPOS.map((t) => {
+              const n = conteo(t.v);
+              const sel = tipo === t.v;
+              return (
+                <button
+                  key={t.v}
+                  type="button"
+                  aria-pressed={sel}
+                  disabled={n === 0}
+                  onClick={() => poner({ tipo: t.v === "aumento" ? "" : t.v })}
+                  className={`rounded border px-3 py-2.5 text-left transition-colors duration-150 ease-suave disabled:opacity-40 ${
+                    sel ? "border-ink bg-surface" : "border-rule hover:border-ink-3"
+                  }`}
+                >
+                  <span className="flex items-baseline gap-2">
+                    <span aria-hidden className={sel ? "text-accent" : "text-ink-3"}>
+                      {t.icono}
+                    </span>
+                    <span
+                      className={`cifra text-[1.35rem] ${sel ? "text-ink" : "text-ink-2"}`}
+                    >
+                      {nf(n)}
+                    </span>
+                  </span>
+                  <span
+                    className={`mt-1 block text-[0.8rem] ${sel ? "font-medium text-ink" : "text-ink-3"}`}
+                  >
+                    {t.corto}
+                  </span>
+                  <span
+                    aria-hidden
+                    className="mt-2 block h-1 overflow-hidden rounded-sm bg-rule-2"
+                  >
+                    <span
+                      className="block h-full rounded-sm"
+                      style={{
+                        width: `${Math.max((n / maxConteo) * 100, n > 0 ? 3 : 0)}%`,
+                        background: sel ? "var(--accent)" : "var(--viz-mute)",
+                      }}
+                    />
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </fieldset>
+
+        <p className="mt-3 max-w-prose text-[0.78rem] leading-relaxed text-ink-3">
+          Los aumentos y las disminuciones salen de un contraste estadístico. La
+          reaparición y la persistencia no llevan prueba: son patrones con una regla
+          escrita, y por eso se cuentan aparte.
+        </p>
+
+        <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+          <button
+            type="button"
+            onClick={() => setPanel((x) => !x)}
+            aria-expanded={panel}
+            aria-controls="panel-senales"
+            className={`${boton} ${filtrosActivos ? "border-ink-3 text-ink" : ""}`}
+          >
+            {panel ? "Ocultar filtros" : "Más filtros"}
+            {filtrosActivos ? (
+              <span className="tabular rounded-full bg-accent px-1.5 text-[0.72rem] font-medium text-paper">
+                {filtrosActivos}
+              </span>
+            ) : null}
+          </button>
+          <p className="text-[0.82rem] text-ink-3" role="status" aria-live="polite">
+            <span className="tabular text-ink-2">{nf(lista.length)}</span>{" "}
+            {lista.length === 1 ? "en esta vista" : "en esta vista"}
           </p>
-          {params.toString() ? (
-            <button
-              type="button"
-              onClick={() => router.replace(pathname, { scroll: false })}
-              className={boton}
-            >
-              Quitar filtros
-            </button>
-          ) : null}
         </div>
+
+        {panel ? (
+          <div id="panel-senales" className="mt-4 border-t border-rule-2 pt-4">
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              <Sel k="region" label="Región" opts={opciones.region} />
+              <Sel k="distrito" label="Distrito" opts={opciones.distrito} />
+              <Sel k="gestion" label="Gestión" opts={opciones.gestion} />
+              <Sel k="nivel" label="Nivel" opts={opciones.nivel} />
+            </div>
+            {params.toString() ? (
+              <button
+                type="button"
+                onClick={() => router.replace(pathname, { scroll: false })}
+                className={`${boton} mt-3`}
+              >
+                Quitar filtros
+              </button>
+            ) : null}
+          </div>
+        ) : null}
       </div>
 
-      {/* Contexto del contraste: cuánto se movió el país ese año. */}
-      <p className="mt-4 text-[0.82rem] leading-relaxed text-ink-3">
-        En todo el país los reportes pasaron de {nf(par.nacional_anterior)} en{" "}
-        {par.anio_anterior} a {nf(par.nacional)} en {par.anio}
-        {par.ratio_nacional !== 1 ? (
-          <>
-            {" "}
-            ({dec((par.ratio_nacional - 1) * 100, 1)} %)
-          </>
-        ) : null}
-        . Un colegio que se movió como el país no aparece aquí: la comparación descuenta
-        ese cambio general.
-        {tipo === "aumento" || tipo === "disminucion" ? (
-          <> Se contrastaron {nf(par.probados)} colegios con volumen suficiente.</>
-        ) : null}
-      </p>
-
+      {/* ── Resultados ──────────────────────────────────────────── */}
       {lista.length === 0 ? (
         <div className="mt-6 rounded-lg border border-dashed border-rule p-6">
           <p className="text-[0.92rem] font-medium text-ink-2">
@@ -370,31 +476,40 @@ export function SignalsExplorer() {
           </p>
         </div>
       ) : (
-        <ul className="mt-6 grid gap-4 lg:grid-cols-2">
+        <ul className="mt-7 grid gap-4 sm:grid-cols-2">
           {lista.slice(0, TOPE).map((s, i) => {
-            const meta = TIPOS.find((t) => t.v === tipo)!;
+            const t = TIPOS.find((x) => x.v === tipo)!;
 
             if (tipo === "aumento" || tipo === "disminucion") {
               const c = s as SignalCambio;
               const rel = c.anterior > 0 ? (c.cambio / c.anterior) * 100 : null;
               return (
-                <Tarjeta
-                  key={`${c.cm}-${i}`}
-                  icono={meta.icono}
-                  etiqueta={meta.label}
-                  s={c}
-                  extra={`${par.anio_anterior}–${par.anio}`}
-                >
-                  Los reportes registrados{" "}
-                  {c.cambio > 0 ? "aumentaron" : "disminuyeron"} de{" "}
-                  <strong className="tabular font-semibold text-ink">{nf(c.anterior)}</strong> a{" "}
-                  <strong className="tabular font-semibold text-ink">{nf(c.actual)}</strong>{" "}
-                  entre {par.anio_anterior} y {par.anio}.
-                  <span className="tabular mt-2 block text-[0.84rem] text-ink-3">
-                    {c.cambio > 0 ? "+" : ""}
-                    {nf(c.cambio)} reportes
-                    {rel != null ? ` (${rel > 0 ? "+" : ""}${dec(rel, 0)} %)` : ""}
-                  </span>
+                <Tarjeta key={`${c.cm}-${i}`} s={c} etiqueta={t.label} icono={t.icono}>
+                  <p className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                    <span className="cifra text-[2.1rem] text-ink">
+                      {nf(c.anterior)}
+                      <span className="mx-2 font-normal text-ink-3">→</span>
+                      {nf(c.actual)}
+                    </span>
+                  </p>
+                  <p className="tabular -mt-1 flex flex-wrap items-baseline gap-x-3 text-[0.9rem]">
+                    <span className="font-semibold text-accent">
+                      {c.cambio > 0 ? "+" : ""}
+                      {nf(c.cambio)} reportes
+                    </span>
+                    {rel != null ? (
+                      <span className="text-ink-3">
+                        {rel > 0 ? "+" : ""}
+                        {dec(rel, 0)} %
+                      </span>
+                    ) : null}
+                  </p>
+                  <Comparacion
+                    antes={c.anterior}
+                    ahora={c.actual}
+                    anioAntes={par.anio_anterior}
+                    anioAhora={par.anio}
+                  />
                 </Tarjeta>
               );
             }
@@ -402,13 +517,15 @@ export function SignalsExplorer() {
             if (tipo === "reaparicion") {
               const c = s as SignalReaparicion;
               return (
-                <Tarjeta key={`${c.cm}-${i}`} icono={meta.icono} etiqueta={meta.label} s={c}>
-                  Después de {c.anios_sin} {c.anios_sin === 1 ? "año" : "años"} sin reportes
-                  registrados, en {par.anio} volvieron a registrarse{" "}
-                  <strong className="tabular font-semibold text-ink">{nf(c.actual)}</strong>.
-                  <span className="mt-2 block text-[0.84rem] text-ink-3">
-                    El año anterior con registros fue {c.ultimo_con}.
-                  </span>
+                <Tarjeta key={`${c.cm}-${i}`} s={c} etiqueta={t.label} icono={t.icono}>
+                  <p className="cifra text-[2.1rem] text-ink">
+                    0<span className="mx-2 font-normal text-ink-3">→</span>
+                    {nf(c.actual)}
+                  </p>
+                  <p className="tabular -mt-1 text-[0.9rem] text-ink-2">
+                    tras {c.anios_sin} {c.anios_sin === 1 ? "año" : "años"} sin registrar ·
+                    el último fue {c.ultimo_con}
+                  </p>
                 </Tarjeta>
               );
             }
@@ -416,28 +533,51 @@ export function SignalsExplorer() {
             if (tipo === "persistencia") {
               const c = s as SignalPersistencia;
               return (
-                <Tarjeta key={`${c.cm}-${i}`} icono={meta.icono} etiqueta={meta.label} s={c}>
-                  Registró reportes en{" "}
-                  <strong className="tabular font-semibold text-ink">{c.anios_con}</strong> de
-                  los últimos {c.ventana} años con datos disponibles.
-                  <span className="tabular mt-2 block text-[0.84rem] text-ink-3">
-                    {nf(c.total)} reportes en esa ventana.
-                  </span>
+                <Tarjeta key={`${c.cm}-${i}`} s={c} etiqueta={t.label} icono={t.icono}>
+                  <p className="flex items-baseline gap-2">
+                    <span className="cifra text-[2.1rem] text-ink">
+                      {c.anios_con}
+                      <span className="mx-1.5 font-normal text-ink-3">de</span>
+                      {c.ventana}
+                    </span>
+                    <span className="text-[0.9rem] text-ink-2">años con registro</span>
+                  </p>
+                  <p className="tabular -mt-1 text-[0.9rem] text-ink-3">
+                    {nf(c.total)} reportes en esa ventana
+                  </p>
                 </Tarjeta>
               );
             }
 
             const c = s as SignalComposicion;
             return (
-              <Tarjeta key={`${c.cm}-${i}`} icono={meta.icono} etiqueta={meta.label} s={c}>
-                La composición de los reportes cambió respecto al año anterior.
-                <span className="mt-2 block text-[0.84rem] text-ink-3">
-                  {par.anio_anterior}: {nf(c.antes.fisica)} física · {nf(c.antes.psicologica)}{" "}
-                  psicológica · {nf(c.antes.sexual)} sexual
-                  <br />
-                  {par.anio}: {nf(c.ahora.fisica)} física · {nf(c.ahora.psicologica)}{" "}
-                  psicológica · {nf(c.ahora.sexual)} sexual
-                </span>
+              <Tarjeta key={`${c.cm}-${i}`} s={c} etiqueta={t.label} icono={t.icono}>
+                <div className="space-y-2.5">
+                  <div>
+                    <p className="tabular mb-1 font-mono text-[0.68rem] text-ink-3">
+                      {par.anio_anterior} · {nf(c.total_antes)}
+                    </p>
+                    <Cinta c={c.antes} />
+                  </div>
+                  <div>
+                    <p className="tabular mb-1 font-mono text-[0.68rem] text-ink-3">
+                      {par.anio} · {nf(c.total_ahora)}
+                    </p>
+                    <Cinta c={c.ahora} />
+                  </div>
+                </div>
+                <p className="flex flex-wrap gap-x-3 gap-y-1 text-[0.72rem] text-ink-3">
+                  {(["psicologica", "fisica", "sexual"] as const).map((k) => (
+                    <span key={k} className="flex items-center gap-1.5">
+                      <span
+                        aria-hidden
+                        className="h-2 w-2 rounded-sm"
+                        style={{ background: color(COLOR_VIOLENCIA[k]) }}
+                      />
+                      {k === "psicologica" ? "psicológica" : k}
+                    </span>
+                  ))}
+                </p>
               </Tarjeta>
             );
           })}
@@ -449,6 +589,18 @@ export function SignalsExplorer() {
           Se muestran {TOPE} de {nf(lista.length)}. Afina los filtros para ver el resto.
         </p>
       ) : null}
+
+      {/* El contraste descuenta el movimiento del país: sin esto, un año en
+          que todo sube marcaría a todo el mundo. */}
+      <p className="mt-7 border-t border-rule pt-5 text-[0.8rem] leading-relaxed text-ink-3">
+        En todo el país los reportes pasaron de {nf(par.nacional_anterior)} en{" "}
+        {par.anio_anterior} a {nf(par.nacional)} en {par.anio}
+        {par.ratio_nacional !== 1 ? <> ({dec((par.ratio_nacional - 1) * 100, 1)} %)</> : null}.
+        Un colegio que se movió como el país no aparece aquí.
+        {tipo === "aumento" || tipo === "disminucion" ? (
+          <> Se contrastaron {nf(par.probados)} colegios con volumen suficiente.</>
+        ) : null}
+      </p>
     </div>
   );
 }

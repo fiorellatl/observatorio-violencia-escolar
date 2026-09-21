@@ -22,30 +22,17 @@ export default function SenalesPage() {
     <div className={`${shell} py-8 sm:py-10`}>
       <Breadcrumbs items={[{ label: "Inicio", href: "/" }, { label: "Señales" }]} />
 
-      <h1 className="mt-6 max-w-[20ch] font-display text-display-xl font-medium text-balance">
+      <h1 className="titular mt-6 max-w-[16ch] text-display-l">
         Cambios que merecen contexto
       </h1>
       <p className="mt-5 max-w-prose text-cuerpo leading-relaxed text-ink-2">
-        Esta página no responde qué colegios registran más reportes —eso está en{" "}
+        Dónde el registro cambió más de lo que cabría esperar si nada hubiera
+        cambiado. No es qué colegios registran más —eso está en{" "}
         <a href="/rankings" className="text-accent hover:underline">
           los rankings
         </a>
-        —, sino dónde el registro <strong className="font-semibold text-ink">cambió</strong>{" "}
-        más de lo que cabría esperar si nada hubiera cambiado.
+        —.
       </p>
-
-      <div className="mt-8 grid gap-4 sm:grid-cols-2">
-        <MethodologyNote tono="aviso">
-          Un cambio en el registro puede ser un cambio en lo que ocurre o un cambio en la
-          disposición a reportarlo. Estos datos no permiten separarlos. Un colegio que
-          estrena psicólogo y empieza a registrar aparece igual que uno donde algo empeoró.
-        </MethodologyNote>
-        <MethodologyNote>
-          Aquí no hay puntuaciones ni posiciones. El cálculo que ordena las señales por
-          dentro no se muestra como cifra del colegio: un número junto a un nombre se lee
-          como nota, diga lo que diga la etiqueta.
-        </MethodologyNote>
-      </div>
 
       <div className="mt-10">
         <Suspense
@@ -58,8 +45,22 @@ export default function SenalesPage() {
       {/* ── El método ──────────────────────────────────────────── */}
       <section className="mt-16 border-t border-rule pt-10">
         <h2 className="font-display text-display-m font-medium">
-          ¿Cómo detectamos un cambio que merece contexto?
+          Cómo leemos estos cambios
         </h2>
+
+        <div className="mt-6 grid gap-4 sm:grid-cols-2">
+          <MethodologyNote tono="aviso">
+            Un cambio en el registro puede ser un cambio en lo que ocurre o un cambio en
+            la disposición a reportarlo. Estos datos no permiten separarlos: un colegio
+            que estrena psicólogo y empieza a registrar aparece igual que uno donde algo
+            empeoró.
+          </MethodologyNote>
+          <MethodologyNote>
+            Aquí no hay puntuaciones ni posiciones. El cálculo que ordena las señales por
+            dentro no se muestra como cifra del colegio: un número junto a un nombre se
+            lee como nota, diga lo que diga la etiqueta.
+          </MethodologyNote>
+        </div>
 
         <div className="mt-6 grid gap-7 lg:grid-cols-2">
           <div>
