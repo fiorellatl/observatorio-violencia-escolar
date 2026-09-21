@@ -185,8 +185,13 @@ export default async function ColegioPage({
       .filter((v, k, a) => a.indexOf(v) === k)
       .join(" · "),
     nivel: null,
-    anio: principal,
-    parcial: principal === meta.anio_parcial,
+    // La portada abre con el año MÁS RECIENTE, aunque vaya por la mitad: es
+    // el dato que hace noticia. El análisis —puesto, posición, composición—
+    // se queda en el último año cerrado, que es el único comparable, y cada
+    // bloque de la pieza escribe su propio año.
+    anio: meta.anio_parcial,
+    anioAnalisis: principal,
+    parcial: true,
     // El mismo puesto que muestra la portada de la ficha.
     puesto: puesto ? { pos: puesto.pos, universo: puesto.universo } : null,
     // Los seis últimos años, el año en curso incluido. Va marcado —tono

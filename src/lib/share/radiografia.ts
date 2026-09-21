@@ -57,8 +57,19 @@ export interface DatosRadiografia {
   lugar: string;
   /** Nivel elegido en la ficha, o null cuando se mira la institución entera. */
   nivel: string | null;
+  /** Año de la cifra de portada: el más reciente, aunque vaya por la mitad. */
   anio: string;
-  /** Reportes registrados en ese año. */
+  /**
+   * Año del ANÁLISIS: puesto, posición y composición.
+   *
+   * Es el último año COMPLETO, y por eso puede no coincidir con el de la
+   * portada. La pieza abre con lo más reciente —que es lo que la hace
+   * noticia— y compara sobre lo último cerrado, que es lo único comparable.
+   * Cada bloque escribe su año para que la diferencia no se pueda pasar por
+   * alto.
+   */
+  anioAnalisis: string;
+  /** Reportes registrados en el año de portada. */
   total: number;
   /** El año todavía no ha terminado. */
   parcial: boolean;
@@ -264,9 +275,11 @@ export async function dibujarRadiografia(d: DatosRadiografia): Promise<Blob> {
 
   if (d.contexto) {
     const c = d.contexto;
+    ctx.font = `500 34px ${sans}`;
+    const frase = lineas(ctx, c.frase, ANCHO - M * 2, 2);
     bloques.push({
-      alto: (d.puesto ? 64 : 0) + 24 + 16 + 48,
-      dibujar: (y0) => contexto(l, c, d.puesto, d.anio, y0),
+      alto: (d.puesto ? 64 : 0) + frase.length * 42 + 30 + 24 + 16 + 48,
+      dibujar: (y0) => contexto(l, c, d.puesto, d.anioAnalisis, frase, y0),
     });
   }
   if (d.serie.length > 1) {
@@ -281,7 +294,7 @@ export async function dibujarRadiografia(d: DatosRadiografia): Promise<Blob> {
       dibujar: (y0) => {
         // El año va en el rótulo: estos dos bloques son del año titular,
         // no del acumulado, y sin decirlo la pieza se lee como un total.
-        rotulo(l, `Qué se registra en ${d.anio}`, y0, TINTA_3);
+        rotulo(l, `Qué se registró en ${d.anioAnalisis}`, y0, TINTA_3);
         categorias(l, d.tipos, y0 + ALTO_ROTULO);
       },
     });
@@ -290,7 +303,7 @@ export async function dibujarRadiografia(d: DatosRadiografia): Promise<Blob> {
     bloques.push({
       alto: ALTO_ROTULO + d.actores.length * ALTO_FILA,
       dibujar: (y0) => {
-        rotulo(l, `Presunto agresor en ${d.anio}`, y0, TINTA_3);
+        rotulo(l, `Presunto agresor en ${d.anioAnalisis}`, y0, TINTA_3);
         categorias(l, d.actores, y0 + ALTO_ROTULO);
       },
     });
@@ -330,6 +343,7 @@ function contexto(
   c: NonNullable<DatosRadiografia["contexto"]>,
   puesto: DatosRadiografia["puesto"],
   anio: string,
+  frase: string[],
   y: number
 ): void {
   const { ctx, sans } = l;
@@ -360,6 +374,19 @@ function contexto(
     ctx.fillStyle = TINTA_3;
     ctx.fillText(`colegios con al menos un reporte en ${anio}`, M, y);
     y += 30;
+  }
+
+  // La frase traduce la posición a algo que se entiende sin mirar la barra.
+  // Vuelve por petición expresa: en una historia que alguien ve de pasada,
+  // leerlo dicho pesa más que deducirlo del punto.
+  if (frase.length) {
+    ctx.font = `500 34px ${sans}`;
+    ctx.fillStyle = ACENTO;
+    for (const t of frase) {
+      ctx.fillText(t, M, y);
+      y += 42;
+    }
+    y += 4;
   }
 
   // La marca central es la mediana del reparto, que parte el eje por la

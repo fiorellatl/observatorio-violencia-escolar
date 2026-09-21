@@ -45,22 +45,25 @@ export function ShareRadiografia({
   const armar = (): DatosRadiografia => {
     const nivel = resolverNivel(servicios, params.get("ver"));
     const fuente = conteosDe(servicios, institucion, nivel);
-    const delAnio = fuente[base.anio];
+    // Dos lecturas distintas: la cifra de portada sale del año más reciente
+    // y la composición, del último cerrado.
+    const dePortada = fuente[base.anio];
+    const deAnalisis = fuente[base.anioAnalisis];
 
     return {
       ...base,
       // El nivel elegido se dice en la pieza: sin eso, una radiografía de
       // primaria y otra de todo el colegio serían indistinguibles.
       nivel: nivel || null,
-      total: delAnio?.total ?? 0,
+      total: dePortada?.total ?? 0,
       serie: base.aniosSerie.map((a) => ({
         anio: a,
         valor: fuente[a]?.total ?? 0,
         pandemia: base.pandemia.includes(a),
         parcial: a === base.parcialAnio,
       })),
-      tipos: categoriasDelAnio(delAnio, tipos.claves, tipos.etiquetas, tipos.colores),
-      actores: categoriasDelAnio(delAnio, actores.claves, actores.etiquetas, actores.colores),
+      tipos: categoriasDelAnio(deAnalisis, tipos.claves, tipos.etiquetas, tipos.colores),
+      actores: categoriasDelAnio(deAnalisis, actores.claves, actores.etiquetas, actores.colores),
       contexto: nivel ? null : base.contexto,
     };
   };
