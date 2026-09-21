@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { ShareButton } from "@/components/ShareButton";
+import { ShareRankingImage } from "@/components/ShareRankingImage";
 import { dec, nf, slugify } from "@/lib/format";
 import { boton, campo, meta as clsMeta } from "@/lib/ui";
 import {
@@ -603,8 +604,40 @@ export function RankingExplorer() {
               </span>
             ) : null}
           </button>
+          <ShareRankingImage
+            datos={() => ({
+              titulo,
+              anio,
+              universo: territorio,
+              metrica: metrica === "tasa" ? "Reportes por 1.000 alumnos" : "Reportes registrados",
+              rango: `Puestos ${nf(pagina * POR_PAGINA + 1)}–${nf(
+                Math.min((pagina + 1) * POR_PAGINA, total)
+              )}`,
+              parcial: esParcial,
+              // Exactamente las filas visibles: la imagen es de ESTA página,
+              // no de los primeros veinte resultados de la consulta.
+              filas: visibles.map((p, i) => ({
+                posicion: pagina * POR_PAGINA + i + 1,
+                nombre: p.fila[0],
+                valor:
+                  metrica === "tasa" && p.tasa != null ? dec(p.tasa, 1) : nf(p.conteo),
+                tramo: tramoDe(p.conteo),
+              })),
+            })}
+            archivo={() => [
+              "ranking",
+              metrica === "tasa" ? "tasa" : "reportes",
+              tipo === "todos" ? "" : tipo,
+              anio,
+              q("region"),
+              q("distrito"),
+              q("gestion"),
+              q("nivel"),
+              `pagina-${pagina + 1}`,
+            ]}
+          />
           <ShareButton
-            etiqueta="Compartir"
+            etiqueta="Enlace"
             soloIconoEnMovil
             titulo={`${titulo} · ${anio} · ${territorio}`}
           />
