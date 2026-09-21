@@ -130,7 +130,7 @@ export function CommandPalette() {
           <circle cx="7" cy="7" r="4.5" stroke="currentColor" strokeWidth="1.5" />
           <path d="M10.5 10.5L14 14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
         </svg>
-        <span>Buscar colegio</span>
+        <span className="max-[380px]:hidden">Buscar colegio</span>
         <kbd className="hidden font-mono text-[0.68rem] tracking-[0.08em] text-noche-ink-4 sm:inline">
           ⌘K
         </kbd>

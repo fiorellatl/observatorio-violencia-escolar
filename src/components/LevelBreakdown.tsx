@@ -110,7 +110,7 @@ export function LevelBreakdown({
               type="button"
               aria-pressed={sel}
               onClick={() => elegir(v)}
-              className={`rounded border px-3 py-1.5 text-[0.84rem] transition-colors duration-150 ease-suave ${
+              className={`min-h-11 rounded border px-3.5 text-[0.84rem] transition-colors duration-150 ease-suave sm:min-h-0 sm:px-3 sm:py-1.5 ${
                 sel
                   ? "border-ink bg-surface font-medium text-ink"
                   : "border-rule text-ink-2 hover:border-ink-3 hover:text-ink"
@@ -174,7 +174,10 @@ export function LevelBreakdown({
             </div>
           </div>
 
-          <div className="overflow-x-auto">
+          {/* La tabla medía 544 px y en un teléfono escondía las dos últimas
+              columnas tras un scroll lateral. Desde `sm` sigue siendo la misma
+              tabla; por debajo, cada nivel se lee como un bloque. */}
+          <div className="hidden sm:block sm:overflow-x-auto">
             <table className="w-full min-w-[34rem] border-collapse text-[0.9rem]">
               <thead>
                 <tr className="border-b border-rule">
@@ -242,6 +245,52 @@ export function LevelBreakdown({
               </tbody>
             </table>
           </div>
+
+          {/* La misma tabla, desplegada: un bloque por nivel con sus cifras en
+              pares rótulo/valor. Mismos datos, sin scroll lateral. */}
+          <ul className="sm:hidden">
+            {[...servicios, null].map((sv) => {
+              const esTotal = sv === null;
+              const a = esTotal ? institucion : sv.anios;
+              const mat = esTotal
+                ? servicios.every((x) => x.matricula != null)
+                  ? servicios.reduce((acc, x) => acc + (x.matricula ?? 0), 0)
+                  : null
+                : sv.matricula;
+              return (
+                <li
+                  key={esTotal ? "total" : sv.nivel}
+                  className={`border-b py-4 ${
+                    esTotal ? "border-b-0 border-t-2 border-ink" : "border-rule-2"
+                  } ${!esTotal && activo === sv.nivel ? "bg-accent-soft/60" : ""}`}
+                >
+                  <p className="text-[0.95rem] font-semibold text-ink">
+                    {esTotal ? "Toda la institución" : sv.nivel}
+                  </p>
+                  <dl className="mt-2 grid grid-cols-2 gap-x-4 gap-y-1.5">
+                    {[
+                      [`Reportes ${principal}`, nf(a[principal]?.total ?? 0)],
+                      [`Reportes ${enCurso}`, nf(a[enCurso]?.total ?? 0)],
+                      ["# alumnos", mat != null ? nf(mat) : "—"],
+                      ...(hayPension
+                        ? ([
+                            [
+                              "Pensión",
+                              !esTotal && sv.pension != null ? `S/ ${nf(sv.pension)}` : "—",
+                            ],
+                          ] as [string, string][])
+                        : []),
+                    ].map(([k, v]) => (
+                      <div key={k} className="flex items-baseline justify-between gap-2">
+                        <dt className="text-[0.8rem] text-ink-3">{k}</dt>
+                        <dd className="tabular text-[0.88rem] font-medium text-ink">{v}</dd>
+                      </div>
+                    ))}
+                  </dl>
+                </li>
+              );
+            })}
+          </ul>
 
           <p className="mt-4 max-w-prose text-[0.78rem] leading-relaxed text-ink-3">
             El número de alumnos procede del Censo Educativo{" "}

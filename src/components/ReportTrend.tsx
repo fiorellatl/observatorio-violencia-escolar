@@ -12,6 +12,7 @@ import {
   YAxis,
 } from "recharts";
 import { nf } from "@/lib/format";
+import { useEsMovil } from "@/lib/useEsMovil";
 
 export interface TrendPoint {
   anio: string;
@@ -29,6 +30,11 @@ export interface TrendPoint {
  * se lean también en escala de grises.
  */
 export function ReportTrend({ data, alto = 320 }: { data: TrendPoint[]; alto?: number }) {
+  // Las alturas que piden las páginas están pensadas para un gráfico ancho.
+  // En 375 px ese mismo alto convierte la serie en una columna estrecha que
+  // ocupa media pantalla sin enseñar más: se acota, no se recorta el dato.
+  const movil = useEsMovil();
+  const altura = movil ? Math.min(alto, 260) : alto;
   // Los años de pandemia caen tan bajo que una barra hueca de 6 px no se ve, y
   // son justo los que hay que señalar. Se sombrea la franja completa: lo que
   // debe leerse es el hueco, no la barra.
@@ -37,7 +43,7 @@ export function ReportTrend({ data, alto = 320 }: { data: TrendPoint[]; alto?: n
   const hasta = pandemia[pandemia.length - 1];
 
   return (
-    <div style={{ height: alto }} className="w-full">
+    <div style={{ height: altura }} className="w-full">
       <svg width="0" height="0" className="absolute">
         <defs>
           <pattern id="rayas" width="5" height="5" patternTransform="rotate(45)" patternUnits="userSpaceOnUse">

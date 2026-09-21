@@ -39,15 +39,23 @@ export const entradilla =
 /** Versalita de metadato. La clase vive en globals.css. */
 export const meta = "meta";
 
-/** Botón: una sola variante secundaria y una de acento. */
+/**
+ * Botón: una sola variante secundaria y una de acento.
+ *
+ * `min-h-11` son 44 px, la altura mínima con la que un dedo acierta sin
+ * pensar. Se aplica SOLO en pantallas estrechas: en escritorio el cursor es
+ * preciso y un botón de 44 px de alto se ve inflado al lado del texto. Por eso
+ * vuelve a su altura natural desde `sm`, y no al revés.
+ */
+const tactil = "min-h-11 sm:min-h-0";
 export const boton =
-  "inline-flex items-center gap-2 rounded border border-rule bg-surface px-3.5 py-2 text-[0.86rem] text-ink-2 transition-colors duration-150 ease-suave hover:border-ink-3 hover:text-ink";
+  `inline-flex items-center justify-center gap-2 rounded border border-rule bg-surface px-3.5 py-2 text-[0.86rem] text-ink-2 transition-colors duration-150 ease-suave hover:border-ink-3 hover:text-ink ${tactil}`;
 export const botonAcento =
-  "inline-flex items-center gap-2 rounded border border-accent bg-accent px-3.5 py-2 text-[0.86rem] font-medium text-paper transition-colors duration-150 ease-suave hover:bg-accent-2 hover:border-accent-2";
+  `inline-flex items-center justify-center gap-2 rounded border border-accent bg-accent px-3.5 py-2 text-[0.86rem] font-medium text-paper transition-colors duration-150 ease-suave hover:bg-accent-2 hover:border-accent-2 ${tactil}`;
 
 /** Campo de formulario. */
 export const campo =
-  "w-full rounded border border-rule bg-surface px-3 py-2 text-[0.88rem] text-ink outline-none transition-colors duration-150 ease-suave focus:border-accent";
+  `w-full rounded border border-rule bg-surface px-3 py-2 text-[0.88rem] text-ink outline-none transition-colors duration-150 ease-suave focus:border-accent ${tactil}`;
 
 /** Enlace dentro de texto corrido. */
 export const enlace =

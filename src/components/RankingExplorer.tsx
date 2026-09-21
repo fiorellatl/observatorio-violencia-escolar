@@ -574,7 +574,7 @@ export function RankingExplorer() {
             value={anio}
             disabled={metrica === "tasa"}
             onChange={(e) => poner({ anio: e.target.value })}
-            className="cifra rounded border border-rule bg-surface px-3 py-1.5 text-[1.1rem] text-ink outline-none transition-colors duration-150 ease-suave hover:border-ink-3 focus:border-accent disabled:opacity-60"
+            className="cifra min-h-11 rounded border border-rule bg-surface px-3 text-[1.1rem] text-ink outline-none transition-colors duration-150 ease-suave hover:border-ink-3 focus:border-accent disabled:opacity-60 sm:min-h-0 sm:py-1.5"
           >
             {[...idx.anios].reverse().map((a) => (
               <option key={a} value={a}>
@@ -599,7 +599,7 @@ export function RankingExplorer() {
                 type="button"
                 aria-pressed={metrica === v}
                 onClick={() => poner({ metrica: v === "reportes" ? "" : v })}
-                className={`px-3 py-2 text-[0.84rem] transition-colors duration-150 ease-suave ${
+                className={`min-h-11 px-3.5 text-[0.84rem] transition-colors duration-150 ease-suave sm:min-h-0 sm:px-3 sm:py-2 ${
                   metrica === v
                     ? "bg-surface font-medium text-ink"
                     : "text-ink-3 hover:bg-surface hover:text-ink-2"
@@ -687,7 +687,7 @@ export function RankingExplorer() {
       {/* Los tipos van en una tira propia que se desplaza en horizontal: en un
           teléfono, envolverlos en dos filas empuja la pieza fuera de la
           primera pantalla, que es justo lo que hay que ver. */}
-      <fieldset className="-mx-5 mt-3 flex items-center gap-1.5 overflow-x-auto px-5 pb-1 [scrollbar-width:none] sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0">
+      <fieldset className="-mx-5 mt-3 flex min-w-0 max-w-[100vw] items-center gap-1.5 overflow-x-auto px-5 pb-1 [scrollbar-width:none] sm:mx-0 sm:max-w-none sm:flex-wrap sm:overflow-visible sm:px-0">
           <legend className="sr-only">Tipo de reporte</legend>
           {TIPOS.map((t) => {
             const c = t.v === "todos" ? null : color(COLOR_VIOLENCIA[t.v]);
@@ -698,7 +698,7 @@ export function RankingExplorer() {
                 type="button"
                 aria-pressed={sel}
                 onClick={() => poner({ tipo: t.v === "todos" ? "" : t.v })}
-                className={`inline-flex shrink-0 items-center gap-1.5 rounded border px-2.5 py-1.5 text-[0.82rem] transition-colors duration-150 ease-suave ${
+                className={`inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded border px-3 text-[0.82rem] transition-colors duration-150 ease-suave sm:min-h-0 sm:px-2.5 sm:py-1.5 ${
                   sel
                     ? "border-ink bg-surface font-medium text-ink"
                     : "border-rule text-ink-3 hover:border-ink-3 hover:text-ink-2"

@@ -11,6 +11,7 @@ import {
   ZAxis,
 } from "recharts";
 import { dec, nf } from "@/lib/format";
+import { useEsMovil } from "@/lib/useEsMovil";
 import type { CrossRow } from "@/lib/types";
 
 type ClaveX = "matricula" | "pension";
@@ -50,8 +51,13 @@ export function ScatterXY({
         ? `${Math.round(v / 1000)}k`
         : String(v);
 
+  // La nube se lee por su FORMA, y una forma aplastada no dice lo mismo. En
+  // una pantalla estrecha el gráfico se acerca al cuadrado en vez de encoger
+  // en las dos direcciones a la vez.
+  const movil = useEsMovil();
+
   return (
-    <div style={{ height: alto }} className="w-full">
+    <div style={{ height: movil ? 320 : alto }} className="w-full">
       <ResponsiveContainer width="100%" height="100%">
         <ScatterChart margin={{ top: 10, right: 12, bottom: 34, left: 4 }}>
           <CartesianGrid stroke="var(--rule-2)" />

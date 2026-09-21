@@ -65,7 +65,18 @@ export default async function CompararPage({
     Object.entries(COLOR_ACTOR).map(([k, v]) => [k, color(v)])
   );
 
-  /** Una fila de la tabla: el mismo dato en cada colegio. */
+  const columnas = `minmax(9rem,1fr) repeat(${cs.length}, minmax(0,1fr))`;
+
+  /**
+   * Una fila: el mismo dato en cada colegio.
+   *
+   * En escritorio es una rejilla con una columna por colegio. En un teléfono
+   * esa rejilla medía 576 px dentro de un hueco de 335 y escondía la mitad de
+   * las cifras detrás de un scroll lateral que nadie encuentra, así que ahí
+   * se despliega en vertical: el rótulo arriba y debajo una línea por colegio
+   * con su nombre. Es el MISMO dato y el mismo orden; solo cambia cómo se
+   * reparte en el ancho disponible.
+   */
   const Fila = ({
     label,
     nota,
@@ -76,16 +87,22 @@ export default async function CompararPage({
     valores: React.ReactNode[];
   }) => (
     <div
-      className="grid gap-x-6 border-b border-rule-2 py-4"
-      style={{ gridTemplateColumns: `minmax(9rem,1fr) repeat(${cs.length}, minmax(0,1fr))` }}
+      className="border-b border-rule-2 py-4 sm:grid sm:gap-x-6"
+      style={{ gridTemplateColumns: columnas }}
     >
       <div>
         <p className="text-[0.88rem] text-ink-2">{label}</p>
         {nota ? <p className="mt-0.5 text-[0.74rem] text-ink-3">{nota}</p> : null}
       </div>
       {valores.map((v, i) => (
-        <div key={i} className="text-right">
-          {v}
+        <div
+          key={i}
+          className="mt-2.5 flex items-baseline justify-between gap-4 sm:mt-0 sm:block sm:text-right"
+        >
+          <span className="truncate text-[0.82rem] text-ink-3 sm:hidden">
+            {cs[i].inst.nombre}
+          </span>
+          <span className="shrink-0">{v}</span>
         </div>
       ))}
     </div>
@@ -164,14 +181,30 @@ export default async function CompararPage({
             <section className="border-t border-rule py-10 sm:py-12">
               <h2 className="titular text-display-s text-ink">Las cifras</h2>
 
-              <div className="mt-6 overflow-x-auto">
-                <div className="min-w-[36rem]">
+              {/* En vertical, cada fila repite el nombre; esta cabecera da el
+                  lugar y la gestión una sola vez, que es donde pertenecen. */}
+              <ul className="mt-4 flex flex-col gap-1.5 sm:hidden">
+                {cs.map((c) => (
+                  <li key={c.inst.slug} className="flex items-baseline gap-2">
+                    <Link
+                      href={`/colegio/${c.inst.slug}`}
+                      className="text-[0.95rem] font-semibold text-ink"
+                    >
+                      {c.inst.nombre}
+                    </Link>
+                    <span className="truncate text-[0.76rem] text-ink-3">
+                      {c.inst.distrito} · {c.inst.gestion}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+
+              <div className="mt-6 sm:overflow-x-auto">
+                <div className="sm:min-w-[36rem]">
                   {/* Cabecera: cada colegio con su sitio y su enlace. */}
                   <div
-                    className="grid gap-x-6 border-b-2 border-ink pb-4"
-                    style={{
-                      gridTemplateColumns: `minmax(9rem,1fr) repeat(${cs.length}, minmax(0,1fr))`,
-                    }}
+                    className="hidden gap-x-6 border-b-2 border-ink pb-4 sm:grid"
+                    style={{ gridTemplateColumns: columnas }}
                   >
                     <div />
                     {cs.map((c) => (
@@ -318,11 +351,11 @@ export default async function CompararPage({
               return (
                 <section key={bloque.titulo} className="border-t border-rule py-10 sm:py-12">
                   <h2 className="titular text-display-s text-ink">{bloque.titulo}</h2>
+                  {/* Dos o tres columnas de barras en 375 px dejan cada barra
+                      en cincuenta píxeles: en el teléfono se apilan. */}
                   <div
-                    className="mt-6 grid gap-x-8 gap-y-8"
-                    style={{
-                      gridTemplateColumns: `repeat(${Math.min(cs.length, 3)}, minmax(0,1fr))`,
-                    }}
+                    className="mt-6 grid gap-x-8 gap-y-8 [grid-template-columns:repeat(var(--cols),minmax(0,1fr))] max-sm:!grid-cols-1"
+                    style={{ ["--cols" as string]: Math.min(cs.length, 3) }}
                   >
                     {porColegio.map(({ c, items }) => (
                       <div key={c.inst.slug}>

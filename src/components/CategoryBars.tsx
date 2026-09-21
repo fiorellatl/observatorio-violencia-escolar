@@ -13,6 +13,7 @@ import {
   YAxis,
 } from "recharts";
 import { dec, nf } from "@/lib/format";
+import { useEsMovil } from "@/lib/useEsMovil";
 
 /**
  * Categorías comparadas año a año, en barras agrupadas.
@@ -33,11 +34,16 @@ import { dec, nf } from "@/lib/format";
  * volumen. La composición se lee igual de bien con el conmutador de «% del
  * año», que no sacrifica la escala.
  *
- * POR QUÉ COLUMNAS Y NO BARRAS HORIZONTALES. Con trece años y tres
- * categorías, agrupar en horizontal da treinta y nueve filas apiladas: en un
- * teléfono, un scroll interminable. En columnas el año es el eje y la pieza
- * cabe de una vez; cuando no cabe, se desplaza en horizontal con el ancho
- * mínimo que cada grupo necesita para seguir siendo legible.
+ * COLUMNAS EN ESCRITORIO, BARRAS HORIZONTALES EN EL TELÉFONO.
+ * En una pantalla ancha el año es el eje horizontal y los catorce grupos
+ * caben de una vez. En 375 px no caben: el gráfico medía 952 px dentro de un
+ * hueco de 343 y escondía seiscientos píxeles detrás de un scroll lateral que
+ * nadie descubre. Girarlo resuelve el problema sin quitar un solo año —el
+ * año pasa al eje vertical, las barras crecen hacia la derecha y el recorrido
+ * se hace con el scroll de la página, que es el gesto natural del teléfono—.
+ *
+ * Es un cambio de PRESENTACIÓN: mismos datos, mismas series, mismos colores y
+ * el mismo conmutador. No hay una segunda versión del componente.
  *
  * El modo porcentaje divide entre el total de reportes DEL AÑO. Cuando un año
  * no tiene reportes no hay porcentaje que calcular: se muestra el conteo antes
@@ -66,6 +72,7 @@ export function CategoryBars({
   alto?: number;
 }) {
   const [modo, setModo] = useState<Modo>("conteo");
+  const movil = useEsMovil();
 
   const datos = puntos.map((p) => {
     const fila: Record<string, string | number | boolean | undefined> = {
@@ -92,9 +99,9 @@ export function CategoryBars({
     );
   }
 
-  // Ancho mínimo por grupo de año: por debajo de esto las barras dejan de
-  // distinguirse y el eje se convierte en una mancha.
-  const minimo = puntos.length * (series.length * 14 + 26);
+  // En vertical, cada grupo de año necesita su sitio: una banda por serie más
+  // el aire entre grupos. Es lo que hace la pieza legible sin apretarla.
+  const altoMovil = puntos.length * (series.length * 18 + 26) + 40;
 
   return (
     <div>
@@ -129,7 +136,7 @@ export function CategoryBars({
               type="button"
               aria-pressed={modo === v}
               onClick={() => setModo(v)}
-              className={`px-3 py-1.5 text-[0.82rem] transition-colors duration-150 ease-suave ${
+              className={`min-h-11 px-3.5 text-[0.82rem] transition-colors duration-150 ease-suave sm:min-h-0 sm:px-3 sm:py-1.5 ${
                 modo === v
                   ? "bg-surface font-medium text-ink"
                   : "text-ink-3 hover:bg-surface hover:text-ink-2"
@@ -141,34 +148,67 @@ export function CategoryBars({
         </div>
       </div>
 
-      <div className="-mx-5 overflow-x-auto px-5 sm:mx-0 sm:px-0">
-        <div style={{ height: alto, minWidth: `max(100%, ${minimo}px)` }}>
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart
-              data={datos}
-              margin={{ top: 16, right: 6, bottom: 4, left: -18 }}
-              barCategoryGap="22%"
-              barGap={3}
-            >
-              <CartesianGrid stroke="var(--rule-2)" vertical={false} />
-              <XAxis
-                dataKey="anio"
-                tickLine={false}
-                axisLine={{ stroke: "var(--rule)" }}
-                tick={{ fill: "var(--ink-3)", fontSize: 11, fontFamily: "var(--font-mono)" }}
-                interval={0}
-                minTickGap={4}
-              />
-              <YAxis
-                tickLine={false}
-                axisLine={false}
-                width={50}
-                allowDecimals={false}
-                tick={{ fill: "var(--ink-3)", fontSize: 11, fontFamily: "var(--font-mono)" }}
-                tickFormatter={(v: number) =>
-                  modo === "porcentaje" ? `${Math.round(v)} %` : String(v)
-                }
-              />
+      <div style={{ height: movil ? altoMovil : alto }} className="w-full">
+        <ResponsiveContainer width="100%" height="100%">
+          <BarChart
+            data={datos}
+            layout={movil ? "vertical" : "horizontal"}
+            margin={
+              movil
+                ? { top: 4, right: 14, bottom: 4, left: 2 }
+                : { top: 16, right: 6, bottom: 4, left: -18 }
+            }
+            barCategoryGap={movil ? "18%" : "22%"}
+            barGap={movil ? 2 : 3}
+          >
+            <CartesianGrid
+              stroke="var(--rule-2)"
+              vertical={movil}
+              horizontal={!movil}
+            />
+
+            {/* Girar el gráfico intercambia el papel de los dos ejes: el de
+                categorías pasa a ser el vertical y el numérico, el horizontal. */}
+            <XAxis
+              {...(movil
+                ? {
+                    type: "number" as const,
+                    tickLine: false,
+                    axisLine: false,
+                    tickFormatter: (v: number) =>
+                      modo === "porcentaje" ? `${Math.round(v)} %` : String(v),
+                  }
+                : {
+                    type: "category" as const,
+                    dataKey: "anio",
+                    tickLine: false,
+                    axisLine: { stroke: "var(--rule)" },
+                    interval: 0,
+                    minTickGap: 4,
+                  })}
+              tick={{ fill: "var(--ink-3)", fontSize: 11, fontFamily: "var(--font-mono)" }}
+            />
+            <YAxis
+              {...(movil
+                ? {
+                    type: "category" as const,
+                    dataKey: "anio",
+                    width: 42,
+                    tickLine: false,
+                    axisLine: { stroke: "var(--rule)" },
+                    interval: 0,
+                  }
+                : {
+                    type: "number" as const,
+                    width: 50,
+                    tickLine: false,
+                    axisLine: false,
+                    allowDecimals: false,
+                    tickFormatter: (v: number) =>
+                      modo === "porcentaje" ? `${Math.round(v)} %` : String(v),
+                  })}
+              tick={{ fill: "var(--ink-3)", fontSize: 11, fontFamily: "var(--font-mono)" }}
+            />
 
               {pandemia.length ? (
                 <ReferenceArea
@@ -236,14 +276,13 @@ export function CategoryBars({
                 <Bar key={s.clave} dataKey={s.clave} name={s.label} isAnimationActive={false}>
                   {/* Los años cerrados van atenuados también en la barra: la
                       franja de fondo sola se pierde al desplazarse en lateral. */}
-                  {datos.map((d, i) => (
-                    <Cell key={i} fill={s.color} fillOpacity={d.pandemia ? 0.35 : 1} />
-                  ))}
+                {datos.map((d, i) => (
+                  <Cell key={i} fill={s.color} fillOpacity={d.pandemia ? 0.35 : 1} />
+                ))}
                 </Bar>
               ))}
             </BarChart>
-          </ResponsiveContainer>
-        </div>
+        </ResponsiveContainer>
       </div>
 
       {parcial ? (
