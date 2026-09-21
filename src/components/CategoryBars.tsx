@@ -39,10 +39,9 @@ import { dec, nf } from "@/lib/format";
  * cabe de una vez; cuando no cabe, se desplaza en horizontal con el ancho
  * mínimo que cada grupo necesita para seguir siendo legible.
  *
- * El modo porcentaje divide entre el total de reportes DEL AÑO, no entre la
- * suma de las categorías, y el pie lo dice en vez de normalizar por la puerta
- * de atrás. Cuando un año no tiene reportes no hay porcentaje que calcular:
- * se muestra el conteo antes que un 0 % inventado.
+ * El modo porcentaje divide entre el total de reportes DEL AÑO. Cuando un año
+ * no tiene reportes no hay porcentaje que calcular: se muestra el conteo antes
+ * que un 0 % inventado.
  */
 
 export type SerieDef = { clave: string; label: string; color: string };
@@ -61,13 +60,10 @@ export function CategoryBars({
   series,
   puntos,
   alto = 300,
-  notaPorcentaje,
 }: {
   series: SerieDef[];
   puntos: PuntoSerie[];
   alto?: number;
-  /** Qué significa el porcentaje. Obligatorio: sin esto el modo miente. */
-  notaPorcentaje: string;
 }) {
   const [modo, setModo] = useState<Modo>("conteo");
 
@@ -256,9 +252,11 @@ export function CategoryBars({
         </p>
       ) : null}
 
-      <p className="mt-3 max-w-prose text-[0.78rem] leading-relaxed text-ink-3">
-        {notaPorcentaje}
-      </p>
+      {modo === "porcentaje" ? (
+        <p className="mt-3 text-[0.78rem] text-ink-3">
+          Sobre el total de reportes registrados ese año.
+        </p>
+      ) : null}
     </div>
   );
 }

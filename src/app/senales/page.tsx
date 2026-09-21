@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { og } from "@/lib/og";
 import { Suspense } from "react";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { MethodologyNote } from "@/components/MethodologyNote";
@@ -12,6 +13,7 @@ export const metadata: Metadata = {
   description:
     "Colegios donde el registro de reportes cambió más de lo esperable entre dos años: aumentos, disminuciones, reapariciones y persistencia, con el método estadístico explicado.",
   alternates: { canonical: "/senales" },
+  ...og({ title: "Cambios que merecen contexto", description: "Colegios donde el registro de reportes cambió más de lo esperable entre dos años: aumentos, disminuciones, reapariciones y persistencia, con el método estadístico explicado.", url: "/senales" }),
 };
 
 export default function SenalesPage() {

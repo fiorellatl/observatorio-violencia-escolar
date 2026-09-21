@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { og } from "@/lib/og";
 import { Suspense } from "react";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { MethodologyNote } from "@/components/MethodologyNote";
@@ -12,6 +13,7 @@ export const metadata: Metadata = {
   description:
     "Busca y filtra las instituciones educativas del Perú con reportes registrados en SíseVe, por región, provincia, distrito, gestión y nivel.",
   alternates: { canonical: "/colegios" },
+  ...og({ title: "Explora colegios", description: "Busca y filtra las instituciones educativas del Perú con reportes registrados en SíseVe, por región, provincia, distrito, gestión y nivel.", url: "/colegios" }),
 };
 
 export default function ColegiosPage() {

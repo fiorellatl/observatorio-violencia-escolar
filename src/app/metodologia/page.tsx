@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { og } from "@/lib/og";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { getMeta } from "@/lib/data/provider";
 import { nf } from "@/lib/format";
@@ -8,6 +9,7 @@ export const metadata: Metadata = {
   description:
     "Qué mide SíseVe y qué no mide, por qué usamos tasas, por qué 2020–2021 se tratan aparte y de dónde sale cada dato de este sitio.",
   alternates: { canonical: "/metodologia" },
+  ...og({ title: "Metodología y fuentes", description: "Qué mide SíseVe y qué no mide, por qué usamos tasas, por qué 2020–2021 se tratan aparte y de dónde sale cada dato de este sitio.", url: "/metodologia" }),
 };
 
 function Seccion({

@@ -63,7 +63,7 @@ export interface DatosImagen {
 }
 
 /** Canal izquierdo: barra de peso + número de puesto. */
-const GUTTER = 128;
+const GUTTER = 112;
 
 export async function dibujarRanking(d: DatosImagen): Promise<Blob> {
   const l = await crearLienzo();
@@ -133,17 +133,24 @@ export async function dibujarRanking(d: DatosImagen): Promise<Blob> {
     const centro = fy + alto / 2;
 
     // Indicador doble: el COLOR es el tramo nacional —el mismo que tiñe la
-    // fila en la web— y el LARGO es el peso dentro de esta página. Así el
-    // indicador informa también cuando los veinte comparten tramo.
+    // fila en la web— y el LARGO es el peso dentro de esta página, para que
+    // informe también cuando los veinte comparten tramo.
+    //
+    // Es DELIBERADAMENTE secundario: un trazo fino y algo translúcido, no un
+    // bloque. Lo que tiene que leerse primero es el puesto, el nombre y la
+    // cifra; el indicador acompaña. Un bloque saturado al borde izquierdo
+    // competía con el nombre y hacía parecer que el color era el dato.
     if (f.tramo) {
+      ctx.globalAlpha = 0.75;
       ctx.fillStyle = colorPorTramoHex(f.tramo);
-      ctx.fillRect(M, fy + 10, 10 + f.peso * 40, alto - 20);
+      ctx.fillRect(M, centro - 4, 8 + f.peso * 26, 8);
+      ctx.globalAlpha = 1;
     }
 
     ctx.font = `500 26px ${mono}`;
     ctx.fillStyle = TINTA_3;
     ctx.textBaseline = "middle";
-    ctx.fillText(String(f.posicion).padStart(2, "0"), M + 64, centro);
+    ctx.fillText(String(f.posicion).padStart(2, "0"), M + 52, centro);
 
     // El valor se mide primero: el nombre ocupa lo que quede.
     ctx.font = `700 40px ${sans}`;

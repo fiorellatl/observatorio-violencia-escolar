@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { og } from "@/lib/og";
 import dynamicImport from "next/dynamic";
 import Link from "next/link";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
@@ -33,6 +34,7 @@ export const metadata: Metadata = {
   description:
     "Qué registra SíseVe en el Perú: cuántos reportes hay, cómo han cambiado por año, qué tipos de violencia aparecen y cómo se relacionan con el tamaño del colegio.",
   alternates: { canonical: "/datos" },
+  ...og({ title: "Explora los datos", description: "Qué registra SíseVe en el Perú: cuántos reportes hay, cómo han cambiado por año, qué tipos de violencia aparecen y cómo se relacionan con el tamaño del colegio.", url: "/datos" }),
 };
 
 /** Cabecera técnica de cada visualización: con qué datos trabaja y de qué año. */
@@ -261,7 +263,6 @@ export default function DatosPage() {
                   series={seriesTipo}
                   puntos={puntos(["psicologica", "fisica", "sexual"])}
                   alto={320}
-                  notaPorcentaje="Cada reporte se registra con un tipo de violencia, así que las tres categorías reparten el total del año."
                 />
               </div>
             </div>
@@ -279,7 +280,6 @@ export default function DatosPage() {
                   series={seriesActor}
                   puntos={puntos(["entre_escolares", "personal_ie"])}
                   alto={300}
-                  notaPorcentaje="Cada reporte se clasifica en una de las dos categorías, así que el porcentaje describe el reparto del año."
                 />
               </div>
             </div>

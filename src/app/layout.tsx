@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Archivo, JetBrains_Mono } from "next/font/google";
 import { CommandPalette } from "@/components/CommandPalette";
 import { getMeta } from "@/lib/data/provider";
+import { og } from "@/lib/og";
 import { shell } from "@/lib/ui";
 import "./globals.css";
 
@@ -32,19 +33,22 @@ const mono = JetBrains_Mono({
   display: "swap",
 });
 
+/** Una sola frase, la misma en el buscador y en la tarjeta de enlace. */
+const DESCRIPCION =
+  "Explora los reportes registrados en SíseVe y cómo se distribuyen por colegio, territorio y año.";
+
 export const metadata: Metadata = {
   metadataBase: new URL("https://observatorioescolar.netlify.app"),
   title: {
     default: "Observatorio Escolar — Violencia escolar registrada en el Perú",
     template: "%s — Observatorio Escolar",
   },
-  description:
-    "Explora los reportes registrados en SíseVe y relaciónalos con información pública del número de alumnos, características del colegio y contexto educativo.",
-  openGraph: {
-    type: "website",
-    locale: "es_PE",
-    siteName: "Observatorio Escolar",
-  },
+  description: DESCRIPCION,
+  ...og({
+    title: "¿Qué se sabe sobre la violencia en los colegios del Perú?",
+    description: DESCRIPCION,
+    url: "/",
+  }),
   robots: { index: true, follow: true },
 };
 

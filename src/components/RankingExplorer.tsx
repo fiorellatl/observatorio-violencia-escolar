@@ -410,6 +410,18 @@ export function RankingExplorer() {
       ? `Colegios con mayor tasa de reportes de violencia${suf}`
       : `Colegios con más reportes de violencia${suf} registrados`;
 
+  /**
+   * Tope de la página, para el largo del indicador.
+   *
+   * El color dice el tramo NACIONAL y en la primera página todos comparten
+   * tramo: veinte marcas idénticas. El largo sí varía dentro de lo que se
+   * está viendo, y entre los dos el indicador informa siempre.
+   */
+  const tope = Math.max(
+    ...visibles.map((x) => (metrica === "tasa" ? (x.tasa ?? 0) : x.conteo)),
+    1
+  );
+
   /* ── Una fila del ranking ──────────────────────────────────────────── */
   const Fila = ({ p, posicion, destacado }: { p: Puesto; posicion: number; destacado: boolean }) => {
     const distrito = idx.dic.d[p.fila[2]];
@@ -430,13 +442,25 @@ export function RankingExplorer() {
           className="group flex items-stretch gap-3 py-4 transition-colors duration-150 ease-suave hover:bg-accent-soft/40 sm:gap-5 sm:py-5"
         >
           {/* Indicador de reparto: dónde cae este conteo dentro del año, en la
-              escala secuencial. No califica al colegio; sitúa el número. */}
+              escala secuencial, y cuánto pesa dentro de la página. No califica
+              al colegio; sitúa el número.
+
+              Deliberadamente secundario: tres píxeles y translúcido. Lo que
+              debe leerse primero es el puesto, el nombre y la cifra. */}
           {tramo ? (
             <span
               aria-hidden
-              className="w-1 shrink-0 rounded-full"
-              style={{ background: colorPorTramo(tramo) }}
-            />
+              className="w-[3px] shrink-0 self-stretch overflow-hidden rounded-full bg-rule-2"
+            >
+              <span
+                className="block w-full rounded-full"
+                style={{
+                  height: `${25 + (Math.min(1, (metrica === "tasa" ? (p.tasa ?? 0) : p.conteo) / tope)) * 75}%`,
+                  background: colorPorTramo(tramo),
+                  opacity: 0.8,
+                }}
+              />
+            </span>
           ) : null}
           {/* Posición: grande en el podio, discreta después. */}
           <span
@@ -631,16 +655,12 @@ export function RankingExplorer() {
                   valor:
                     metrica === "tasa" && p.tasa != null ? dec(p.tasa, 1) : nf(p.conteo),
                   tramo: tramoDe(p.conteo),
-                  // Contra el máximo de ESTA página: la escalera describe lo
-                  // que se está viendo, no el máximo nacional.
-                  peso: (() => {
-                    const v = metrica === "tasa" ? (p.tasa ?? 0) : p.conteo;
-                    const tope = Math.max(
-                      ...visibles.map((x) => (metrica === "tasa" ? (x.tasa ?? 0) : x.conteo)),
-                      1
-                    );
-                    return Math.min(1, Math.max(0, v / tope));
-                  })(),
+                  // Contra el máximo de ESTA página, el mismo `tope` que usa
+                  // la tabla: imagen y web no pueden dar largos distintos.
+                  peso: Math.min(
+                    1,
+                    Math.max(0, (metrica === "tasa" ? (p.tasa ?? 0) : p.conteo) / tope)
+                  ),
                 })),
               })
             }

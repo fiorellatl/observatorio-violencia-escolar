@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { og } from "@/lib/og";
 import { Suspense } from "react";
 import Link from "next/link";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
@@ -79,13 +80,13 @@ export async function generateMetadata({
     description: desc,
     alternates: { canonical: "/rankings" },
     robots: limpia ? { index: true, follow: true } : { index: false, follow: true },
-    openGraph: {
-      title: `${titulo} — Observatorio Escolar`,
+    ...og({
+      // `titulo` ya trae el año y el territorio: añadirlo otra vez daba
+      // «… · 2025 · Perú · 2025».
+      title: titulo,
       description: desc,
-      type: "website",
-      locale: "es_PE",
-    },
-    twitter: { card: "summary_large_image", title: titulo, description: desc },
+      url: "/rankings",
+    }),
     other: { "data:corte": meta.corte },
   };
 }

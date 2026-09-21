@@ -250,10 +250,10 @@ export async function dibujarRadiografia(d: DatosRadiografia): Promise<Blob> {
 
   if (d.contexto) {
     const c = d.contexto;
-    ctx.font = `500 32px ${sans}`;
+    ctx.font = `500 36px ${sans}`;
     const frase = lineas(ctx, c.frase, ANCHO - M * 2, 2);
     bloques.push({
-      alto: 50 + 34 + 48 + 52 + frase.length * 40,
+      alto: 36 + 58 + frase.length * 44 + 10 + 16 + 48,
       dibujar: (y0) => contexto(l, c, frase, y0),
     });
   }
@@ -305,7 +305,15 @@ export async function dibujarRadiografia(d: DatosRadiografia): Promise<Blob> {
   return aBlob(l.canvas);
 }
 
-/** El bloque de contexto, con su barra de posición. */
+/**
+ * El bloque de contexto. Es el protagonista de la pieza junto a la cifra.
+ *
+ * Orden deliberado: primero la mediana —el número que hace legible al otro—,
+ * luego contra quién se compara, luego la frase que traduce la posición, y
+ * la barra al final como respaldo visual de lo que la frase ya dijo. Los
+ * cuantiles que deciden el tramo no se enseñan: nadie necesita leer «p95»
+ * para entender «entre el 5 % que más registra».
+ */
 function contexto(
   l: Lienzo,
   c: NonNullable<DatosRadiografia["contexto"]>,
@@ -313,22 +321,27 @@ function contexto(
   y: number
 ): void {
   const { ctx, sans } = l;
-  rotulo(l, "Contexto", y, TINTA_3);
-  y += 50;
 
-  ctx.font = `400 28px ${sans}`;
-  ctx.fillStyle = TINTA_2;
-  ctx.fillText(
-    recortar(ctx, `Mediana entre los ${nf(c.n)} colegios analizados: ${c.mediana}`, ANCHO - M * 2),
-    M,
-    y
-  );
+  ctx.font = `700 46px ${sans}`;
+  ctx.fillStyle = TINTA;
+  ctx.fillText(`Mediana: ${c.mediana} reportes`, M, y);
 
-  // Barra de posición sobre el percentil: la mediana cae siempre en el
-  // centro y el punto se lee sin saber estadística. Sobre un eje de conteos,
-  // el reparto amontonaría a cinco mil colegios en el primer centímetro y la
-  // posición no se vería.
-  y += 34;
+  y += 36;
+  ctx.font = `400 26px ${sans}`;
+  ctx.fillStyle = TINTA_3;
+  ctx.fillText(recortar(ctx, `entre ${c.universo}`, ANCHO - M * 2), M, y);
+
+  y += 58;
+  ctx.font = `500 36px ${sans}`;
+  ctx.fillStyle = ACENTO;
+  for (const t of frase) {
+    ctx.fillText(t, M, y);
+    y += 44;
+  }
+
+  // La barra repite en imagen lo que la frase acaba de decir: la mediana
+  // parte el eje por la mitad y el punto marca dónde cae este colegio.
+  y += 10;
   const ancho = ANCHO - M * 2;
   const grad = ctx.createLinearGradient(M, 0, M + ancho, 0);
   ESCALA_SECUENCIAL_HEX.forEach((color, i) => {
@@ -356,12 +369,4 @@ function contexto(
   ctx.fillText("menos reportes", M, y);
   const der = "más reportes";
   ctx.fillText(der, ANCHO - M - ctx.measureText(der).width, y);
-
-  y += 52;
-  ctx.font = `500 32px ${sans}`;
-  ctx.fillStyle = TINTA;
-  for (const t of frase) {
-    ctx.fillText(t, M, y);
-    y += 40;
-  }
 }

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { og } from "@/lib/og";
 import Link from "next/link";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { MethodologyNote } from "@/components/MethodologyNote";
@@ -9,8 +10,9 @@ import { entradilla, panelPad, panelEnlace, h3 } from "@/lib/ui";
 export const metadata: Metadata = {
   title: "Comparar colegios",
   description:
-    "Compara hasta tres colegios por reportes registrados, nútrícula, tasa por 1,000 estudiantes y contexto institucional.",
+    "Compara hasta tres colegios por reportes registrados, matrícula, tasa por 1,000 estudiantes y contexto institucional.",
   alternates: { canonical: "/comparar" },
+  ...og({ title: "Comparar colegios", description: "Compara hasta tres colegios por reportes registrados, matrícula, tasa por 1,000 estudiantes y contexto institucional.", url: "/comparar" }),
 };
 
 /**

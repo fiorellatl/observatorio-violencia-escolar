@@ -274,7 +274,6 @@ export function LevelBreakdown({
           series={seriesTipo}
           puntos={puntos(["psicologica", "fisica", "sexual"])}
           alto={320}
-          notaPorcentaje="Cada reporte se registra con un tipo de violencia, así que las tres categorías reparten el total del año."
         />
       </section>
 
@@ -300,7 +299,6 @@ export function LevelBreakdown({
           series={seriesActor}
           puntos={puntos(["entre_escolares", "personal_ie"])}
           alto={280}
-          notaPorcentaje="Cada reporte se clasifica en una de las dos categorías, así que aquí el porcentaje sí describe el reparto del año."
         />
 
         <p className="mt-4 max-w-prose text-[0.8rem] leading-relaxed text-ink-3">

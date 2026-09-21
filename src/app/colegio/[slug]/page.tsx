@@ -31,6 +31,7 @@ import {
   VIZ_HEX,
   color,
 } from "@/lib/viz/colors";
+import { og } from "@/lib/og";
 import { shell } from "@/lib/ui";
 
 export const dynamicParams = true;
@@ -69,7 +70,7 @@ export async function generateMetadata({
     description: desc,
     alternates: { canonical: `/colegio/${s.slug}` },
     robots: util ? { index: true, follow: true } : { index: false, follow: true },
-    openGraph: { title: titulo, description: desc, type: "article" },
+    ...og({ title: titulo, description: desc, url: `/colegio/${s.slug}`, type: "article" }),
   };
 }
 

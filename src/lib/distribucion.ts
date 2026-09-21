@@ -210,17 +210,20 @@ export function tramoDe(valor: number, d: Distribucion): Tramo {
  * del país, y las dos frases son ciertas.
  */
 function nombreUniverso(anio: string, a: Ambito, o: OpcionesUniverso = {}): string {
+  // "colegios analizados" se leía como "todos los colegios del Perú", que es
+  // justo lo que este universo NO es: son los que registraron algo ese año.
+  // La frase lo dice entera para que no haga falta interpretarla.
   const donde =
     a.tipo === "pais"
-      ? "del país"
+      ? ""
       : a.tipo === "departamento"
-        ? `de ${a.valor}`
-        : `de la UGEL ${a.valor}`;
+        ? ` de ${a.valor}`
+        : ` de la UGEL ${a.valor}`;
   const nivel = o.nivel ? ` con ${o.nivel.toLowerCase()}` : "";
-  const que = o.tipo ? `reportes de violencia ${ETIQUETA_TIPO[o.tipo]}` : "reportes";
+  const que = o.tipo ? ` de violencia ${ETIQUETA_TIPO[o.tipo]}` : "";
   return o.incluirCeros
-    ? `colegios ${donde}${nivel} presentes en el registro`
-    : `colegios ${donde}${nivel} con al menos un ${que.replace(/^reportes/, "reporte")} en ${anio}`;
+    ? `colegios${donde}${nivel} presentes en el registro de ${anio}`
+    : `colegios${donde}${nivel} que registraron al menos un reporte${que} en ${anio}`;
 }
 
 const ETIQUETA_TIPO = { fisica: "física", psicologica: "psicológica", sexual: "sexual" } as const;

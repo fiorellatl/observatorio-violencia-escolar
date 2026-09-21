@@ -2,21 +2,27 @@ import { dec, nf } from "@/lib/format";
 import { ESCALA_SECUENCIAL, colorPorTramo } from "@/lib/viz/colors";
 import type { ContextoDistribucion } from "@/lib/distribucion";
 
+/** La interpolación da decimales; cuando no los hay, no se inventan. */
+const medianaLegible = (v: number) => (Number.isInteger(v) ? nf(v) : dec(v, 1));
+
 /**
  * Dónde cae este colegio dentro del reparto de reportes registrados.
  *
  * LA PREGUNTA QUE RESPONDE es "¿dónde está comparado con los demás?", no
- * "¿qué tan violento es?". Un número absoluto no se puede leer solo: 45 no
+ * "¿qué tan violento es?". Un número absoluto no se puede leer solo: 76 no
  * significa nada hasta saber que la mitad de los colegios que registran algo
- * se queda en 2. Eso es lo único que hace esta pieza.
+ * se queda en 2.
  *
  * POR QUÉ EL EJE ES EL PERCENTIL Y NO EL CONTEO. El reparto es tan asimétrico
  * que un eje de 0 a 76 amontona a cinco mil colegios en el primer centímetro
  * y deja el resto vacío: la mediana caería pegada al borde izquierdo y dos
  * colegios muy distintos se verían en el mismo punto. Sobre el percentil, la
- * mediana está siempre en el centro y la posición se lee directamente, que es
- * justo lo que se quiere comunicar. Los conteos van escritos debajo, sin
- * intermediarios.
+ * mediana está siempre en el centro y la posición se lee directamente.
+ *
+ * QUÉ NO SE ENSEÑA. Los cuantiles que deciden el tramo —p75, p90, p95, p99—
+ * se quedan dentro del motor. Nadie necesita leer "p95" para entender "está
+ * entre el 5 % que más registra", y enseñarlos convertiría una frase clara en
+ * una tabla estadística.
  *
  * NO ES UN RANKING. No hay puesto, no hay podio y no hay nadie con quien
  * compararse por nombre: hay un reparto y una posición dentro de él.
@@ -27,12 +33,7 @@ export function DistributionPosition({ ctx }: { ctx: ContextoDistribucion }) {
 
   return (
     <div>
-      <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1">
-        <p className="meta">Dónde cae en la distribución</p>
-        <p className="text-[0.8rem] text-ink-3">
-          {nf(ctx.n)} colegios {ctx.universo.replace(/^colegios /, "")}
-        </p>
-      </div>
+      <p className="meta">Dónde cae en la distribución</p>
 
       {/* La barra es un gráfico, no un adorno: lleva rótulos en los dos
           extremos porque «izquierda» y «derecha» no significan nada solas. */}
@@ -40,10 +41,8 @@ export function DistributionPosition({ ctx }: { ctx: ContextoDistribucion }) {
         <div
           className="relative h-3 w-full rounded-sm"
           role="img"
-          aria-label={`Este colegio registra ${nf(ctx.valor)} reportes en ${ctx.anio}. ${ctx.frase} La mediana del universo es ${dec(ctx.mediana, 1)}.`}
-          style={{
-            background: `linear-gradient(to right, ${ESCALA_SECUENCIAL.join(", ")})`,
-          }}
+          aria-label={`Este colegio registra ${nf(ctx.valor)} reportes en ${ctx.anio}. ${ctx.frase} La mediana es ${medianaLegible(ctx.mediana)}.`}
+          style={{ background: `linear-gradient(to right, ${ESCALA_SECUENCIAL.join(", ")})` }}
         >
           {/* La mediana parte el eje por la mitad, por definición. */}
           <span
@@ -64,24 +63,17 @@ export function DistributionPosition({ ctx }: { ctx: ContextoDistribucion }) {
         </div>
       </div>
 
-      <dl className="mt-5 flex flex-wrap gap-x-10 gap-y-3">
-        <div>
-          <dt className="text-[0.8rem] text-ink-3">Este colegio</dt>
-          <dd className="cifra mt-0.5 text-cifra-m text-ink">{nf(ctx.valor)}</dd>
-        </div>
-        <div>
-          <dt className="text-[0.8rem] text-ink-3">Mediana del universo</dt>
-          <dd className="cifra mt-0.5 text-cifra-m text-ink-2">{dec(ctx.mediana, 1)}</dd>
-        </div>
-      </dl>
-
-      <p className="mt-4 max-w-prose text-[1rem] leading-snug text-ink">{ctx.frase}</p>
-
-      <p className="mt-3 max-w-prose text-[0.78rem] leading-relaxed text-ink-3">
-        Describe la distribución de reportes registrados en {ctx.anio}, no la violencia
-        que ocurre: un colegio puede registrar más porque allí denunciar funciona mejor.
-        {ctx.parcial ? ` ${ctx.anio} es un año en curso.` : ""}
+      <p className="mt-6 flex items-baseline gap-2.5">
+        <span className="text-[0.95rem] text-ink-2">Mediana:</span>
+        <span className="cifra text-cifra-m text-ink">{medianaLegible(ctx.mediana)}</span>
+        <span className="text-[0.95rem] text-ink-2">reportes</span>
       </p>
+      <p className="mt-1 text-[0.82rem] leading-relaxed text-ink-3">
+        Entre {ctx.universo}.
+        {ctx.parcial ? " Es un año en curso." : ""}
+      </p>
+
+      <p className="mt-5 max-w-prose text-[1.05rem] leading-snug text-ink">{ctx.frase}</p>
     </div>
   );
 }
