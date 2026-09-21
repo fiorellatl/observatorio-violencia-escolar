@@ -1,101 +1,84 @@
-# SíseVe (MINEDU Perú) — inspección técnica y scraper reproducible
+# El pipeline de datos
 
-Investigación sobre `https://siseve.minedu.gob.pe/Web/App/Mapa`.
-Solo se consumen endpoints que el portal invoca desde el navegador de cualquier
-ciudadano, sin autenticación, sin CAPTCHA y sin evadir ningún control de acceso.
-
-## Conclusión principal
-
-**El portal público de SíseVe no expone datos a nivel de institución educativa.**
-La granularidad máxima es la **UGEL** (225 con casos, 227 en el catálogo).
-No existe endpoint, parámetro ni columna con nombre de colegio o código modular.
-
-## Arquitectura
-
-| Capa | Tecnología |
-|---|---|
-| Backend | ASP.NET MVC (rutas `/Controlador/Accion`, bundles `/Web/bundles/`) |
-| Frontend | jQuery 3.7.1 + plantilla Inspinia |
-| Mapa | Highmaps + topojson `/Web/Content/json/pe-all.topo.json` |
-| Gráficos | Chart.js |
-| Ofuscación | AES-128-CBC (CryptoJS) en request y response |
-
-### La capa AES no es un control de acceso
-
-El servidor entrega la clave en el HTML público:
-
-```html
-<div id="divTheme" data-url="SBPBSSGP%2FNAep...Bw%3DSBPBSSGP">
-```
-
-Los 8 primeros y 8 últimos caracteres se traducen a dígitos con un diccionario
-fijo (`L→0, G→1, A→2, q→3, t→4, P→5, Z→6, B→7, M→8, S→9`) y se concatenan
-formando una clave de 16 bytes; el bloque del medio se descifra con ella y
-produce la clave AES real. Es ofuscación del lado del cliente, no autenticación:
-no hay sesión, cookie ni token asociados.
-
-## Endpoints públicos
-
-Todos: `POST https://siseve.minedu.gob.pe/Web` + ruta,
-`Content-Type: application/json; charset=utf-8`,
-cuerpo `{"filter": "<AES(JSON) url-encoded>"}` (o vacío si no lleva parámetros).
-
-| Ruta | Parámetros | Devuelve |
-|---|---|---|
-| `/TableroControl/ListarAnio` | — | años publicados |
-| `/TableroControl/ListarDatosMapa` | `ANIO` | totales por región y tipo de violencia |
-| `/TableroControl/ListarDreUgel` | — | catálogo de 227 DRE/UGEL |
-| `/TableroControl/ListarDatosGraficoNacional` | `ANIO` | 22 series nacionales |
-| `/TableroControl/ListarDatosGraficoRegion` | `ANIO`, `CODIGO_MAPA` | 22 series por región |
-| `/TableroControl/ListarDatosGraficoUgel` | `ANIO`, `CODIGO_MAPA`, `CODIGO_UGEL` | 22 series por UGEL |
-| `/Inicio/DescargarEXCEL` | — | xlsx, listado caso por caso (1.9 MB) |
-
-`GET /Web/App/MapaDetalle?filter=<base64(JSON)>` — navegación, no es API.
-El `filter` de la URL es Base64 plano (`btoa`), distinto del AES de los POST.
-
-## Uso
+Seis pasos, un orden que importa y una trampa. Esto es lo que hay que saber
+el día que llegue una tanda nueva de SíseVe.
 
 ```bash
-pip install requests pycryptodome openpyxl
-python scripts/inspect_siseve.py   # verifica endpoints -> data/raw/
-python scripts/scrape_siseve.py    # construye CSVs    -> data/processed/
-python scripts/build_lima_map.py   # mapa de Lima      -> data/processed/
-python scripts/render_story.py     # video vertical    -> data/processed/
+python scripts/pipeline.py            # comprueba, no escribe nada
+python scripts/pipeline.py --run      # ejecuta en orden
+python scripts/pipeline.py --run --desde senales
 ```
 
-## Salidas
+## La trampa
 
-| Archivo | Contenido |
-|---|---|
-| `data/raw/*.json` | respuestas originales descifradas |
-| `data/raw/EstadisticaExcel.xlsx` | 50 633 casos, 2024-01-01 a 2026-08-31 |
-| `data/processed/siseve_ugel_lima.csv` | Lima agregada por año/UGEL/nivel/agresor |
-| `data/processed/siseve_ugel_nacional.csv` | idem, nacional (3035 filas) |
-| `data/processed/top_50_ugel_nacional.csv` | ranking por total de reportes |
-| `data/processed/top_50_ugel_lima.csv` | idem, Lima (16 UGEL) |
-| `data/processed/lima_ugel_map.json` | 42 distritos de Lima con su UGEL y sus reportes |
-| `data/processed/siseve_volumen_vs_composicion.mp4` | historia vertical 1080x1920 |
+`data/public/` es a la vez **salida** del primer paso y **entrada** de los
+tres siguientes.
 
-Las columnas `school_name`, `modular_code`, `district` y `management` se emiten
-**vacías a propósito**: el portal no las entrega y no se rellenan con estimaciones.
+```
+EstadisticaExcel.xlsx ──► [1 etl] ──► data/public/  ◄──┐
+                                          │            │
+                        [3 denominador] ──┤ reescribe ─┤
+                        [4 instituciones]─┤ añade ─────┤
+                        [5 señales] ──────┘ lee ───────┘
+```
 
-## Fuentes externas
+Volver a ejecutar el ETL sobrescribe el directorio entero y deshace, sin
+decir nada, el denominador del Censo 2024 y la capa institucional. No falla:
+el sitio simplemente pasa a servir datos viejos.
 
-El mapa de Lima cruza tres cosas: la geometría distrital del repositorio público
-[peru-geojson](https://github.com/juaneladio/peru-geojson) (guardada en
-`data/raw/peru_distrital_simple.geojson`), la jurisdicción de cada UGEL publicada
-por la DRELM, y los reportes por UGEL de SíseVe. **El número es de la UGEL, no del
-distrito**: todos los distritos de una misma UGEL comparten valor porque el portal
-no publica nada más fino. Santa Anita no tiene polígono en la fuente geográfica.
+Por eso el orquestador comprueba **frescura por fecha**: un paso está
+obsoleto cuando alguna de sus entradas es más reciente que su salida. Es una
+regla tonta y es la única que hace visible este fallo.
 
-## Interpretación
+> La primera vez que se ejecutó esta comprobación encontró que `signals.json`
+> se había generado antes de aplicar el denominador de 2024. `/senales`
+> llevaba desde entonces publicando el número de alumnos del padrón 2026
+> mientras la ficha del mismo colegio mostraba el del Censo 2024: El Carmelo
+> aparecía con 294 alumnos en un sitio y 311 en el otro. Los conteos de
+> reportes eran correctos; el denominador que los acompañaba, no.
 
-Nota metodológica del propio Excel oficial:
+## Los pasos
 
-> La información que se consigna en el presente reporte recoge **alertas de
-> violencia escolar**, las mismas que siguen un procedimiento para su atención
-> por parte de la IE. El SíseVe es un portal abierto a la ciudadanía, por lo que
-> **puede existir más de un reporte sobre un mismo caso**.
+| # | Paso | Lee | Escribe |
+|---|------|-----|---------|
+| 1 | `etl` | `data/raw/EstadisticaExcel.xlsx` | `data/public/` entero |
+| 2 | `padron` | `00_Padron.zip` de ESCALE | `data/processed/padron_censo_2024.json` |
+| 3 | `denominador` | 1 + 2 | reescribe `schools_detail`, `cross_2024`, `meta` |
+| 4 | `instituciones` | 3 + padrones | `institutions`, `service-redirects`, `facetas` |
+| 5 | `senales` | 3 | `signals.json` |
+| 6 | `portada` | 4 | `public/og.png` |
+| 7 | `privacidad` | todo | nada: falla si aparece un campo personal |
 
-Un registro ≠ un caso confirmado, y ≠ "bullying" (el bullying es una categoría
-aparte en el portal). Conservar siempre las categorías originales.
+El paso 1 es la **puerta de anonimización**. Todo lo que sale de ahí puede
+publicarse; nada de lo que entra puede.
+
+## Las dos fuentes que hay que conseguir a mano
+
+Ninguna se descarga sola, y ninguna vive en el repositorio.
+
+- **SíseVe** llega por solicitud de acceso a la información pública. Se deja
+  en `data/raw/EstadisticaExcel.xlsx`.
+- **Censo Educativo** se baja de ESCALE (`00_Padron.zip`) y se procesa con
+  `python scripts/padron_censo_2024.py --zip <ruta>`.
+
+Si falta alguna, el orquestador para y dice cuál. No inventa un hueco ni
+sigue con datos a medias.
+
+## Cuando llegue la tanda nueva
+
+1. Deja el XLSX en `data/raw/`.
+2. `python scripts/pipeline.py` — dirá que todo quedó obsoleto.
+3. `python scripts/pipeline.py --run`.
+4. `npm run build` — la validación de privacidad corre sola antes de compilar.
+5. `python scripts/pipeline.py` otra vez: tiene que decir «Todo al día».
+
+El paso 5 no es ceremonia. Es la comprobación que faltaba.
+
+## Lo que este pipeline todavía no arregla
+
+`data/public/` sigue siendo entrada y salida a la vez. Lo correcto sería que
+los pasos 3 y 4 ocurrieran **dentro** del ETL y que el directorio fuera una
+salida pura, pero eso exige re-ejecutar el ETL para comprobarlo, y el XLSX
+que generó la capa actual ya no está en disco. Mientras tanto, la
+comprobación de frescura cubre el riesgo: no evita el error, pero lo hace
+imposible de no ver.

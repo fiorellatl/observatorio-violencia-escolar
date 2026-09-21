@@ -11,7 +11,9 @@
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
     "validate": "node scripts/validate-public.mjs",
-    "validate:distribucion": "node --experimental-strip-types --import ./scripts/registrar-alias.mjs scripts/validate-distribucion.mjs"
+    "validate:distribucion": "node --experimental-strip-types --import ./scripts/registrar-alias.mjs scripts/validate-distribucion.mjs",
+    "datos": "python scripts/pipeline.py",
+    "datos:run": "python scripts/pipeline.py --run"
   },
   "dependencies": {
     "next": "^15.5.24",
