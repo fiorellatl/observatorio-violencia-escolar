@@ -187,11 +187,14 @@ export default async function ColegioPage({
     nivel: null,
     anio: principal,
     parcial: principal === meta.anio_parcial,
-    // Los seis últimos años COMPLETOS. El año en curso queda fuera: en la
-    // web va rotulado como parcial, pero en una imagen que circula sola una
-    // columna a media altura se lee como una caída que no ha ocurrido.
-    aniosSerie: anios.filter((a) => a !== meta.anio_parcial).slice(-6),
+    // El mismo puesto que muestra la portada de la ficha.
+    puesto: puesto ? { pos: puesto.pos, universo: puesto.universo } : null,
+    // Los seis últimos años, el año en curso incluido. Va marcado —tono
+    // distinto y rótulo al pie— porque cubre menos meses: sin eso, una
+    // columna a media altura se leería como una caída que no ha ocurrido.
+    aniosSerie: anios.slice(-6),
     pandemia: meta.anios_pandemia,
+    parcialAnio: meta.anio_parcial,
     contexto: ctxDist
       ? {
           mediana: Number.isInteger(ctxDist.mediana)

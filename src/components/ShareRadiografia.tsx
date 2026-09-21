@@ -31,6 +31,8 @@ export function ShareRadiografia({
   base: Omit<DatosRadiografia, "total" | "serie" | "tipos" | "actores"> & {
     aniosSerie: string[];
     pandemia: string[];
+    /** Cuál de los años de la serie va por parte del año. */
+    parcialAnio: string;
   };
   servicios: ServicioFicha[];
   institucion: Record<string, YearCounts>;
@@ -55,6 +57,7 @@ export function ShareRadiografia({
         anio: a,
         valor: fuente[a]?.total ?? 0,
         pandemia: base.pandemia.includes(a),
+        parcial: a === base.parcialAnio,
       })),
       tipos: categoriasDelAnio(delAnio, tipos.claves, tipos.etiquetas, tipos.colores),
       actores: categoriasDelAnio(delAnio, actores.claves, actores.etiquetas, actores.colores),

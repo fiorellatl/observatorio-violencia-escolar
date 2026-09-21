@@ -47,6 +47,8 @@ export interface BarraAnio {
   valor: number;
   /** Colegios cerrados: la barra se atenúa en vez de desaparecer. */
   pandemia: boolean;
+  /** Año en curso: la barra va rayada y el rótulo lo dice. */
+  parcial?: boolean;
 }
 
 export interface DatosRadiografia {
@@ -61,6 +63,8 @@ export interface DatosRadiografia {
   /** El año todavía no ha terminado. */
   parcial: boolean;
   serie: BarraAnio[];
+  /** Puesto dentro del ranking nacional del año titular. */
+  puesto: { pos: number; universo: number } | null;
   tipos: CategoriaAnual[];
   actores: CategoriaAnual[];
   /**
@@ -99,7 +103,10 @@ function evolucion(l: Lienzo, serie: BarraAnio[], y: number): number {
     // marca, no confundirse con un año sin ninguno.
     const h = s.valor === 0 ? 0 : Math.max(3, (s.valor / max) * alto);
 
-    ctx.fillStyle = s.pandemia ? "#c8cdd2" : ACENTO;
+    // El año en curso va en un tono intermedio, no en el pleno: cubre menos
+    // meses que los demas y una barra igual de solida invitaria a compararla
+    // de tu a tu con un ano cerrado.
+    ctx.fillStyle = s.pandemia ? "#c8cdd2" : s.parcial ? "#7fb3a0" : ACENTO;
     ctx.fillRect(cx - grosor / 2, base - h, grosor, h);
 
     ctx.textAlign = "center";
@@ -117,10 +124,17 @@ function evolucion(l: Lienzo, serie: BarraAnio[], y: number): number {
   ctx.fillRect(M, base, ancho, 2);
 
   y = base + 56;
-  if (serie.some((s) => s.pandemia)) {
+  // El pie solo menciona lo que de verdad se ve. Antes anunciaba el gris
+  // aunque los anos de pandemia valieran cero y no dibujaran ninguna barra:
+  // una leyenda que apunta a algo invisible.
+  const notas: string[] = [];
+  if (serie.some((s) => s.pandemia && s.valor > 0)) notas.push("en gris, colegios cerrados");
+  const parcial = serie.find((s) => s.parcial);
+  if (parcial) notas.push(`${parcial.anio} va por parte del año`);
+  if (notas.length) {
     ctx.font = `400 22px ${sans}`;
     ctx.fillStyle = TINTA_3;
-    ctx.fillText("En gris, años con los colegios cerrados", M, y);
+    ctx.fillText(notas.join(" · ").replace(/^./, (c) => c.toUpperCase()), M, y);
     y += 26;
   }
   return y;
@@ -253,8 +267,8 @@ export async function dibujarRadiografia(d: DatosRadiografia): Promise<Blob> {
     ctx.font = `500 36px ${sans}`;
     const frase = lineas(ctx, c.frase, ANCHO - M * 2, 2);
     bloques.push({
-      alto: 36 + 58 + frase.length * 44 + 10 + 16 + 48,
-      dibujar: (y0) => contexto(l, c, frase, y0),
+      alto: (d.puesto ? 72 : 0) + 30 + 50 + frase.length * 44 + 10 + 16 + 48,
+      dibujar: (y0) => contexto(l, c, d.puesto, d.anio, frase, y0),
     });
   }
   if (d.serie.length > 1) {
@@ -317,21 +331,46 @@ export async function dibujarRadiografia(d: DatosRadiografia): Promise<Blob> {
 function contexto(
   l: Lienzo,
   c: NonNullable<DatosRadiografia["contexto"]>,
+  puesto: DatosRadiografia["puesto"],
+  anio: string,
   frase: string[],
   y: number
 ): void {
-  const { ctx, sans } = l;
+  const { ctx, sans, mono } = l;
 
-  ctx.font = `700 46px ${sans}`;
-  ctx.fillStyle = TINTA;
+  // El PUESTO manda en este bloque. La mediana es la referencia que lo hace
+  // legible, no el dato: en cuerpo 46 competia con la cifra de la portada y
+  // se leia como si el hallazgo fuera la mediana del pais.
+  if (puesto) {
+    ctx.font = `700 54px ${sans}`;
+    ctx.fillStyle = TINTA;
+    const cab = `Puesto ${nf(puesto.pos)}`;
+    ctx.fillText(cab, M, y);
+    const an = ctx.measureText(cab).width;
+    ctx.font = `400 28px ${sans}`;
+    ctx.fillStyle = TINTA_2;
+    ctx.fillText(`de ${nf(puesto.universo)} colegios`, M + an + 16, y);
+    y += 32;
+    ctx.font = `500 21px ${mono}`;
+    ctx.fillStyle = TINTA_3;
+    ctx.letterSpacing = "2px";
+    ctx.fillText(`REPORTES REGISTRADOS · ${anio} · TODO EL PAÍS`, M, y);
+    ctx.letterSpacing = "0px";
+    y += 40;
+  }
+
+  // En una sola linea no cabe y se cortaba a media frase. Dos lineas cortas
+  // mantienen la mediana discreta y dejan legible contra quien se compara,
+  // que es justo lo que le da sentido.
+  ctx.font = `400 27px ${sans}`;
+  ctx.fillStyle = TINTA_2;
   ctx.fillText(`Mediana: ${c.mediana} reportes`, M, y);
-
-  y += 36;
-  ctx.font = `400 26px ${sans}`;
+  y += 30;
+  ctx.font = `400 23px ${sans}`;
   ctx.fillStyle = TINTA_3;
   ctx.fillText(recortar(ctx, `entre ${c.universo}`, ANCHO - M * 2), M, y);
 
-  y += 58;
+  y += 50;
   ctx.font = `500 36px ${sans}`;
   ctx.fillStyle = ACENTO;
   for (const t of frase) {
