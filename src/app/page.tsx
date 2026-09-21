@@ -66,7 +66,7 @@ export default function Home() {
           </p>
 
           <h1 className="titular surgir mt-6 max-w-[12ch] text-display-xxl text-ink">
-            ¿Qué sabemos de cada colegio
+            ¿Qué sabemos de la <span className="text-accent">violencia</span> en los colegios del Perú
             <span className="text-accent">?</span>
           </h1>
 
