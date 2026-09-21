@@ -54,23 +54,51 @@ export type Evento =
   | "view_map";
 
 /**
- * Envía un evento. No hace nada si gtag no está —bloqueador, sin
- * consentimiento, servidor—, y no rompe la página por ello: la medición es lo
- * primero que debe fallar en silencio.
+ * Prepara la cola de gtag, si nadie lo ha hecho todavía.
+ *
+ * ESTO ARREGLA UN FALLO QUE COSTÓ VER. El script de Google se carga con
+ * `afterInteractive`, pero los efectos de React corren en cuanto la página
+ * hidrata: una vista de ficha podía dispararse ANTES de que `window.gtag`
+ * existiera y se perdía sin dejar rastro —ni error, ni aviso, solo un evento
+ * que nunca llega—. Se detectó porque `view_school` no aparecía en producción
+ * mientras `page_view` sí, que es justo la forma que tiene una carrera.
+ *
+ * La solución es la que usa el propio fragmento de GA: definir la cola antes
+ * que el script. Lo que se encole aquí lo procesa `gtag.js` en orden cuando
+ * llega, así que `js` y `config` van siempre por delante de cualquier evento.
+ * Es idempotente: la llama quien llegue primero.
+ */
+function asegurarCola(): void {
+  if (typeof window === "undefined") return;
+  window.dataLayer = window.dataLayer || [];
+  if (typeof window.gtag === "function") return;
+  window.gtag = function gtag() {
+    // eslint-disable-next-line prefer-rest-params
+    window.dataLayer!.push(arguments);
+  };
+  window.gtag("js", new Date());
+  window.gtag("config", GA_ID, { send_page_view: false, anonymize_ip: true });
+}
+
+/**
+ * Envía un evento. Nunca rompe la página: la medición es lo primero que debe
+ * fallar en silencio si hay un bloqueador de por medio.
  */
 export function medir(evento: Evento, params: Parametros = {}): void {
-  if (typeof window === "undefined" || typeof window.gtag !== "function") return;
+  if (typeof window === "undefined") return;
+  asegurarCola();
   const limpio: Parametros = {};
   for (const [k, v] of Object.entries(params)) {
     if (v !== undefined && v !== "") limpio[k] = v;
   }
-  window.gtag("event", evento, limpio);
+  window.gtag!("event", evento, limpio);
 }
 
 /** La vista de página, que se dispara en cada cambio de ruta. */
 export function medirPagina(ruta: string): void {
-  if (typeof window === "undefined" || typeof window.gtag !== "function") return;
-  window.gtag("event", "page_view", {
+  if (typeof window === "undefined") return;
+  asegurarCola();
+  window.gtag!("event", "page_view", {
     page_path: ruta,
     page_location: window.location.origin + ruta,
     page_title: document.title,
