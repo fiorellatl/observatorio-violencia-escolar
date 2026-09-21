@@ -39,7 +39,17 @@ from bajar_identicole import parsear  # noqa: E402  (se importa tras fijar la ru
 # Correos del propio portal: son institucionales y forman parte del pie.
 INSTITUCIONALES = ("identicole@minedu.gob.pe", "webmaster@minedu.gob.pe")
 
-RE_EMAIL = re.compile(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}")
+# El lookbehind no cambia QUE se considera un correo: cambia DONDE puede
+# empezar a buscarlo. Sin el, `[A-Za-z0-9._%+-]+` arranca en cada posicion de
+# cada secuencia larga del JavaScript embebido y recorre el resto buscando una
+# arroba que no esta: coste cuadratico sobre ficheros de 400 KB, 146 segundos
+# en el peor. Exigiendo que el tramo local empiece donde empieza de verdad,
+# solo se prueba una vez por secuencia.
+#
+# La equivalencia no se supone: se comprobo la salida de `sanear()` con una y
+# con otra sobre las 798 fichas del cache, byte a byte. 798/798 identicas,
+# 2.218 redacciones con cada una.
+RE_EMAIL = re.compile(r"(?<![A-Za-z0-9._%+-])[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}")
 RE_TELEFONO = re.compile(r"""(\$\(["']#phone["']\)\.val\(["'])(\d{6,12})(["']\))""")
 RE_DIRECTOR = re.compile(
     r"""(Nombre\s+del\s+director\s*:?\s*</div>.*?<strong[^>]*>)(.*?)(</strong>)""",
