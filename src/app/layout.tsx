@@ -201,7 +201,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 </a>
               </div>
             </div>
-
+<p className="mt-8 text-[0.8rem] text-noche-ink-3">
+  Un proyecto de <strong>Fiorella Toranzo Lossio</strong>
+</p>
             <p className="mt-14 border-t border-noche-rule pt-6 font-mono text-[0.66rem] uppercase tracking-[0.1em] text-noche-ink-4">
               Datos públicos del Ministerio de Educación del Perú · Capa pública generada el{" "}
               <span className="tabular">{meta.generado}</span>
