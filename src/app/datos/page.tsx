@@ -9,7 +9,7 @@ import { MethodologyNote } from "@/components/MethodologyNote";
 import { ReportTrend } from "@/components/ReportTrend";
 import { ScatterXY } from "@/components/ScatterXY";
 import { CategoryBars, type SerieDef } from "@/components/CategoryBars";
-import { getCross, getMeta, getNational } from "@/lib/data/provider";
+import { getAllInstitutions, getCross, getMeta, getNational } from "@/lib/data/provider";
 import { nf } from "@/lib/format";
 import { COLOR_ACTOR, COLOR_VIOLENCIA, color } from "@/lib/viz/colors";
 import { entradilla, meta as clsMeta, panelPad, panelEnlace, h3 } from "@/lib/ui";
@@ -106,6 +106,28 @@ export default function DatosPage() {
   }));
 
   const conPension = cross.filter((c) => (c.pension ?? 0) > 0);
+
+  /*
+   * De dónde sale realmente esta sección.
+   *
+   * Identicole se consultó colegio por colegio y esa consulta solo cubrió
+   * Lima: el resto del país no tiene una sola ficha. Presentar el gráfico sin
+   * decirlo lo convertiría en un hallazgo nacional construido sobre una
+   * fracción de una región. El alcance se calcula aquí a partir de los datos
+   * —no se escribe a mano— para que deje de ser cierto el día que la
+   * cobertura cambie.
+   */
+  const conPensionSlugs = new Set(conPension.map((c) => c.slug));
+  const regionesPension = new Set<string>();
+  let privadosTotal = 0;
+  for (const i of Object.values(getAllInstitutions())) {
+    for (const sv of i.servicios) {
+      if (i.gestion?.startsWith("Priv")) privadosTotal++;
+      if (conPensionSlugs.has(sv.slug)) regionesPension.add(i.departamento);
+    }
+  }
+  const ambitoPension =
+    regionesPension.size === 1 ? [...regionesPension][0] : `${regionesPension.size} regiones`;
   const comparables = nacional.filter((n) => !n.pandemia && n.anio !== meta.anio_parcial);
   const pico = comparables.reduce((a, b) => (b.total > a.total ? b : a), comparables[0]);
   const ultimoCompleto = comparables[comparables.length - 1];
@@ -364,11 +386,14 @@ export default function DatosPage() {
         <Pregunta id="pension" pregunta="¿Y con la pensión?">
           <div className={panelPad}>
             <div className="flex flex-wrap items-baseline justify-between gap-2">
-              <h3 className={h3}>Pensión mensual y tasa de reportes</h3>
+              <h3 className={h3}>Pensiones publicadas en Identicole</h3>
               <DataSourceBadge fuente="Identicole" anio={conPension.length ? "2025" : null} />
             </div>
             <p className={entradilla}>
-              Solo colegios privados: los públicos no cobran pensión.
+              {ambitoPension} · colegios privados con ficha en Identicole:{" "}
+              <strong className="font-semibold text-ink">{nf(conPension.length)}</strong> de{" "}
+              {nf(privadosTotal)} privados del país. Los públicos no cobran pensión y quedan
+              fuera por definición.
             </p>
 
             {conPension.length >= 30 ? (
