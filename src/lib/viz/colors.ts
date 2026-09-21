@@ -104,6 +104,46 @@ export const ESCALA_SECUENCIAL = [
   "var(--viz-seq-5)",
 ] as const;
 
+/**
+ * Color de un tramo de la distribución.
+ *
+ * El mapa de calor del ranking NO dice "más violencia": dice dónde cae ese
+ * colegio dentro del reparto de reportes registrados del año. Por eso usa una
+ * secuencial de un solo matiz —de claro a oscuro, "menos" a "más"— y no una
+ * divergente con dos extremos enfrentados, que insinuaría un centro bueno.
+ */
+export type TramoDistribucion = "corriente" | "p75" | "p90" | "p95" | "p99";
+
+const TRAMO_A_ESCALON: Record<TramoDistribucion, number> = {
+  corriente: 0,
+  p75: 1,
+  p90: 2,
+  p95: 3,
+  p99: 4,
+};
+
+export const colorPorTramo = (t: TramoDistribucion): string =>
+  ESCALA_SECUENCIAL[TRAMO_A_ESCALON[t]];
+
+/**
+ * Los mismos cinco tonos en hexadecimal.
+ *
+ * Un `canvas` no resuelve `var(--viz-seq-1)`, así que la imagen que se
+ * comparte necesita los valores literales. Tienen que seguir siendo los
+ * mismos que los de `:root`: si divergen, la web y la captura dirían cosas
+ * distintas con el mismo color.
+ */
+export const ESCALA_SECUENCIAL_HEX = [
+  "#dbe6f2",
+  "#a9c3de",
+  "#6e97c4",
+  "#3f6fa6",
+  "#234b78",
+] as const;
+
+export const colorPorTramoHex = (t: TramoDistribucion): string =>
+  ESCALA_SECUENCIAL_HEX[TRAMO_A_ESCALON[t]];
+
 /** Devuelve el color de un tramo de la escala secuencial. */
 export function colorSecuencial(valor: number, min: number, max: number): string {
   if (!Number.isFinite(valor) || max <= min) return ESCALA_SECUENCIAL[0];

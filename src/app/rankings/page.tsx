@@ -5,7 +5,7 @@ import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { MethodologyNote } from "@/components/MethodologyNote";
 import { RankingExplorer } from "@/components/RankingExplorer";
 import { facetaValida, getAnioPrincipal, getMeta } from "@/lib/data/provider";
-import { nf } from "@/lib/format";
+import { fechaLegible, nf } from "@/lib/format";
 import { shell } from "@/lib/ui";
 
 type Busqueda = Promise<Record<string, string | string[] | undefined>>;
@@ -116,16 +116,11 @@ export default function RankingsPage() {
       <section className="mt-16 border-t border-rule pt-10">
         <h2 className="font-display text-display-m font-medium">Cómo leer este ranking</h2>
 
-        <div className="mt-6 grid gap-4 sm:grid-cols-2">
+        <div className="mt-6 max-w-prose">
           <MethodologyNote tono="aviso">
             Esta tabla no dice qué colegio es más violento: dice cuál registró más
             reportes, que es otra cosa. Un número alto puede reflejar que allí denunciar
             funciona mejor.
-          </MethodologyNote>
-          <MethodologyNote>
-            Los reportes registrados no equivalen a casos únicos. SíseVe advierte que
-            puede existir más de un reporte sobre un mismo caso, y un colegio sin reportes
-            no significa que no haya ocurrido violencia.
           </MethodologyNote>
         </div>
 
@@ -152,15 +147,15 @@ export default function RankingsPage() {
               Divide los reportes entre el número de alumnos y permite comparar colegios de
               distinto tamaño. Solo existe en {meta.anio_transversal} —el último Censo
               Educativo publicado— y a partir de {nf(meta.matricula_minima)} alumnos: por
-              debajo, un solo reporte mueve la tasa decenas de puntos. No representa
-              personas afectadas ni casos únicos.
+              debajo, un solo reporte mueve la tasa decenas de puntos.
             </p>
           </div>
           <div>
             <p className="meta">Qué año se muestra</p>
             <p className="mt-2 max-w-prose text-[0.88rem] leading-relaxed text-ink-2">
               Por defecto {principal}, el último año completo. {meta.anio_parcial} está en
-              curso —datos hasta el {meta.corte}— y no se compara con un año cerrado.
+              curso —datos hasta el {fechaLegible(meta.corte)}— y no se compara con un año
+              cerrado.
             </p>
           </div>
           <div>

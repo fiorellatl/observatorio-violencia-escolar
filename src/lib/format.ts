@@ -60,3 +60,19 @@ export const valorLegible = (v: string | number): string => {
   if (s.length > 3 && s === s.toUpperCase() && /[A-ZÁÉÍÓÚÑ]/.test(s)) return titulo(s);
   return s;
 };
+
+const MESES = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio",
+  "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
+
+/**
+ * Fecha de corte en prosa: "31 de agosto de 2026".
+ *
+ * El ISO sirve para ordenar y para la máquina; dentro de una frase obliga a
+ * descifrarlo. Se parte a mano en vez de usar `Date` porque `new Date("2026-08-31")`
+ * interpreta UTC y en Lima devuelve el día anterior.
+ */
+export const fechaLegible = (iso: string): string => {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso ?? "");
+  if (!m) return iso ?? "";
+  return `${Number(m[3])} de ${MESES[Number(m[2]) - 1]} de ${m[1]}`;
+};

@@ -5,7 +5,6 @@ import { notFound, permanentRedirect } from "next/navigation";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { DataSourceBadge } from "@/components/DataSourceBadge";
 import { LevelBreakdown } from "@/components/LevelBreakdown";
-import { MethodologyNote } from "@/components/MethodologyNote";
 import { MetricBand } from "@/components/MetricBand";
 import { SchoolNav } from "@/components/SchoolNav";
 import { ShareButton } from "@/components/ShareButton";
@@ -15,10 +14,10 @@ import {
   getMeta,
   getPosicionRanking,
   getPrerenderSlugs,
-  getSenalDeColegio,
   getServiceRedirect,
 } from "@/lib/data/provider";
-import { dec, nf, valorLegible } from "@/lib/format";
+import { getInsights } from "@/lib/insights";
+import { dec, fechaLegible, nf, valorLegible } from "@/lib/format";
 import { COLOR_SERIE, color } from "@/lib/viz/colors";
 import { shell } from "@/lib/ui";
 
@@ -62,13 +61,14 @@ export async function generateMetadata({
   };
 }
 
-/** Rótulo de cada clase de señal. Nunca "riesgo" ni "peligro". */
-const SENAL: Record<string, { titulo: string; flecha?: string }> = {
-  aumento: { titulo: "Aumento inusual", flecha: "↑" },
-  disminucion: { titulo: "Disminución inusual", flecha: "↓" },
-  composicion: { titulo: "Cambio en el tipo de reportes" },
-  reaparicion: { titulo: "Vuelve a registrar" },
-  persistencia: { titulo: "Registro sostenido" },
+/** Flechas de las señales. Acompañan al texto; nunca lo sustituyen, y no
+    codifican bueno ni malo: una subida de reportes puede ser un colegio donde
+    por fin se denuncia. */
+const FLECHA: Record<string, string> = {
+  subida: "↑",
+  bajada: "↓",
+  vuelve: "↗",
+  sostiene: "→",
 };
 
 export default async function ColegioPage({
@@ -103,7 +103,7 @@ export default async function ColegioPage({
   const delPrincipal = s.anios[principal];
   const enCurso = s.anios[meta.anio_parcial];
   const puesto = getPosicionRanking(s.cm, principal);
-  const senal = getSenalDeColegio(s.servicios.map((x) => x.cm));
+  const insights = getInsights(s);
 
   // Comparación con el año anterior comparable: el de pandemia no sirve de
   // referencia y se salta.
@@ -159,10 +159,9 @@ export default async function ColegioPage({
           Identidad, cifra del año y contexto medible van juntos sobre el
           material oscuro; el análisis —evolución, tipos, agresor— baja al
           papel, que es donde se lee un gráfico denso sin fatiga. */}
-      <section className="noche">
+      <section className="border-b border-rule">
         <div className={`${shell} pb-2 pt-6`}>
           <Breadcrumbs
-            tono="noche"
             items={[
               { label: "Inicio", href: "/" },
               { label: "Colegios", href: "/colegios" },
@@ -175,24 +174,24 @@ export default async function ColegioPage({
           />
 
           <div className="mt-3">
-            <Suspense fallback={<div className="h-[4.6rem] border-y border-noche-rule" />}>
-              <SchoolNav {...navProps} tono="noche" />
+            <Suspense fallback={<div className="h-[4.6rem] border-y border-rule" />}>
+              <SchoolNav {...navProps} />
             </Suspense>
           </div>
         </div>
 
         <div className={`${shell} grid gap-x-12 gap-y-10 pb-12 pt-10 sm:pt-12 lg:grid-cols-12`}>
           <div className="lg:col-span-7">
-            <h1 className="titular max-w-[16ch] text-display-xl text-noche-ink">{s.nombre}</h1>
+            <h1 className="titular max-w-[16ch] text-display-xl text-ink">{s.nombre}</h1>
 
-            <p className="mt-7 flex flex-wrap items-center gap-x-3 gap-y-2 font-mono text-[0.68rem] uppercase tracking-[0.1em] text-noche-ink-2">
+            <p className="mt-7 flex flex-wrap items-center gap-x-3 gap-y-2 font-mono text-[0.68rem] uppercase tracking-[0.1em] text-ink-2">
               {[`${s.distrito} · ${s.departamento}`, s.gestion, ...s.niveles, `CM ${s.cm}`]
                 .filter(Boolean)
                 .map((v, k, arr) => (
                   <span key={`${v}-${k}`} className="flex items-center gap-3">
                     {v}
                     {k < arr.length - 1 ? (
-                      <span aria-hidden className="text-noche-rule-2">
+                      <span aria-hidden className="text-rule">
                         /
                       </span>
                     ) : null}
@@ -203,13 +202,13 @@ export default async function ColegioPage({
             <div className="mt-8 flex flex-wrap items-center gap-2.5">
               <Link
                 href={`/comparar?colegio=${encodeURIComponent(s.slug)}`}
-                className="inline-flex items-center gap-2 rounded-full border border-menta px-4 py-2 text-[0.85rem] font-medium text-menta transition-colors duration-150 ease-suave hover:bg-menta hover:text-noche"
+                className="inline-flex items-center gap-2 rounded-full border border-accent px-4 py-2 text-[0.85rem] font-medium text-accent transition-colors duration-150 ease-suave hover:bg-accent hover:text-paper"
               >
                 Comparar este colegio
               </Link>
               <Link
                 href={`/colegios?region=${encodeURIComponent(s.departamento)}&distrito=${encodeURIComponent(s.distrito)}&de=colegios`}
-                className="inline-flex items-center gap-2 rounded-full border border-noche-rule-2 px-4 py-2 text-[0.85rem] text-noche-ink-2 transition-colors duration-150 ease-suave hover:border-menta hover:text-menta"
+                className="inline-flex items-center gap-2 rounded-full border border-rule px-4 py-2 text-[0.85rem] text-ink-2 transition-colors duration-150 ease-suave hover:border-accent hover:text-accent"
               >
                 Otros colegios de {s.distrito}
               </Link>
@@ -217,16 +216,16 @@ export default async function ColegioPage({
           </div>
 
           {/* La cifra del año principal: el elemento más grande después del
-              nombre. La menta la marca como el dato que la página afirma. */}
+              nombre. Es el dato que la página afirma. */}
           <div className="lg:col-span-5">
-            <p className="meta-noche">Reportes registrados en {principal}</p>
-            <p className="cifra mt-4 text-[clamp(4rem,11vw,7rem)] text-noche-ink">
+            <p className="meta">Reportes registrados en {principal}</p>
+            <p className="cifra mt-4 text-[clamp(4rem,11vw,7rem)] text-ink">
               {nf(delPrincipal?.total ?? 0)}
             </p>
-            <p className="mt-4 flex flex-wrap items-baseline gap-x-4 gap-y-1 text-[0.9rem] text-noche-ink-2">
+            <p className="mt-4 flex flex-wrap items-baseline gap-x-4 gap-y-1 text-[0.9rem] text-ink-2">
               <span className="tabular">último año completo</span>
               {delta != null && previo ? (
-                <span className="tabular text-menta">
+                <span className="tabular text-accent">
                   <span aria-hidden>{delta > 0 ? "↑" : delta < 0 ? "↓" : "="}</span>{" "}
                   {delta === 0
                     ? `sin cambio vs. ${previo}`
@@ -234,25 +233,28 @@ export default async function ColegioPage({
                 </span>
               ) : null}
             </p>
-            <p className="mt-2 font-mono text-[0.66rem] uppercase tracking-[0.1em] text-noche-ink-4">
-              <span className="tabular">{nf(s.total)}</span> en total desde {primero}
-              {s.servicios.length > 1 ? ` · ${nf(s.servicios.length)} niveles` : ""}
+            {/* En versalita monoespaciada esta línea no se leía: es una cifra
+                con significado, no un metadato de procedencia. */}
+            <p className="mt-2.5 text-[0.88rem] text-ink-3">
+              <span className="tabular">{nf(s.total)}</span> reportes en total desde{" "}
+              {primero}
+              {s.servicios.length > 1 ? `, sumando sus ${nf(s.servicios.length)} niveles` : ""}
             </p>
 
             {puesto ? (
-              <div className="mt-8 border-t border-noche-rule pt-6">
+              <div className="mt-8 border-t border-rule pt-6">
                 <p className="flex items-baseline gap-3">
-                  <span className="cifra text-cifra-l text-menta">#{nf(puesto.pos)}</span>
-                  <span className="text-[0.9rem] text-noche-ink-2">
+                  <span className="cifra text-cifra-l text-accent">#{nf(puesto.pos)}</span>
+                  <span className="text-[0.9rem] text-ink-2">
                     de {nf(puesto.universo)} colegios
                   </span>
                 </p>
-                <p className="mt-2 font-mono text-[0.66rem] uppercase tracking-[0.1em] text-noche-ink-4">
+                <p className="mt-2 font-mono text-[0.66rem] uppercase tracking-[0.1em] text-ink-3">
                   Reportes registrados · {principal} · todo el país
                 </p>
                 <Link
                   href={`/rankings?anio=${principal}`}
-                  className="mt-3 inline-flex items-baseline gap-1.5 text-[0.85rem] font-medium text-menta hover:underline"
+                  className="mt-3 inline-flex items-baseline gap-1.5 text-[0.85rem] font-medium text-accent hover:underline"
                 >
                   Ver el ranking
                   <span aria-hidden>→</span>
@@ -266,14 +268,13 @@ export default async function ColegioPage({
         <div className={shell}>
           <h2 className="sr-only">Otros datos del colegio</h2>
           <MetricBand
-            tono="noche"
             metricas={[
               {
                 label: `Reportes en ${meta.anio_parcial}`,
                 valor: nf(enCurso?.total ?? 0),
                 fuente: "SíseVe",
                 anio: `${meta.anio_parcial} · en curso`,
-                nota: `Hasta el ${meta.corte}. No comparable con un año completo.`,
+                nota: `Hasta el ${fechaLegible(meta.corte)}.`,
               },
               {
                 label: "# Alumnos",
@@ -307,7 +308,7 @@ export default async function ColegioPage({
                 valor: s.tasa_2024 != null ? dec(s.tasa_2024, 1) : null,
                 fuente: "SíseVe / Censo",
                 anio: s.tasa_2024 != null ? t : null,
-                nota: `Métrica secundaria. Reportes de ${t} ÷ alumnos de ${s.anio_matricula}.`,
+
                 ausente: !s.matricula_completa
                   ? "Falta el número de alumnos de algún nivel: la tasa saldría inflada"
                   : s.matricula == null
@@ -320,76 +321,64 @@ export default async function ColegioPage({
       </section>
 
       <div className={shell}>
-      {/* ── Señal reciente ─────────────────────────────────────── */}
-      <section id="senal" className={seccion}>
+      {/* ── Señales ─────────────────────────────── */}
+      <section id="senales" className={seccion}>
         <div className="grid gap-8 lg:grid-cols-12">
           <div className="lg:col-span-4">
             <h2 className="font-display text-display-m font-medium">Señales</h2>
-            <p className="mt-2 max-w-prose text-[0.85rem] leading-relaxed text-ink-3">
-              Cambios en el registro más grandes de lo esperable entre dos años, con
-              corrección por las miles de comparaciones que se hacen a la vez.
+            <p className="mt-3 max-w-prose text-[0.88rem] leading-relaxed text-ink-2">
+              Lo que destaca al mirar su historia y compararlo con otros colegios. Cada
+              señal sale de un cálculo sobre los datos publicados y dice contra quién
+              compara.
+            </p>
+            <p className="mt-4 max-w-prose text-[0.78rem] leading-relaxed text-ink-3">
+              Describen registros, no evalúan al colegio. Un número alto de reportes
+              puede reflejar que allí denunciar funciona mejor.
             </p>
           </div>
 
           <div className="lg:col-span-8">
-            {senal ? (
-              <div
-                className="rounded-lg border border-rule bg-surface p-5 sm:p-6"
-                style={{ borderLeft: `3px solid ${azul}` }}
-              >
-                <p className="meta">Señal reciente</p>
-                <p className="mt-2.5 flex items-baseline gap-2.5 font-display text-display-m font-medium">
-                  {SENAL[senal.clase].flecha ? (
-                    <span aria-hidden style={{ color: azul }}>
-                      {SENAL[senal.clase].flecha}
-                    </span>
-                  ) : null}
-                  {SENAL[senal.clase].titulo}
-                </p>
-
-                <p className="mt-3 text-[0.95rem] text-ink-2">
-                  {senal.clase === "aumento" || senal.clase === "disminucion" ? (
-                    <span className="tabular">
-                      {nf(senal.anterior)} → {nf(senal.actual)} reportes ·{" "}
-                      {senal.anio_anterior} → {senal.anio}
-                    </span>
-                  ) : senal.clase === "composicion" ? (
-                    <span className="tabular">
-                      El reparto por tipo de violencia cambió entre {senal.anio_anterior} y{" "}
-                      {senal.anio}
-                    </span>
-                  ) : senal.clase === "reaparicion" ? (
-                    <span className="tabular">
-                      {nf(senal.actual)} reportes en {senal.anio} tras {nf(senal.anios_sin)}{" "}
-                      años sin registrar; el último fue {senal.ultimo_con}
-                    </span>
-                  ) : senal.clase === "persistencia" ? (
-                    <span className="tabular">
-                      Registró reportes en {nf(senal.anios_con)} de los últimos{" "}
-                      {nf(senal.ventana)} años
-                    </span>
-                  ) : null}
-                </p>
-
-                <Link
-                  href="/senales"
-                  className="mt-4 inline-flex items-baseline gap-1.5 text-[0.88rem] font-medium text-accent hover:underline"
-                >
-                  Ver por qué aparece
-                  <span aria-hidden>→</span>
-                </Link>
-              </div>
+            {insights.length > 0 ? (
+              <ul className="grid gap-px overflow-hidden rounded-lg border border-rule bg-rule sm:grid-cols-2">
+                {insights.map((x) => (
+                  <li key={x.titular} className="flex flex-col gap-2.5 bg-surface p-5 sm:p-6">
+                    <p className="flex items-center gap-2.5">
+                      {x.flecha ? (
+                        <span aria-hidden className="text-[1.05rem] leading-none" style={{ color: azul }}>
+                          {FLECHA[x.flecha]}
+                        </span>
+                      ) : null}
+                      <span className="meta">{x.etiqueta}</span>
+                    </p>
+                    <p className="text-[1.15rem] font-bold leading-tight tracking-[-0.03em] text-ink">
+                      {x.titular}
+                    </p>
+                    <p className="text-[0.86rem] leading-relaxed text-ink-2">{x.detalle}</p>
+                  </li>
+                ))}
+              </ul>
             ) : (
               <div className="rounded-lg border border-dashed border-rule p-5 sm:p-6">
                 <p className="text-[0.95rem] text-ink-2">
-                  No hay señales recientes para este colegio.
+                  No hay señales destacables para este colegio.
                 </p>
                 <p className="mt-2 max-w-prose text-[0.82rem] leading-relaxed text-ink-3">
-                  Significa que su registro no cambió más de lo esperable entre los dos
-                  últimos años comparables. No significa que no ocurra violencia.
+                  Sus cifras no superan ninguno de los umbrales con los que se detectan
+                  patrones. No significa que no ocurra violencia: significa que su
+                  registro no se aparta de lo corriente.
                 </p>
               </div>
             )}
+
+            <p className="mt-4 text-[0.78rem] leading-relaxed text-ink-3">
+              Se calculan sobre {principal}, el último año completo, y sobre la serie de
+              años comparables. {meta.anios_pandemia.join(" y ")} quedan fuera de rachas y
+              récords porque los colegios estuvieron cerrados.{" "}
+              <Link href="/senales" className="text-accent hover:underline">
+                Cómo se detectan los cambios
+              </Link>
+              .
+            </p>
           </div>
         </div>
       </section>
@@ -439,12 +428,6 @@ export default async function ColegioPage({
           </p>
         ) : null}
 
-        <div className="mt-8">
-          <MethodologyNote href="/metodologia">
-            Los reportes de SíseVe son alertas registradas, no casos confirmados. Un número
-            más alto puede reflejar que en ese colegio denunciar funciona mejor.
-          </MethodologyNote>
-        </div>
       </section>
 
       {/* ── Seguir explorando ──────────────────────────────────── */}

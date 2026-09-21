@@ -26,17 +26,17 @@
      claro queda para el contenido denso. El contraste entre los dos
      bloques es lo que da ritmo a la página; sin él, todo pesa igual.
      Existe en los dos esquemas de color: no se invierte. */
-  --noche: #0e1110;
-  --noche-2: #141816;        /* hover sobre noche */
-  --noche-rule: #232725;
-  --noche-rule-2: #2c312e;
+  --noche: #1a1d21;
+  --noche-2: #22262b;        /* hover sobre noche */
+  --noche-rule: #2e3339;
+  --noche-rule-2: #3a4047;
   --noche-ink: #f7f8f5;
   --noche-ink-2: #a7aea8;
   --noche-ink-3: #8b938d;
   --noche-ink-4: #5f6762;
 
-  /* Acento sobre la noche. El verde pino del papel se apaga sobre negro;
-     la menta es el mismo gesto con la luminosidad que el fondo exige. */
+  /* La menta pura. Sobre grafito sí escribe —ahí el contraste se invierte—
+     y sobre papel solo dibuja. */
   --menta: #57e3ae;
 
   /* ── tinta: cuatro niveles, cada uno con un trabajo ───────── */
@@ -50,9 +50,20 @@
   --rule-2: #e2e4df;
   --rule-3: #f0f1ec;
 
-  --accent: #1d6a58;
-  --accent-2: #14503f;
-  --accent-soft: #e4efeb;
+  /* ── ACENTO, EN DOS PIEZAS ────────────────────────────────
+     La menta es el color de la marca, pero sobre papel da 1,8:1 de
+     contraste: como texto es ilegible, incluso a 132 px. Así que se parte
+     en dos y cada mitad hace lo que puede hacer.
+
+     `accent` es la menta llevada a su versión oscura —mismo matiz, otra
+     luminosidad— y es la que escribe: enlaces, cifras destacadas, estados
+     activos. Pasa AA de sobra sobre el papel.
+
+     `menta` es gráfica: filetes, subrayados, puntos, y rellenos con tinta
+     oscura encima. Nunca texto de color menta sobre papel. */
+  --accent: #0a6f55;
+  --accent-2: #085343;
+  --accent-soft: #dff5ec;
 
   /* ── COLOR DE DATOS ───────────────────────────────────────
      Separado de la interfaz a propósito: el acento, los grises y los
@@ -150,9 +161,9 @@
     --rule: #2c2f2c;
     --rule-2: #232522;
     --rule-3: #1d1f1d;
-    --accent: #4fae94;
-    --accent-2: #6cc4ac;
-    --accent-soft: #14302a;
+    --accent: #57e3ae;
+    --accent-2: #7eecc2;
+    --accent-soft: #10322a;
     --viz-blue: #5b95d6;
     --viz-blue-soft: #16273a;
     --viz-blue-strong: #7fb0e3;

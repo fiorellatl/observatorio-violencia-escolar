@@ -6,7 +6,13 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { ShareButton } from "@/components/ShareButton";
 import { dec, nf, slugify } from "@/lib/format";
 import { boton, campo, meta as clsMeta } from "@/lib/ui";
-import { COLOR_SERIE, COLOR_VIOLENCIA, color } from "@/lib/viz/colors";
+import {
+  COLOR_SERIE,
+  COLOR_VIOLENCIA,
+  color,
+  colorPorTramo,
+  type TramoDistribucion,
+} from "@/lib/viz/colors";
 import type { RankingIndex, RankingRow } from "@/lib/types";
 
 /**
@@ -47,6 +53,10 @@ const TIPOS: { v: Tipo; label: string; corto: string; pos: number }[] = [
   { v: "psicologica", label: "Psicológicos", corto: "de violencia psicológica", pos: 2 },
   { v: "sexual", label: "Sexuales", corto: "de violencia sexual", pos: 3 },
 ];
+
+/** Un cuantil interpolado puede no ser entero; no se finge que lo sea. */
+const numeroCorto = (n: number) =>
+  Number.isInteger(n) ? nf(n) : n.toFixed(1).replace(".", ",");
 
 const POR_PAGINA = 20;
 const DESTACADOS = 3;
@@ -301,6 +311,28 @@ export function RankingExplorer() {
     return c.toString();
   })();
 
+  /**
+   * Dónde cae un conteo dentro del reparto nacional del año.
+   *
+   * Se usa el reparto NACIONAL y no el del filtro: así el color significa lo
+   * mismo en un ranking de Lima que en uno de Cajamarca, y una captura de
+   * cualquiera de los dos se lee con la misma escala. Solo aplica al conteo;
+   * la tasa tiene otro universo —los colegios con cien alumnos o más— y
+   * teñirla con estos cortes sería mezclar dos repartos.
+   */
+  const tramoDe = useCallback(
+    (v: number): TramoDistribucion | null => {
+      const d = idx?.distribucion?.[anio];
+      if (!d || metrica === "tasa" || v <= 0) return null;
+      if (v >= d.p99) return "p99";
+      if (v >= d.p95) return "p95";
+      if (v >= d.p90) return "p90";
+      if (v >= d.p75) return "p75";
+      return "corriente";
+    },
+    [idx, anio, metrica]
+  );
+
   /** El territorio, dicho en una línea. Es el subtítulo de la pieza. */
   const territorio = (() => {
     const de = (k: string) => filtros.out.find((f) => f.clave === k)?.valor ?? "";
@@ -387,12 +419,23 @@ export function RankingExplorer() {
     const serie = idx.anios.map((a) => p.conteos[a]?.[posTipo] ?? 0);
     const href = `/colegio/${slugify(p.fila[0], distrito, p.fila[1])}?${contexto}`;
 
+    const tramo = tramoDe(p.conteo);
+
     return (
       <li className="border-b border-rule-2 last:border-b-0">
         <Link
           href={href}
-          className="group flex items-start gap-3 py-4 transition-colors duration-150 ease-suave hover:bg-accent-soft/40 sm:gap-5 sm:py-5"
+          className="group flex items-stretch gap-3 py-4 transition-colors duration-150 ease-suave hover:bg-accent-soft/40 sm:gap-5 sm:py-5"
         >
+          {/* Indicador de reparto: dónde cae este conteo dentro del año, en la
+              escala secuencial. No califica al colegio; sitúa el número. */}
+          {tramo ? (
+            <span
+              aria-hidden
+              className="w-1 shrink-0 rounded-full"
+              style={{ background: colorPorTramo(tramo) }}
+            />
+          ) : null}
           {/* Posición: grande en el podio, discreta después. */}
           <span
             aria-hidden
@@ -658,23 +701,23 @@ export function RankingExplorer() {
         aria-label="Ranking"
         className="mt-5 overflow-hidden rounded-xl border border-rule bg-surface"
       >
-        {/* ── Portada, sobre la noche ────────────────────────────
-            El bloque oscuro es lo que convierte la tabla en una pieza: separa
-            lo que se afirma —métrica, año, universo— de las filas que lo
-            sostienen, y hace que un recorte siga leyéndose como algo emitido
-            por alguien y no como una captura de una hoja de cálculo. */}
-        <div className="noche px-5 pb-8 pt-8 sm:px-10 sm:pb-10 sm:pt-10">
+        {/* ── Portada ────────────────────────────────────────────
+            Separa lo que la pieza afirma —métrica, año, universo— de las filas
+            que lo sostienen, para que un recorte siga leyéndose como algo
+            emitido por alguien y no como una captura de una hoja de cálculo.
+            El corte lo marca un filete grueso del color del tipo elegido. */}
+        <div className="border-b border-rule px-5 pb-8 pt-8 sm:px-10 sm:pb-10 sm:pt-10">
           <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2">
-            <p className="flex items-center gap-2.5 font-mono text-[0.68rem] uppercase tracking-[0.18em] text-noche-ink">
-              <span aria-hidden className="h-2 w-2 rounded-sm bg-menta" />
+            <p className="flex items-center gap-2.5 font-mono text-[0.68rem] uppercase tracking-[0.18em] text-ink">
+              <span aria-hidden className="h-2 w-2 rounded-sm bg-accent" />
               Observatorio Escolar
             </p>
-            <p className="font-mono text-[0.66rem] uppercase tracking-[0.12em] text-noche-ink-4">
+            <p className="font-mono text-[0.66rem] uppercase tracking-[0.12em] text-ink-3">
               Ranking descriptivo
             </p>
           </div>
 
-          <p className="meta-noche mt-8">
+          <p className="meta mt-8">
             {metrica === "tasa" ? "Tasa de reportes" : "Reportes registrados"}
             {tipo === "todos" ? "" : ` · ${TIPOS.find((x) => x.v === tipo)!.label}`}
           </p>
@@ -682,14 +725,14 @@ export function RankingExplorer() {
           {/* display-l y no display-xl: "Colegios con más reportes registrados"
               son cinco palabras largas, y a 6 rem ocupan tres líneas que se
               comen la pieza entera. La escala grande es para un titular corto. */}
-          <h2 className="titular mt-4 max-w-[17ch] text-display-l text-noche-ink">
+          <h2 className="titular mt-4 max-w-[17ch] text-display-l text-ink">
             {titulo}
           </h2>
 
-          <div className="mt-9 flex flex-wrap items-end gap-x-8 gap-y-5 border-t border-noche-rule pt-7">
+          <div className="mt-9 flex flex-wrap items-end gap-x-8 gap-y-5 border-t border-rule pt-7">
             <div className="flex items-end gap-4">
-              <p className="cifra text-[clamp(3.2rem,8vw,5rem)] text-menta">{anio}</p>
-              <p className="pb-1.5 font-mono text-[0.66rem] uppercase leading-relaxed tracking-[0.1em] text-noche-ink-3">
+              <p className="cifra text-[clamp(3.2rem,8vw,5rem)] text-accent">{anio}</p>
+              <p className="pb-1.5 font-mono text-[0.66rem] uppercase leading-relaxed tracking-[0.1em] text-ink-3">
                 {esParcial ? (
                   <>
                     año en curso
@@ -711,31 +754,31 @@ export function RankingExplorer() {
 
             <dl className="ml-auto flex gap-x-10 gap-y-3">
               <div>
-                <dd className="cifra text-cifra-m text-noche-ink">{nf(universo.conReportes)}</dd>
-                <dt className="mt-1.5 font-mono text-[0.62rem] uppercase tracking-[0.1em] text-noche-ink-4">
+                <dd className="cifra text-cifra-m text-ink">{nf(universo.conReportes)}</dd>
+                <dt className="mt-1.5 font-mono text-[0.62rem] uppercase tracking-[0.1em] text-ink-3">
                   colegios
                 </dt>
               </div>
               <div>
-                <dd className="cifra text-cifra-m text-noche-ink">{nf(universo.reportes)}</dd>
-                <dt className="mt-1.5 font-mono text-[0.62rem] uppercase tracking-[0.1em] text-noche-ink-4">
+                <dd className="cifra text-cifra-m text-ink">{nf(universo.reportes)}</dd>
+                <dt className="mt-1.5 font-mono text-[0.62rem] uppercase tracking-[0.1em] text-ink-3">
                   reportes registrados
                 </dt>
               </div>
             </dl>
           </div>
 
-          <p className="mt-6 font-mono text-[0.72rem] uppercase tracking-[0.1em] text-noche-ink-2">
+          <p className="mt-6 font-mono text-[0.72rem] uppercase tracking-[0.1em] text-ink-2">
             {territorio}
           </p>
           {filtros.ignorados.length ? (
-            <p className="mt-2 max-w-prose text-[0.82rem] leading-relaxed text-menta">
+            <p className="mt-2 max-w-prose text-[0.82rem] leading-relaxed text-accent">
               No se aplicó {filtros.ignorados.map((v) => `«${v}»`).join(", ")}: no es un
               valor de estos datos. La tabla muestra el universo sin ese filtro.
             </p>
           ) : null}
           {metrica === "tasa" ? (
-            <p className="mt-2 max-w-prose text-[0.82rem] leading-relaxed text-noche-ink-3">
+            <p className="mt-2 max-w-prose text-[0.82rem] leading-relaxed text-ink-3">
               Métrica secundaria. Solo existe en {idx.anio_tasa}, el año con censo de
               alumnos, y a partir de {nf(idx.matricula_minima)} alumnos.
               {sinTasa > 0 ? ` ${nf(sinTasa)} colegios quedan fuera por eso.` : ""}
@@ -766,6 +809,29 @@ export function RankingExplorer() {
             })}
           </ol>
         )}
+
+        {/* Leyenda del indicador. La regla del proyecto es que el color nunca
+            viaja solo: sin esto, la barrita lateral sería decoración. */}
+        {metrica === "reportes" && idx.distribucion?.[anio] ? (
+          <div className="flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-rule px-5 py-3.5 sm:px-10">
+            <span className={clsMeta}>Dónde cae en {anio}</span>
+            <span className="flex items-center gap-2">
+              {(["corriente", "p75", "p90", "p95", "p99"] as TramoDistribucion[]).map((x) => (
+                <span
+                  key={x}
+                  aria-hidden
+                  className="h-2.5 w-5 rounded-sm"
+                  style={{ background: colorPorTramo(x) }}
+                />
+              ))}
+            </span>
+            <span className="text-[0.78rem] text-ink-3">
+              de la mediana ({numeroCorto(idx.distribucion[anio].mediana)} reportes) al
+              1 % con más registros, entre los {nf(idx.distribucion[anio].n)} colegios del
+              país con al menos uno
+            </span>
+          </div>
+        ) : null}
 
         <p className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 border-t border-rule px-5 py-4 font-mono text-[0.66rem] uppercase tracking-[0.09em] text-ink-3 sm:px-10">
           <span>

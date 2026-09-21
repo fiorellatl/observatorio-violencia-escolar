@@ -196,7 +196,21 @@ export type RankingRow = [
   Record<string, [number, Record<string, [number, number, number, number]>]>?,
 ];
 
+/** Cuantiles nacionales de un año. Van en el índice para que el mapa de
+    calor use el mismo reparto en la web y en la imagen compartible, y para
+    que el color no dependa del filtro que el usuario tenga puesto. */
+export interface CuantilesAnio {
+  n: number;
+  mediana: number;
+  p75: number;
+  p90: number;
+  p95: number;
+  p99: number;
+}
+
 export interface RankingIndex {
+  /** anio -> cuantiles nacionales sobre colegios con al menos un reporte. */
+  distribucion: Record<string, CuantilesAnio>;
   /** Años ofrecidos. Excluye la pandemia: no es comparable. */
   anios: string[];
   /** Año de los REPORTES con los que se calcula la tasa. */

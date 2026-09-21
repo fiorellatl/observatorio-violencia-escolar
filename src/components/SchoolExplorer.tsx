@@ -83,6 +83,7 @@ export function SchoolExplorer() {
   // El texto se escribe en local y se vuelca a la URL con retardo: escribir no
   // debe generar una entrada de historial por letra.
   const [texto, setTexto] = useState(filtros.q);
+  const [filtros_abiertos, setFiltros] = useState(false);
   useEffect(() => setTexto(filtros.q), [filtros.q]);
 
   const poner = useCallback(
@@ -194,7 +195,31 @@ export function SchoolExplorer() {
           />
         </div>
 
-        <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+        {/* En móvil los filtros se pliegan: apilados empujaban los resultados
+            unos 350 px hacia abajo, así que escribir un nombre parecía no
+            devolver nada. Desde tablet caben en una fila y se quedan a la
+            vista. */}
+        <button
+          type="button"
+          onClick={() => setFiltros((x) => !x)}
+          aria-expanded={filtros_abiertos}
+          aria-controls="filtros-colegios"
+          className={`${boton} mt-3 w-full justify-center sm:hidden`}
+        >
+          {filtros_abiertos ? "Ocultar filtros" : "Filtros"}
+          {activos > 0 ? (
+            <span className="tabular rounded-full bg-accent px-1.5 text-[0.72rem] font-medium text-paper">
+              {activos}
+            </span>
+          ) : null}
+        </button>
+
+        <div
+          id="filtros-colegios"
+          className={`mt-4 gap-3 sm:grid sm:grid-cols-2 lg:grid-cols-5 ${
+            filtros_abiertos ? "grid" : "hidden"
+          }`}
+        >
           <Select k="region" label="Región" />
           <Select k="provincia" label="Provincia" />
           <Select k="distrito" label="Distrito" />
@@ -209,7 +234,7 @@ export function SchoolExplorer() {
             ) : (
               <>
                 <span className="tabular font-medium text-ink">{nf(resultados.length)}</span>{" "}
-                {resultados.length === 1 ? "servicio educativo" : "servicios educativos"}
+                {resultados.length === 1 ? "colegio" : "colegios"}
                 {activos > 0 ? (
                   <span className="text-ink-3">
                     {" "}

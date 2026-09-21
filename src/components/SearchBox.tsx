@@ -16,16 +16,16 @@ import type { BrowseRow } from "@/lib/types";
 export function SearchBox({
   autoFocus = false,
   placeholder = "Busca un colegio, distrito o código modular",
-  tono = "papel",
+  tono = "campo",
 }: {
   autoFocus?: boolean;
   placeholder?: string;
-  /** Sobre la noche el campo pierde la caja: queda una línea de menta y el
-      texto a tamaño de titular. Buscar es la acción de la portada, no un
-      control más. */
-  tono?: "papel" | "noche";
+  /** En la portada el campo pierde la caja: queda una línea de menta y el
+      texto a tamaño de titular. Buscar es la acción principal, no un control
+      más. */
+  tono?: "campo" | "portada";
 }) {
-  const noche = tono === "noche";
+  const noche = tono === "portada";
   const [q, setQ] = useState("");
   const [consulta, setConsulta] = useState("");
   const [sel, setSel] = useState(-1);
@@ -88,7 +88,7 @@ export function SearchBox({
       {noche ? (
         <label
           htmlFor="buscador"
-          className="pointer-events-none absolute left-0 top-1/2 -translate-y-[1.35rem] font-mono text-[0.68rem] uppercase tracking-[0.14em] text-menta"
+          className="pointer-events-none absolute left-0 top-1/2 -translate-y-[1.35rem] font-mono text-[0.68rem] uppercase tracking-[0.14em] text-accent"
         >
           Buscar
         </label>
@@ -135,7 +135,7 @@ export function SearchBox({
         }}
         className={
           noche
-            ? "w-full border-b-2 border-menta bg-transparent pb-4 pt-6 text-[clamp(1.4rem,3.2vw,2.1rem)] font-medium tracking-[-0.032em] text-noche-ink outline-none placeholder:text-noche-ink-4"
+            ? "w-full border-b-2 border-menta bg-transparent pb-4 pt-6 text-[clamp(1.4rem,3.2vw,2.1rem)] font-medium tracking-[-0.032em] text-ink outline-none placeholder:text-ink-3"
             : "w-full rounded-xl border-2 border-rule bg-surface px-4 py-3.5 text-[1.02rem] text-ink outline-none transition-colors placeholder:text-ink-3 focus:border-accent"
         }
       />

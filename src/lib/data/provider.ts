@@ -10,6 +10,7 @@
  */
 import fs from "node:fs";
 import path from "node:path";
+import { getDistribucion } from "@/lib/distribucion";
 import type {
   BrowseIndex,
   Institution,
@@ -76,6 +77,13 @@ let _redir: Record<string, [string, string]> | null = null;
 
 function allInstitutions(): Record<string, Institution> {
   return (_inst ??= read<Record<string, Institution>>("institutions.json"));
+}
+
+/** Todas las instituciones. Solo para cálculos que necesitan el universo
+    entero —percentiles, posiciones, agregados por UGEL—; una página nunca
+    debe recorrerlas para pintarse. */
+export function getAllInstitutions(): Record<string, Institution> {
+  return allInstitutions();
 }
 
 /** Cuántos colegios —instituciones, no servicios— hay en la capa pública. */
@@ -284,7 +292,19 @@ export function getRankingIndex(): RankingIndex {
     ]);
   }
 
+  // Mismo motor que usan las señales de la ficha: un solo reparto por año.
+  const distribucion: Record<string, import("@/lib/types").CuantilesAnio> = {};
+  for (const a of anios) {
+    const d = getDistribucion(a);
+    if (d) {
+      distribucion[a] = {
+        n: d.n, mediana: d.mediana, p75: d.p75, p90: d.p90, p95: d.p95, p99: d.p99,
+      };
+    }
+  }
+
   return {
+    distribucion,
     anios,
     anio_tasa: meta.anio_transversal,
     anio_padron: meta.fuentes.matricula?.anio ?? "",

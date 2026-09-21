@@ -1,12 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { DataSourceBadge } from "@/components/DataSourceBadge";
-import { MethodologyNote } from "@/components/MethodologyNote";
 import { ReportTrend } from "@/components/ReportTrend";
 import { SearchBox } from "@/components/SearchBox";
 import { getInstitutionCount, getMeta, getNational } from "@/lib/data/provider";
-import { nf } from "@/lib/format";
-import { enlace, h2, panel, shell } from "@/lib/ui";
+import { fechaLegible, nf } from "@/lib/format";
+import { h2, shell } from "@/lib/ui";
 
 export const metadata: Metadata = {
   alternates: { canonical: "/" },
@@ -48,7 +46,7 @@ export default function Home() {
     {
       valor: nf(meta.reportes),
       titulo: "reportes en todo el histórico",
-      detalle: "cada uno es una alerta registrada, no un caso confirmado",
+      detalle: `desde ${meta.anio_min}`,
       fuente: "SíseVe",
       anio: `${meta.anio_min}–${meta.anio_max}`,
     },
@@ -58,47 +56,46 @@ export default function Home() {
     <>
       {/* ══ PORTADA, SOBRE LA NOCHE ═══════════════════════
           La pregunta ocupa la pantalla entera y el buscador va inmediatamente
-          debajo, con el filete de menta: entrar aquí es buscar un colegio.
+          debajo: entrar aquí es buscar un colegio.
           Las tres cifras cierran el bloque como una franja divida por filetes,
           sin tarjetas. */}
-      <section className="noche">
+      <section className="border-b border-rule">
         <div className={`${shell} pb-14 pt-16 sm:pb-16 sm:pt-24`}>
-          <p className="meta-noche surgir">
+          <p className="meta surgir">
             Datos públicos SíseVe · {meta.anio_min}–{meta.anio_max}
           </p>
 
-          <h1 className="titular surgir mt-6 max-w-[12ch] text-display-xxl text-noche-ink">
+          <h1 className="titular surgir mt-6 max-w-[12ch] text-display-xxl text-ink">
             ¿Qué sabemos de cada colegio
-            <span className="text-menta">?</span>
+            <span className="text-accent">?</span>
           </h1>
 
-          <p className="surgir mt-8 max-w-[52ch] text-[1.08rem] leading-relaxed text-noche-ink-2">
+          <p className="surgir mt-8 max-w-[52ch] text-[1.08rem] leading-relaxed text-ink-2">
             {nf(meta.reportes)} reportes registrados en {nf(colegios)} colegios. Un
             reporte es una alerta registrada en SíseVe, no un caso confirmado.
           </p>
 
           <div className="surgir mt-12">
             <SearchBox
-              tono="noche"
-              placeholder="nombre del colegio, distrito o código modular"
+                placeholder="nombre del colegio, distrito o código modular"
             />
           </div>
         </div>
 
         {/* Tres cifras, sin tarjetas: las separan filetes. */}
-        <dl className={`${shell} grid border-t border-noche-rule sm:grid-cols-3`}>
+        <dl className={`${shell} grid border-t border-rule sm:grid-cols-3`}>
           {cifras.map((c, i) => (
             <div
               key={c.titulo}
-              className={`border-noche-rule px-1 py-8 sm:px-7 sm:py-9 ${
+              className={`border-rule px-1 py-8 sm:px-7 sm:py-9 ${
                 i < 2 ? "border-b sm:border-b-0 sm:border-r" : ""
               } ${i === 0 ? "sm:pl-0" : ""}`}
             >
-              <dd className="cifra text-[clamp(2.6rem,5.5vw,3.6rem)] text-noche-ink">
+              <dd className="cifra text-[clamp(2.6rem,5.5vw,3.6rem)] text-ink">
                 {c.valor}
               </dd>
-              <dt className="mt-3 text-[0.95rem] text-noche-ink-2">{c.titulo}</dt>
-              <p className="mt-1.5 font-mono text-[0.62rem] uppercase tracking-[0.1em] text-noche-ink-4">
+              <dt className="mt-3 text-[0.95rem] text-ink-2">{c.titulo}</dt>
+              <p className="mt-1.5 font-mono text-[0.62rem] uppercase tracking-[0.1em] text-ink-3">
                 {c.detalle}
               </p>
             </div>
@@ -106,7 +103,7 @@ export default function Home() {
         </dl>
 
         {/* Las dos puertas de entrada, a sangre. */}
-        <div className="grid border-t border-noche-rule sm:grid-cols-2">
+        <div className="grid border-t border-rule sm:grid-cols-2">
           {[
             {
               n: "01",
@@ -124,20 +121,20 @@ export default function Home() {
             <Link
               key={x.href}
               href={x.href}
-              className={`group flex flex-col gap-3 px-5 py-10 transition-colors duration-150 ease-suave hover:bg-noche-2 sm:px-10 sm:py-14 ${
-                i === 0 ? "border-b border-noche-rule sm:border-b-0 sm:border-r" : ""
+              className={`group flex flex-col gap-3 px-5 py-10 transition-colors duration-150 ease-suave hover:bg-accent-soft/50 sm:px-10 sm:py-14 ${
+                i === 0 ? "border-b border-rule sm:border-b-0 sm:border-r" : ""
               }`}
             >
-              <span className="meta-noche">{x.n}</span>
-              <span className="text-[clamp(1.5rem,3vw,2.15rem)] font-bold leading-tight tracking-[-0.04em] text-noche-ink">
+              <span className="meta">{x.n}</span>
+              <span className="text-[clamp(1.5rem,3vw,2.15rem)] font-bold leading-tight tracking-[-0.04em] text-ink">
                 {x.t}
               </span>
-              <span className="max-w-[38ch] text-[0.92rem] leading-relaxed text-noche-ink-3">
+              <span className="max-w-[38ch] text-[0.92rem] leading-relaxed text-ink-3">
                 {x.d}
               </span>
               <span
                 aria-hidden
-                className="mt-1 text-menta transition-transform duration-150 ease-suave group-hover:translate-x-1"
+                className="mt-1 text-accent transition-transform duration-150 ease-suave group-hover:translate-x-1"
               >
                 →
               </span>
@@ -198,103 +195,43 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ── Los datos en contexto ───────────────────────────────── */}
+      {/* ── El gráfico, como pieza principal ───────────────
+          Catorce años de registro en una sola figura. Va sobre papel y a
+          tamaño grande: es el resumen que la portada promete, y una cifra
+          suelta no cuenta lo que cuenta la forma de la serie. */}
       <section className="border-t border-rule">
         <div className={`${shell} py-14 sm:py-20`}>
-          <h2 className="meta">Los datos en contexto</h2>
+          <div className="flex flex-wrap items-end justify-between gap-x-10 gap-y-4">
+            <h2 className="max-w-[18ch] font-display text-display-l font-bold text-balance">
+              Catorce años de reportes registrados
+            </h2>
+            <p className="font-mono text-[0.66rem] uppercase leading-relaxed tracking-[0.1em] text-ink-3 sm:text-right">
+              Reportes registrados por año
+              <span className="block">
+                Fuente SíseVe · corte {fechaLegible(meta.corte)}
+              </span>
+            </p>
+          </div>
 
-          <dl className="mt-10 grid gap-x-10 gap-y-12 sm:grid-cols-3">
-            {cifras.map((c) => (
-              <div key={c.titulo} className="border-t border-rule pt-5">
-                <dd className="cifra text-cifra-xl font-medium">{c.valor}</dd>
-                <dt className="mt-3 text-[0.98rem] font-medium leading-snug text-ink">
-                  {c.titulo}
-                </dt>
-                <p className="mt-1.5 max-w-[34ch] text-[0.84rem] leading-relaxed text-ink-3">
-                  {c.detalle}
-                </p>
-                <div className="mt-3">
-                  <DataSourceBadge fuente={c.fuente} anio={c.anio} />
-                </div>
-              </div>
-            ))}
-          </dl>
+          <div className="mt-10">
+            <ReportTrend data={serie} alto={420} />
+          </div>
 
-          <div className="mt-12 max-w-prose">
-            <MethodologyNote href="/metodologia">
-              Más reportes no significa necesariamente más violencia. Puede reflejar un
-              colegio más grande, o uno donde denunciar funciona mejor. Y cero reportes no
-              significa que no ocurra nada: significa que nadie lo registró.
-            </MethodologyNote>
+          <div className="mt-8 flex flex-wrap gap-x-10 gap-y-3 border-t border-rule pt-6">
+            <p className="max-w-[40ch] text-[0.85rem] leading-relaxed text-ink-2">
+              <span className="meta block">{meta.anios_pandemia.join("–")}</span>
+              Escuelas cerradas: el canal de registro casi desaparece. No se compara con
+              un año normal.
+            </p>
+            <p className="max-w-[40ch] text-[0.85rem] leading-relaxed text-ink-2">
+              <span className="meta block">{meta.anio_parcial}</span>
+              Año en curso, con datos hasta el corte. No es comparable con un año
+              completo.
+            </p>
           </div>
         </div>
       </section>
 
-      {/* ── Las dos entradas ────────────────────────────────────── */}
-      <section className="border-t border-rule">
-        <div className={`${shell} py-14 sm:py-20`}>
-          <h2 className={h2}>Dos formas de mirar</h2>
-
-          <div className="mt-10 grid gap-px overflow-hidden rounded-lg border border-rule bg-rule sm:grid-cols-2">
-            <Link
-              href="/colegios"
-              className="group bg-surface p-7 transition-colors duration-150 ease-suave hover:bg-accent-soft sm:p-9"
-            >
-              <p className="meta">Entrada 1</p>
-              <p className="mt-4 font-display text-display-m font-medium">
-                Explora un colegio
-              </p>
-              <p className="mt-3 max-w-prose text-cuerpo-s leading-relaxed text-ink-2">
-                Busca por nombre, distrito o código modular. Cada ficha muestra la
-                trayectoria de reportes, el número de alumnos cuando lo conocemos y el contexto
-                que declara la institución, con el año de cada fuente.
-              </p>
-              <span className="mt-6 inline-flex items-baseline gap-2 text-[0.9rem] font-medium text-accent">
-                Buscar un colegio
-                <span
-                  aria-hidden
-                  className="transition-transform duration-150 ease-suave group-hover:translate-x-1"
-                >
-                  →
-                </span>
-              </span>
-            </Link>
-
-            <Link
-              href="/datos"
-              className="group bg-surface p-7 transition-colors duration-150 ease-suave hover:bg-accent-soft sm:p-9"
-            >
-              <p className="meta">Entrada 2</p>
-              <p className="mt-4 font-display text-display-m font-medium">
-                Explora los datos
-              </p>
-              <p className="mt-3 max-w-prose text-cuerpo-s leading-relaxed text-ink-2">
-                Qué está pasando, cómo ha cambiado, qué tipos de violencia se registran y
-                cómo se relaciona con el tamaño del colegio. Cada bloque dice con cuántos
-                colegios trabaja y qué no se puede concluir.
-              </p>
-              <span className="mt-6 inline-flex items-baseline gap-2 text-[0.9rem] font-medium text-accent">
-                Ver los datos
-                <span
-                  aria-hidden
-                  className="transition-transform duration-150 ease-suave group-hover:translate-x-1"
-                >
-                  →
-                </span>
-              </span>
-            </Link>
-          </div>
-
-          <p className="mt-8 max-w-prose text-[0.84rem] leading-relaxed text-ink-3">
-            ¿Quieres saber cómo se construyó todo esto, qué mide SíseVe y qué decidimos no
-            publicar?{" "}
-            <Link href="/metodologia" className={enlace}>
-              Lee la metodología
-            </Link>
-            .
-          </p>
-        </div>
-      </section>
     </>
   );
 }

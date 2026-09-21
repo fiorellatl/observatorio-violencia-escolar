@@ -189,9 +189,8 @@ export default function DatosPage() {
           </dl>
           <div className="mt-5 max-w-prose">
             <MethodologyNote>
-              Un reporte es una alerta registrada en SíseVe, no un caso confirmado ni una
-              víctima. Puede haber más de un reporte sobre un mismo hecho, y muchos hechos
-              no llegan nunca al sistema.
+              Muchos hechos no llegan nunca al sistema: lo que se cuenta aquí es lo que
+              alguien registró.
             </MethodologyNote>
           </div>
         </Pregunta>
