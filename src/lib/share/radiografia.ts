@@ -264,11 +264,9 @@ export async function dibujarRadiografia(d: DatosRadiografia): Promise<Blob> {
 
   if (d.contexto) {
     const c = d.contexto;
-    ctx.font = `500 36px ${sans}`;
-    const frase = lineas(ctx, c.frase, ANCHO - M * 2, 2);
     bloques.push({
-      alto: (d.puesto ? 72 : 0) + 30 + 50 + frase.length * 44 + 10 + 16 + 48,
-      dibujar: (y0) => contexto(l, c, d.puesto, d.anio, frase, y0),
+      alto: (d.puesto ? 64 : 0) + 24 + 16 + 48,
+      dibujar: (y0) => contexto(l, c, d.puesto, d.anio, y0),
     });
   }
   if (d.serie.length > 1) {
@@ -322,25 +320,29 @@ export async function dibujarRadiografia(d: DatosRadiografia): Promise<Blob> {
 /**
  * El bloque de contexto. Es el protagonista de la pieza junto a la cifra.
  *
- * Orden deliberado: primero la mediana —el número que hace legible al otro—,
- * luego contra quién se compara, luego la frase que traduce la posición, y
- * la barra al final como respaldo visual de lo que la frase ya dijo. Los
- * cuantiles que deciden el tramo no se enseñan: nadie necesita leer «p95»
- * para entender «entre el 5 % que más registra».
+ * Dos elementos y ninguna frase: el puesto dentro del reparto y el punto
+ * sobre la barra. Los cuantiles que lo deciden no se enseñan —nadie necesita
+ * leer «p95»— y tampoco se traducen a palabras, porque el número y el punto
+ * ya dicen lo mismo dos veces.
  */
 function contexto(
   l: Lienzo,
   c: NonNullable<DatosRadiografia["contexto"]>,
   puesto: DatosRadiografia["puesto"],
   anio: string,
-  frase: string[],
   y: number
 ): void {
-  const { ctx, sans, mono } = l;
+  const { ctx, sans } = l;
 
-  // El PUESTO manda en este bloque. La mediana es la referencia que lo hace
-  // legible, no el dato: en cuerpo 46 competia con la cifra de la portada y
-  // se leia como si el hallazgo fuera la mediana del pais.
+  // El PUESTO y la BARRA, y nada más.
+  //
+  // Aquí vivían además la mediana y una frase que traducía la posición a
+  // palabras. Las dos decían lo que el puesto y el punto sobre la barra ya
+  // enseñan, y en una pieza que se lee en tres segundos repetir una idea en
+  // tres registros distintos no la refuerza: la diluye. Se quitan sin
+  // sustituirlas por otro texto, que es justo el impulso que había que
+  // resistir. La mediana sigue en la ficha web, donde hay sitio para
+  // explicarla.
   if (puesto) {
     ctx.font = `700 54px ${sans}`;
     ctx.fillStyle = TINTA;
@@ -349,38 +351,20 @@ function contexto(
     const an = ctx.measureText(cab).width;
     ctx.font = `400 28px ${sans}`;
     ctx.fillStyle = TINTA_2;
-    ctx.fillText(`de ${nf(puesto.universo)} colegios`, M + an + 16, y);
-    y += 32;
-    ctx.font = `500 21px ${mono}`;
+    ctx.fillText(`de ${nf(puesto.universo)}`, M + an + 16, y);
+
+    // La única aclaración que queda: contra quién se cuenta ese puesto. Sin
+    // ella, "de 6.134" no dice de qué conjunto se habla.
+    y += 34;
+    ctx.font = `400 25px ${sans}`;
     ctx.fillStyle = TINTA_3;
-    ctx.letterSpacing = "2px";
-    ctx.fillText(`REPORTES REGISTRADOS · ${anio} · TODO EL PAÍS`, M, y);
-    ctx.letterSpacing = "0px";
-    y += 40;
+    ctx.fillText(`colegios con al menos un reporte en ${anio}`, M, y);
+    y += 30;
   }
 
-  // En una sola linea no cabe y se cortaba a media frase. Dos lineas cortas
-  // mantienen la mediana discreta y dejan legible contra quien se compara,
-  // que es justo lo que le da sentido.
-  ctx.font = `400 27px ${sans}`;
-  ctx.fillStyle = TINTA_2;
-  ctx.fillText(`Mediana: ${c.mediana} reportes`, M, y);
-  y += 30;
-  ctx.font = `400 23px ${sans}`;
-  ctx.fillStyle = TINTA_3;
-  ctx.fillText(recortar(ctx, `entre ${c.universo}`, ANCHO - M * 2), M, y);
-
-  y += 50;
-  ctx.font = `500 36px ${sans}`;
-  ctx.fillStyle = ACENTO;
-  for (const t of frase) {
-    ctx.fillText(t, M, y);
-    y += 44;
-  }
-
-  // La barra repite en imagen lo que la frase acaba de decir: la mediana
-  // parte el eje por la mitad y el punto marca dónde cae este colegio.
-  y += 10;
+  // La marca central es la mediana del reparto, que parte el eje por la
+  // mitad por definición. Se dibuja, no se nombra.
+  y += 24;
   const ancho = ANCHO - M * 2;
   const grad = ctx.createLinearGradient(M, 0, M + ancho, 0);
   ESCALA_SECUENCIAL_HEX.forEach((color, i) => {
