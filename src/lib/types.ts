@@ -18,6 +18,27 @@ export interface YearCounts {
   entre_escolares?: number;
 }
 
+/**
+ * Por qué no hay pensión, cuando no la hay.
+ *
+ * Antes la ausencia era un solo `null` que valía para cuatro situaciones muy
+ * distintas, y la interfaz no podía distinguirlas porque el dato no las
+ * distinguía: acababa diciendo lo mismo de un colegio público —que por
+ * definición no cobra— y de uno privado que simplemente no hemos consultado.
+ * Eso no es un detalle de presentación, es un error de modelado.
+ */
+export type EstadoPension =
+  /** Hay importe, con su año. */
+  | "disponible"
+  /** Colegio público: no cobra pensión. */
+  | "no_aplica"
+  /** Tiene ficha en Identicole y la ficha no declara importe. */
+  | "no_informada"
+  /** Su ficha no se ha consultado: la cobertura de Identicole es solo Lima. */
+  | "sin_ficha"
+  /** SíseVe lo llama público e Identicole, privado. No se resuelve a ojo. */
+  | "conflicto";
+
 export interface SchoolDetail {
   cm: string;
   slug: string;
@@ -40,6 +61,7 @@ export interface SchoolDetail {
   /** Solo colegios privados, y solo donde ya bajamos la ficha de Identicole. */
   pension?: number | null;
   anio_pension?: string | null;
+  pension_estado?: EstadoPension;
   /** Contexto de Identicole. Cada campo lleva su propia fuente y año. */
   contexto?: Record<string, ContextField>;
 }
@@ -69,6 +91,7 @@ export interface InstitutionService {
   secciones?: number | null;
   pension?: number | null;
   anio_pension?: string | null;
+  pension_estado?: EstadoPension;
   tasa_2024?: number | null;
 }
 

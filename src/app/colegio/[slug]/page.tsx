@@ -20,6 +20,7 @@ import {
   getServiceRedirect,
 } from "@/lib/data/provider";
 import { getInsights } from "@/lib/insights";
+import { PENSION, estadoPension } from "@/lib/pension";
 import { getContexto } from "@/lib/distribucion";
 import type { DatosRadiografia } from "@/lib/share/radiografia";
 import { dec, fechaLegible, nf, valorLegible } from "@/lib/format";
@@ -132,6 +133,9 @@ export default async function ColegioPage({
   // La pensión no se agrega: la declara cada servicio. En la franja se muestra
   // la del nivel más alto que la tenga, y el desglose completo va en la tabla.
   const conPension = [...s.servicios].reverse().find((x) => x.pension != null);
+  // Sin importe, el estado sale del servicio cabecera: es el que representa
+  // a la institución en todo lo demás.
+  const servPension = conPension ?? s.servicios.find((x) => x.slug === s.slug) ?? s.servicios[0];
   const cabecera = s.servicios.find((x) => x.slug === s.slug) ?? s.servicios[0];
 
   const contexto: { label: string; valor: string; fuente: string; anio?: string | null }[] = [
@@ -412,9 +416,10 @@ export default async function ColegioPage({
                   conPension && s.servicios.length > 1
                     ? `Declarada para ${conPension.nivel.toLowerCase()}.`
                     : undefined,
-                ausente: s.gestion?.startsWith("Públic")
-                  ? "No aplica: es un colegio público"
-                  : "Sin consultar todavía",
+                // El motivo exacto, no un «sin datos» que valga para todo:
+                // un público que no cobra y un privado fuera de la cobertura
+                // de Identicole no son la misma ausencia.
+                ausente: PENSION[estadoPension({ ...servPension, gestion: s.gestion })].largo,
               },
               {
                 label: "Reportes por 1.000 alumnos",
@@ -527,6 +532,7 @@ export default async function ColegioPage({
             matricula: x.matricula ?? null,
             pension: x.pension ?? null,
             anio_pension: x.anio_pension ?? null,
+            pension_estado: x.pension_estado,
           }))}
           institucion={s.anios}
           anios={anios}

@@ -7,6 +7,7 @@ import { MethodologyNote } from "@/components/MethodologyNote";
 import { ReportTrend } from "@/components/ReportTrend";
 import { CategoryBars, type SerieDef } from "@/components/CategoryBars";
 import { nf } from "@/lib/format";
+import { PENSION, estadoPension } from "@/lib/pension";
 import { COLOR_ACTOR, COLOR_VIOLENCIA, color } from "@/lib/viz/colors";
 import { conteosDe, puntosPorAnio, resolverNivel } from "@/lib/ficha";
 import type { YearCounts } from "@/lib/types";
@@ -35,6 +36,7 @@ export type ServicioVista = {
   matricula: number | null;
   pension: number | null;
   anio_pension?: string | null;
+  pension_estado?: import("@/lib/types").EstadoPension;
 };
 
 export function LevelBreakdown({
@@ -220,7 +222,15 @@ export function LevelBreakdown({
                     </td>
                     {hayPension ? (
                       <td className="tabular py-3 text-right text-ink-2">
-                        {s.pension != null ? `S/ ${nf(s.pension)}` : "—"}
+                        {s.pension != null ? (
+                          `S/ ${nf(s.pension)}`
+                        ) : (
+                          // Un guion no dice nada; el motivo, sí. Va en
+                          // versalita pequeña para no competir con las cifras.
+                          <span className="text-[0.76rem] text-ink-3" title={PENSION[estadoPension(s)].largo}>
+                            {PENSION[estadoPension(s)].corto}
+                          </span>
+                        )}
                       </td>
                     ) : null}
                   </tr>
@@ -276,7 +286,11 @@ export function LevelBreakdown({
                         ? ([
                             [
                               "Pensión",
-                              !esTotal && sv.pension != null ? `S/ ${nf(sv.pension)}` : "—",
+                              esTotal
+                                ? "—"
+                                : sv.pension != null
+                                  ? `S/ ${nf(sv.pension)}`
+                                  : PENSION[estadoPension(sv)].corto,
                             ],
                           ] as [string, string][])
                         : []),
