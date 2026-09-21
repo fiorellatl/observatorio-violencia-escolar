@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { boton, botonAcento } from "@/lib/ui";
+import { medir } from "@/lib/analytics";
 
 /**
  * Copiar el enlace de la página actual.
@@ -47,6 +48,7 @@ export function ShareButton({
         // pintarse como tal, así que se sale sin cambiar de estado.
         try {
           await navigator.share({ title: titulo, url: actual });
+          medir("share", { method: "web_share", content_type: "enlace" });
           return;
         } catch {
           return;
@@ -67,6 +69,7 @@ export function ShareButton({
         if (!ok) throw new Error("execCommand");
       }
       setEstado("copiado");
+      medir("share", { method: "copiar_enlace", content_type: "enlace" });
     } catch {
       setEstado("fallo");
     }

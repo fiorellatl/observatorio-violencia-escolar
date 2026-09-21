@@ -4,6 +4,7 @@ import { Suspense } from "react";
 import { og } from "@/lib/og";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { CompararPicker } from "@/components/CompararPicker";
+import { MedirVista } from "@/components/MedirVista";
 import { getAnioPrincipal, getInstitution, getMeta } from "@/lib/data/provider";
 import { categoriasDelAnio } from "@/lib/ficha";
 import { MAXIMO, compararColegios, contrastes } from "@/lib/comparar";
@@ -110,6 +111,18 @@ export default async function CompararPage({
 
   return (
     <article className="pb-16">
+      {cs.length > 0 ? (
+        <MedirVista
+          evento="view_compare"
+          params={{
+            colegios: cs.length,
+            // Ordenados para que la misma comparación dé siempre la misma
+            // cadena, venga en el orden que venga en la URL.
+            seleccion: cs.map((c) => c.inst.slug).sort().join(","),
+          }}
+        />
+      ) : null}
+
       {/* ── Portada ──────────────────────────────────────────── */}
       <section className="border-b border-rule">
         <div className={`${shell} pb-10 pt-6 sm:pb-12`}>

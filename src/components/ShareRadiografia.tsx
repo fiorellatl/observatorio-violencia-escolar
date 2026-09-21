@@ -66,6 +66,8 @@ export function ShareRadiografia({
     <ShareImage
       titulo="Radiografía del colegio"
       microcopy="Genera una radiografía del colegio"
+      eventoDescarga="download_radiografia"
+      contexto={{ colegio: base.nombre, anio: base.anio }}
       alineacion="izquierda"
       dibujar={() => dibujarRadiografia(armar())}
       archivo={() => [

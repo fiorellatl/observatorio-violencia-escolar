@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import Link from "next/link";
 import { Archivo, JetBrains_Mono } from "next/font/google";
+import { Analytics } from "@/components/Analytics";
 import { CommandPalette } from "@/components/CommandPalette";
 import { getMeta } from "@/lib/data/provider";
 import { og } from "@/lib/og";
@@ -74,6 +76,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="es" className={`${sans.variable} ${mono.variable}`}>
       <body className="flex min-h-screen flex-col antialiased">
+        {/* Isla de cliente: no pinta nada y `useSearchParams` obliga a la
+            frontera de Suspense para no volver dinámica toda la cáscara. */}
+        <Suspense fallback={null}>
+          <Analytics />
+        </Suspense>
+
         <a
           href="#contenido"
           className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-[60] focus:rounded focus:border focus:border-accent focus:bg-surface focus:px-4 focus:py-2 focus:text-[0.88rem]"

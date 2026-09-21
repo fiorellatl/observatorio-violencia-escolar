@@ -6,6 +6,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { ShareButton } from "@/components/ShareButton";
 import { ShareImage } from "@/components/ShareImage";
 import { dibujarRanking } from "@/lib/share/rankingImage";
+import { medir } from "@/lib/analytics";
 import { dec, nf, slugify } from "@/lib/format";
 import { boton, campo, meta as clsMeta } from "@/lib/ui";
 import {
@@ -184,11 +185,20 @@ export function RankingExplorer() {
         p.delete("distrito");
       }
       if ("provincia" in cambios) p.delete("distrito");
+
+      // `poner` es el paso obligado de TODO cambio de filtro, así que medir
+      // aquí cubre los selectores, la métrica, el tipo y el año sin repartir
+      // llamadas por media docena de manejadores.
+      for (const [k, v] of Object.entries(cambios)) {
+        if (k === "anio") medir("select_year", { anio: v || anio, donde: "rankings" });
+        else medir("filter_ranking", { filtro: k, valor: v || "(ninguno)" });
+      }
+
       setPagina(0);
       const qs = p.toString();
       router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
     },
-    [params, pathname, router]
+    [params, pathname, router, anio]
   );
 
   // Pedir tasa obliga a ponerse en el único año que la tiene.
@@ -302,8 +312,30 @@ export function RankingExplorer() {
 
   const total = puestos.length;
   const visibles = puestos.slice(pagina * POR_PAGINA, (pagina + 1) * POR_PAGINA);
+
+
   const paginas = Math.ceil(total / POR_PAGINA);
   const filtrosActivos = filtros.out.length;
+
+  /**
+   * La vista del ranking, ya resuelta.
+   *
+   * Se mide aquí y no en cada control porque lo que interesa saber es qué
+   * ranking acabó viendo la persona, no cuántas veces tocó un desplegable
+   * para llegar. El efecto solo dispara cuando el índice ya cargó: antes,
+   * `total` sería cero y ensuciaría la medición con vistas vacías.
+   */
+  useEffect(() => {
+    if (!idx) return;
+    medir("view_ranking", {
+      anio,
+      metrica,
+      tipo,
+      pagina: pagina + 1,
+      resultados: total,
+      filtros: filtrosActivos,
+    });
+  }, [idx, anio, metrica, tipo, pagina, total, filtrosActivos]);
 
   /** Parámetros que definen este universo, tal cual los leerá la ficha. */
   const contexto = (() => {
@@ -632,6 +664,8 @@ export function RankingExplorer() {
           <ShareImage
             titulo="Compartir este ranking"
             microcopy="Pieza para historias"
+            eventoDescarga="download_ranking"
+            contexto={{ anio, metrica, tipo, pagina: pagina + 1 }}
             dibujar={() =>
               dibujarRanking({
                 titulo,

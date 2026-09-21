@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { nf, norm, slugify } from "@/lib/format";
 import { useBrowseIndex } from "@/lib/useBrowseIndex";
+import { medir } from "@/lib/analytics";
 import type { BrowseRow } from "@/lib/types";
 
 /**
@@ -85,6 +86,14 @@ export function CommandPalette() {
     out.sort((a, b) => b.score - a.score);
     return out.slice(0, MAXIMO).map((o) => o.fila);
   }, [consulta, datos]);
+
+  // Se mide la consulta ya asentada, no cada tecla, y NUNCA el texto: solo
+  // cuánto se escribió y cuántos resultados salieron, que es lo que dice si
+  // el buscador está funcionando. El porqué, en `@/lib/analytics`.
+  useEffect(() => {
+    if (consulta.trim().length < 3) return;
+    medir("search", { largo: consulta.trim().length, resultados: hits.length, donde: "paleta" });
+  }, [consulta, hits.length]);
 
   useEffect(() => setSel(0), [consulta]);
 

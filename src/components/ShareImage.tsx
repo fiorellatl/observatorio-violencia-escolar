@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { boton, botonAcento } from "@/lib/ui";
 import { nombreArchivo } from "@/lib/share/lienzo";
+import { medir, type Evento } from "@/lib/analytics";
 
 /**
  * "Compartir en Instagram": genera una pieza vertical de lo que se está
@@ -32,6 +33,8 @@ export function ShareImage({
   microcopy,
   etiqueta = "Compartir en Instagram",
   alineacion = "derecha",
+  eventoDescarga,
+  contexto,
 }: {
   dibujar: () => Promise<Blob>;
   archivo: () => string[];
@@ -41,6 +44,10 @@ export function ShareImage({
   microcopy?: string;
   etiqueta?: string;
   alineacion?: "derecha" | "izquierda";
+  /** Qué pieza se está generando, para medir la descarga. */
+  eventoDescarga: Extract<Evento, "download_radiografia" | "download_ranking">;
+  /** Identificadores públicos de lo que se comparte. */
+  contexto?: Record<string, string | number | boolean | undefined>;
 }) {
   const [abierto, setAbierto] = useState(false);
   const [estado, setEstado] = useState<"reposo" | "generando" | "lista" | "error">("reposo");
@@ -69,12 +76,13 @@ export function ShareImage({
     }
   };
 
-  const descargar = () => {
+  const descargar = (via: "boton" | "respaldo" = "boton") => {
     if (!url) return;
     const a = document.createElement("a");
     a.href = url;
     a.download = nombreArchivo(archivo());
     a.click();
+    medir(eventoDescarga, { ...contexto, via });
   };
 
   const compartir = async () => {
@@ -83,8 +91,12 @@ export function ShareImage({
     try {
       if (navigator.canShare?.({ files: [f] })) {
         await navigator.share({ files: [f] });
+        // La hoja nativa no dice a dónde fue el archivo, así que el destino
+        // no se inventa: se registra que se abrió y por qué camino.
+        medir("share", { ...contexto, method: "web_share", content_type: eventoDescarga });
       } else {
-        descargar();
+        descargar("respaldo");
+        medir("share", { ...contexto, method: "descarga", content_type: eventoDescarga });
       }
     } catch {
       // Cancelar la hoja nativa no es un fallo y no debe pintarse como tal.
@@ -165,7 +177,7 @@ export function ShareImage({
                     Compartir
                   </button>
                 ) : null}
-                <button type="button" onClick={descargar} className={boton}>
+                <button type="button" onClick={() => descargar()} className={boton}>
                   Descargar
                 </button>
               </div>

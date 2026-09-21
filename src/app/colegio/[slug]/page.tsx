@@ -10,6 +10,7 @@ import { SchoolNav } from "@/components/SchoolNav";
 import { ShareButton } from "@/components/ShareButton";
 import { ShareRadiografia } from "@/components/ShareRadiografia";
 import { DistributionPosition } from "@/components/DistributionPosition";
+import { MedirVista } from "@/components/MedirVista";
 import {
   getAnioPrincipal,
   getInstitution,
@@ -210,6 +211,18 @@ export default async function ColegioPage({
 
   return (
     <article className="pb-20">
+      {/* Identificadores públicos: los mismos que ya están en la URL. */}
+      <MedirVista
+        evento="view_school"
+        params={{
+          colegio: s.slug,
+          region: s.departamento,
+          gestion: s.gestion,
+          reportes: delPrincipal?.total ?? 0,
+          anio: principal,
+        }}
+      />
+
       {/* ══ PORTADA, SOBRE LA NOCHE ═══════════════════════
           Identidad, cifra del año y contexto medible van juntos sobre el
           material oscuro; el análisis —evolución, tipos, agresor— baja al
