@@ -7,7 +7,7 @@ import { Proximamente } from "@/components/DataState";
 import { MethodologyNote } from "@/components/MethodologyNote";
 import { ReportTrend } from "@/components/ReportTrend";
 import { ScatterXY } from "@/components/ScatterXY";
-import { ViolenceBreakdown } from "@/components/ViolenceBreakdown";
+import { CategoryBars, type SerieDef } from "@/components/CategoryBars";
 import { getCross, getMeta, getNational } from "@/lib/data/provider";
 import { nf } from "@/lib/format";
 import { COLOR_ACTOR, COLOR_VIOLENCIA, color } from "@/lib/viz/colors";
@@ -109,20 +109,34 @@ export default function DatosPage() {
   const ultimoCompleto = comparables[comparables.length - 1];
 
   const t = meta.anio_transversal;
-  const delAnio = nacional.find((n) => n.anio === t);
-  const tipos = delAnio
-    ? [
-        { label: "Psicológica", value: delAnio.psicologica ?? 0, color: color(COLOR_VIOLENCIA.psicologica) },
-        { label: "Física", value: delAnio.fisica ?? 0, color: color(COLOR_VIOLENCIA.fisica) },
-        { label: "Sexual", value: delAnio.sexual ?? 0, color: color(COLOR_VIOLENCIA.sexual) },
-      ]
-    : [];
-  const actores = delAnio
-    ? [
-        { label: "Entre estudiantes", value: delAnio.entre_escolares ?? 0, color: color(COLOR_ACTOR.entre_escolares) },
-        { label: "De un adulto del colegio", value: delAnio.personal_ie ?? 0, color: color(COLOR_ACTOR.personal_ie) },
-      ]
-    : [];
+
+  // Tipo y presunto agresor, AÑO A AÑO. Antes esta sección mostraba la
+  // composición de un solo año: respondía "qué se registra" pero no "qué ha
+  // cambiado", que en catorce años de serie es la mitad de la pregunta. Los
+  // dos desgloses vienen completos desde 2013 en `national.json`, así que no
+  // hacía falta ningún dato nuevo para enseñarlos.
+  const puntos = (claves: string[]) =>
+    nacional.map((n) => {
+      const valores: Record<string, number> = {};
+      for (const k of claves) valores[k] = Number(n[k as keyof typeof n]) || 0;
+      return {
+        anio: n.anio,
+        total: n.total,
+        pandemia: n.pandemia,
+        parcial: n.anio === meta.anio_parcial,
+        valores,
+      };
+    });
+
+  const seriesTipo: SerieDef[] = [
+    { clave: "psicologica", label: "Psicológica", color: color(COLOR_VIOLENCIA.psicologica) },
+    { clave: "fisica", label: "Física", color: color(COLOR_VIOLENCIA.fisica) },
+    { clave: "sexual", label: "Sexual", color: color(COLOR_VIOLENCIA.sexual) },
+  ];
+  const seriesActor: SerieDef[] = [
+    { clave: "entre_escolares", label: "Entre estudiantes", color: color(COLOR_ACTOR.entre_escolares) },
+    { clave: "personal_ie", label: "De un adulto del colegio", color: color(COLOR_ACTOR.personal_ie) },
+  ];
 
   const privadosDelCorte = cross.filter((c) => c.gestion.startsWith("Priv")).length;
 
@@ -233,30 +247,40 @@ export default function DatosPage() {
 
         {/* ── ¿Qué se registra? ──────────────────────────────── */}
         <Pregunta id="que-se-registra" pregunta="¿Qué se registra?">
-          <div className="grid gap-4 lg:grid-cols-2">
+          <div className="grid gap-4">
             <div className={panelPad}>
               <div className="flex flex-wrap items-baseline justify-between gap-2">
-                <h3 className={h3}>Tipo de violencia</h3>
-                <DataSourceBadge fuente="SíseVe" anio={t} />
+                <h3 className={h3}>Tipo de violencia, año a año</h3>
+                <DataSourceBadge fuente="SíseVe" anio={`${meta.anio_min}–${meta.anio_max}`} />
               </div>
               <p className={entradilla}>
-                Composición de los {nf(delAnio?.total ?? 0)} reportes de {t}.
+                Cada categoría por año de registro, no el acumulado.
               </p>
-              <div className="mt-5">
-                <ViolenceBreakdown items={tipos} total={delAnio?.total ?? 0} />
+              <div className="mt-6">
+                <CategoryBars
+                  series={seriesTipo}
+                  puntos={puntos(["psicologica", "fisica", "sexual"])}
+                  alto={320}
+                  notaPorcentaje="Cada reporte se registra con un tipo de violencia, así que las tres categorías reparten el total del año."
+                />
               </div>
             </div>
 
             <div className={panelPad}>
               <div className="flex flex-wrap items-baseline justify-between gap-2">
-                <h3 className={h3}>Quién ejerce</h3>
-                <DataSourceBadge fuente="SíseVe" anio={t} />
+                <h3 className={h3}>Quién ejerce, año a año</h3>
+                <DataSourceBadge fuente="SíseVe" anio={`${meta.anio_min}–${meta.anio_max}`} />
               </div>
               <p className={entradilla}>
                 Entre estudiantes o desde un adulto de la institución.
               </p>
-              <div className="mt-5">
-                <ViolenceBreakdown items={actores} total={delAnio?.total ?? 0} />
+              <div className="mt-6">
+                <CategoryBars
+                  series={seriesActor}
+                  puntos={puntos(["entre_escolares", "personal_ie"])}
+                  alto={300}
+                  notaPorcentaje="Cada reporte se clasifica en una de las dos categorías, así que el porcentaje describe el reparto del año."
+                />
               </div>
             </div>
           </div>
