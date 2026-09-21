@@ -40,9 +40,9 @@ export async function generateMetadata({
   const tipo = uno(p.tipo);
 
   const TIPO: Record<string, string> = {
-    fisica: " de violencia física",
-    psicologica: " de violencia psicológica",
-    sexual: " de violencia sexual",
+    fisica: " física",
+    psicologica: " psicológica",
+    sexual: " sexual",
   };
 
   // Solo se nombra lo que la tabla va a aplicar de verdad: un valor que no
@@ -61,8 +61,8 @@ export async function generateMetadata({
   );
 
   const base = tasa
-    ? `Colegios con mayor tasa de reportes${TIPO[tipo] ?? ""}`
-    : `Colegios con más reportes${TIPO[tipo] ?? ""} registrados`;
+    ? `Colegios con mayor tasa de reportes de violencia${TIPO[tipo] ?? ""}`
+    : `Colegios con más reportes de violencia${TIPO[tipo] ?? ""} registrados`;
   const titulo = [base, anio, lugar, ...rasgos].join(" · ");
 
   const desc =

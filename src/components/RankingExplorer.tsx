@@ -50,9 +50,9 @@ type Tipo = "todos" | "fisica" | "psicologica" | "sexual";
 
 const TIPOS: { v: Tipo; label: string; corto: string; pos: number }[] = [
   { v: "todos", label: "Todos", corto: "", pos: 0 },
-  { v: "fisica", label: "Físicos", corto: "de violencia física", pos: 1 },
-  { v: "psicologica", label: "Psicológicos", corto: "de violencia psicológica", pos: 2 },
-  { v: "sexual", label: "Sexuales", corto: "de violencia sexual", pos: 3 },
+  { v: "fisica", label: "Físicos", corto: " física", pos: 1 },
+  { v: "psicologica", label: "Psicológicos", corto: " psicológica", pos: 2 },
+  { v: "sexual", label: "Sexuales", corto: " sexual", pos: 3 },
 ];
 
 /** Un cuantil interpolado puede no ser entero; no se finge que lo sea. */
@@ -406,8 +406,8 @@ export function RankingExplorer() {
   const suf = TIPOS.find((t) => t.v === tipo)!.corto;
   const titulo =
     metrica === "tasa"
-      ? `Colegios con mayor tasa de reportes ${suf}`.trim()
-      : `Colegios con más reportes ${suf} registrados`.replace(/\s{2,}/g, " ");
+      ? `Colegios con mayor tasa de reportes de violencia${suf}`
+      : `Colegios con más reportes de violencia${suf} registrados`;
 
   /* ── Una fila del ranking ──────────────────────────────────────────── */
   const Fila = ({ p, posicion, destacado }: { p: Puesto; posicion: number; destacado: boolean }) => {
@@ -619,6 +619,10 @@ export function RankingExplorer() {
               filas: visibles.map((p, i) => ({
                 posicion: pagina * POR_PAGINA + i + 1,
                 nombre: p.fila[0],
+                lugar: [idx.dic.d[p.fila[2]], idx.dic.r[p.fila[4]]]
+                  .filter(Boolean)
+                  .filter((v, k, a) => a.indexOf(v) === k)
+                  .join(" · "),
                 valor:
                   metrica === "tasa" && p.tasa != null ? dec(p.tasa, 1) : nf(p.conteo),
                 tramo: tramoDe(p.conteo),

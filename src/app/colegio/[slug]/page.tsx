@@ -327,9 +327,7 @@ export default async function ColegioPage({
           <div className="lg:col-span-4">
             <h2 className="font-display text-display-m font-medium">Señales</h2>
             <p className="mt-3 max-w-prose text-[0.88rem] leading-relaxed text-ink-2">
-              Lo que destaca al mirar su historia y compararlo con otros colegios. Cada
-              señal sale de un cálculo sobre los datos publicados y dice contra quién
-              compara.
+              Lo que destaca al mirar su historia y compararlo con otros colegios.
             </p>
             <p className="mt-4 max-w-prose text-[0.78rem] leading-relaxed text-ink-3">
               Describen registros, no evalúan al colegio. Un número alto de reportes

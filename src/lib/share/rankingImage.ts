@@ -22,6 +22,9 @@ import { ESCALA_SECUENCIAL_HEX, colorPorTramoHex, type TramoDistribucion } from 
 export interface FilaImagen {
   posicion: number;
   nombre: string;
+  /** Distrito y región. Hay muchos colegios que comparten nombre —cada
+      «San Juan» del país— y sin el lugar la fila no identifica a ninguno. */
+  lugar: string;
   /** Ya formateado: conteo o tasa, según la métrica que muestre la tabla. */
   valor: string;
   tramo: TramoDistribucion | null;
@@ -192,10 +195,23 @@ export async function dibujarRanking(d: DatosImagen): Promise<Blob> {
     ctx.fillStyle = TINTA;
     ctx.fillText(f.valor, ANCHO - M - anchoValor, centro);
 
-    ctx.font = `500 34px ${sans}`;
-    ctx.fillStyle = TINTA;
+    // Nombre y lugar comparten línea: con veinte filas no cabe una segunda,
+    // y el lugar es lo que distingue a dos colegios del mismo nombre. El
+    // nombre manda, así que se le reserva el espacio primero y el lugar se
+    // queda con lo que sobre —si no sobra nada, no se dibuja.
     const disponible = ANCHO - M * 2 - 90 - anchoValor - 36;
-    ctx.fillText(recortar(ctx, f.nombre, disponible), M + 90, centro);
+    ctx.font = `500 34px ${sans}`;
+    const nombre = recortar(ctx, f.nombre, disponible);
+    const anchoNombre = ctx.measureText(nombre).width;
+    ctx.fillStyle = TINTA;
+    ctx.fillText(nombre, M + 90, centro);
+
+    const sobra = disponible - anchoNombre - 18;
+    if (f.lugar && sobra > 90) {
+      ctx.font = `400 24px ${sans}`;
+      ctx.fillStyle = TINTA_3;
+      ctx.fillText(recortar(ctx, f.lugar, sobra), M + 90 + anchoNombre + 18, centro);
+    }
 
     ctx.textBaseline = "alphabetic";
     ctx.fillStyle = "#e2e4df";
