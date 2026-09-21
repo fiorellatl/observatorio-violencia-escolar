@@ -171,6 +171,15 @@ export default async function ColegioPage({
   // El contexto de distribución: una sola llamada al motor central, que
   // alimenta a la vez la sección de la ficha y la imagen que se comparte.
   const ctxDist = getContexto(delPrincipal?.total ?? 0, principal);
+
+  /* La imagen que se comparte va sobre el año en curso, y por tanto necesita
+     su propio puesto y su propio reparto. La ficha web NO cambia: sigue
+     analizando el último año cerrado, que es donde hay sitio para explicar
+     por qué un año a medias no se compara con uno entero. */
+  const anioImg = meta.anio_parcial;
+  const totalImg = s.anios[anioImg]?.total ?? 0;
+  const puestoImg = getPosicionRanking(s.cm, anioImg);
+  const ctxImg = getContexto(totalImg, anioImg);
   const hexTipos = Object.fromEntries(
     Object.entries(COLOR_VIOLENCIA).map(([k, v]) => [k, VIZ_HEX[v]])
   );
@@ -185,30 +194,31 @@ export default async function ColegioPage({
       .filter((v, k, a) => a.indexOf(v) === k)
       .join(" · "),
     nivel: null,
-    // La portada abre con el año MÁS RECIENTE, aunque vaya por la mitad: es
-    // el dato que hace noticia. El análisis —puesto, posición, composición—
-    // se queda en el último año cerrado, que es el único comparable, y cada
-    // bloque de la pieza escribe su propio año.
-    anio: meta.anio_parcial,
-    anioAnalisis: principal,
+    // UN SOLO AÑO EN TODA LA PIEZA: el más reciente, aunque vaya por la mitad.
+    //
+    // Antes la portada abría con el año en curso y el análisis se quedaba en
+    // el último cerrado. Cada bloque escribía su año, pero la cifra grande y
+    // el puesto de debajo eran de años distintos y alguien que pasara rápido
+    // podía leerlos juntos. Ahora todo —cifra, puesto, posición, composición—
+    // habla del mismo año, y la comparación sigue siendo legítima porque el
+    // reparto de 2026 se calcula también sobre 2026: parcial contra parcial.
+    anio: anioImg,
+    anioAnalisis: anioImg,
     parcial: true,
-    // El mismo puesto que muestra la portada de la ficha.
-    puesto: puesto ? { pos: puesto.pos, universo: puesto.universo } : null,
+    puesto: puestoImg ? { pos: puestoImg.pos, universo: puestoImg.universo } : null,
     // Los seis últimos años, el año en curso incluido. Va marcado —tono
     // distinto y rótulo al pie— porque cubre menos meses: sin eso, una
     // columna a media altura se leería como una caída que no ha ocurrido.
     aniosSerie: anios.slice(-6),
     pandemia: meta.anios_pandemia,
     parcialAnio: meta.anio_parcial,
-    contexto: ctxDist
+    contexto: ctxImg
       ? {
-          mediana: Number.isInteger(ctxDist.mediana)
-            ? nf(ctxDist.mediana)
-            : dec(ctxDist.mediana, 1),
-          n: ctxDist.n,
-          universo: ctxDist.universo,
-          percentil: ctxDist.percentil,
-          frase: ctxDist.frase,
+          mediana: Number.isInteger(ctxImg.mediana) ? nf(ctxImg.mediana) : dec(ctxImg.mediana, 1),
+          n: ctxImg.n,
+          universo: ctxImg.universo,
+          percentil: ctxImg.percentil,
+          frase: ctxImg.frase,
         }
       : null,
   };

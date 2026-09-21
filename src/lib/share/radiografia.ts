@@ -278,7 +278,7 @@ export async function dibujarRadiografia(d: DatosRadiografia): Promise<Blob> {
     ctx.font = `500 34px ${sans}`;
     const frase = lineas(ctx, c.frase, ANCHO - M * 2, 2);
     bloques.push({
-      alto: (d.puesto ? 64 : 0) + frase.length * 42 + 30 + 24 + 16 + 48,
+      alto: (d.puesto ? 84 : 0) + frase.length * 42 + 30 + 24 + 16 + 48,
       dibujar: (y0) => contexto(l, c, d.puesto, d.anioAnalisis, frase, y0),
     });
   }
@@ -373,7 +373,9 @@ function contexto(
     ctx.font = `400 25px ${sans}`;
     ctx.fillStyle = TINTA_3;
     ctx.fillText(`colegios con al menos un reporte en ${anio}`, M, y);
-    y += 30;
+    // Aire suficiente para que la frase no se pegue a la aclaración: con 30
+    // px, un cuerpo de 34 casi tocaba la línea de arriba.
+    y += 50;
   }
 
   // La frase traduce la posición a algo que se entiende sin mirar la barra.
