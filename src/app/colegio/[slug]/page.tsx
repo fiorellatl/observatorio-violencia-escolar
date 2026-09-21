@@ -8,6 +8,8 @@ import { LevelBreakdown } from "@/components/LevelBreakdown";
 import { MetricBand } from "@/components/MetricBand";
 import { SchoolNav } from "@/components/SchoolNav";
 import { ShareButton } from "@/components/ShareButton";
+import { ShareRadiografia } from "@/components/ShareRadiografia";
+import { DistributionPosition } from "@/components/DistributionPosition";
 import {
   getAnioPrincipal,
   getInstitution,
@@ -17,8 +19,18 @@ import {
   getServiceRedirect,
 } from "@/lib/data/provider";
 import { getInsights } from "@/lib/insights";
+import { getContexto } from "@/lib/distribucion";
+import type { DatosRadiografia } from "@/lib/share/radiografia";
 import { dec, fechaLegible, nf, valorLegible } from "@/lib/format";
-import { COLOR_SERIE, color } from "@/lib/viz/colors";
+import {
+  COLOR_ACTOR,
+  COLOR_SERIE,
+  COLOR_VIOLENCIA,
+  ETIQUETA_ACTOR,
+  ETIQUETA_VIOLENCIA,
+  VIZ_HEX,
+  color,
+} from "@/lib/viz/colors";
 import { shell } from "@/lib/ui";
 
 export const dynamicParams = true;
@@ -149,6 +161,48 @@ export default async function ColegioPage({
     if (c) contexto.push({ label: etiqueta, valor: valorLegible(c.v), fuente: c.f, anio: c.a });
   }
 
+  /* ── La radiografía que se comparte ──────────────────────────────────
+     Aquí solo viaja la identidad y el universo de comparación: los conteos
+     los arma el cliente con las MISMAS funciones de `@/lib/ficha` que usan
+     los gráficos, para que la imagen siga el nivel que el usuario tenga
+     elegido y no pueda afirmar algo que la página no dice. */
+  // El contexto de distribución: una sola llamada al motor central, que
+  // alimenta a la vez la sección de la ficha y la imagen que se comparte.
+  const ctxDist = getContexto(delPrincipal?.total ?? 0, principal);
+  const hexTipos = Object.fromEntries(
+    Object.entries(COLOR_VIOLENCIA).map(([k, v]) => [k, VIZ_HEX[v]])
+  );
+  const hexActores = Object.fromEntries(
+    Object.entries(COLOR_ACTOR).map(([k, v]) => [k, VIZ_HEX[v]])
+  );
+
+  const radiografiaBase = {
+    nombre: s.nombre,
+    lugar: [s.distrito, s.provincia, s.departamento]
+      .filter(Boolean)
+      .filter((v, k, a) => a.indexOf(v) === k)
+      .join(" · "),
+    nivel: null,
+    anio: principal,
+    parcial: principal === meta.anio_parcial,
+    // Los seis últimos años COMPLETOS. El año en curso queda fuera: en la
+    // web va rotulado como parcial, pero en una imagen que circula sola una
+    // columna a media altura se lee como una caída que no ha ocurrido.
+    aniosSerie: anios.filter((a) => a !== meta.anio_parcial).slice(-6),
+    pandemia: meta.anios_pandemia,
+    contexto: ctxDist
+      ? {
+          mediana: Number.isInteger(ctxDist.mediana)
+            ? nf(ctxDist.mediana)
+            : dec(ctxDist.mediana, 1),
+          n: ctxDist.n,
+          universo: ctxDist.universo,
+          percentil: ctxDist.percentil,
+          frase: ctxDist.frase,
+        }
+      : null,
+  };
+
   const azul = color(COLOR_SERIE.reportes);
   const navProps = { cm: s.cm, distrito: s.distrito, departamento: s.departamento };
   const seccion = "scroll-mt-24 border-t border-rule py-10 sm:py-14";
@@ -212,6 +266,33 @@ export default async function ColegioPage({
               >
                 Otros colegios de {s.distrito}
               </Link>
+            </div>
+
+            {/* La acción de compartir va en la portada, no al final: quien
+                quiere difundir un dato lo decide al verlo, no después de
+                recorrer la ficha entera. */}
+            <div className="mt-6 flex flex-wrap items-start gap-3">
+              <Suspense fallback={<div className="h-[2.4rem] w-[15rem]" />}>
+                <ShareRadiografia
+                  base={radiografiaBase}
+                  servicios={s.servicios.map((x) => ({ nivel: x.nivel, anios: x.anios }))}
+                  institucion={s.anios}
+                  tipos={{
+                    claves: ["fisica", "psicologica", "sexual"],
+                    etiquetas: ETIQUETA_VIOLENCIA,
+                    colores: hexTipos,
+                  }}
+                  actores={{
+                    claves: ["entre_escolares", "personal_ie"],
+                    etiquetas: ETIQUETA_ACTOR,
+                    colores: hexActores,
+                  }}
+                />
+              </Suspense>
+              <ShareButton
+                etiqueta="Copiar enlace"
+                titulo={`${s.nombre} — ${s.distrito}`}
+              />
             </div>
           </div>
 
@@ -321,6 +402,28 @@ export default async function ColegioPage({
       </section>
 
       <div className={shell}>
+      {/* ── Contexto en la distribución ─────────────
+          Va antes que las señales y antes que los gráficos: es lo que hace
+          legible la cifra de la portada. Un 45 no se puede leer solo. */}
+      {ctxDist ? (
+        <section id="distribucion" className={seccion}>
+          <div className="grid gap-8 lg:grid-cols-12">
+            <div className="lg:col-span-4">
+              <h2 className="font-display text-display-m font-medium">
+                Frente a otros colegios
+              </h2>
+              <p className="mt-3 max-w-prose text-[0.88rem] leading-relaxed text-ink-2">
+                Dónde cae este colegio dentro del reparto de reportes registrados. No es
+                un ranking: es la posición del dato dentro de su distribución.
+              </p>
+            </div>
+            <div className="lg:col-span-8">
+              <DistributionPosition ctx={ctxDist} />
+            </div>
+          </div>
+        </section>
+      ) : null}
+
       {/* ── Señales ─────────────────────────────── */}
       <section id="senales" className={seccion}>
         <div className="grid gap-8 lg:grid-cols-12">

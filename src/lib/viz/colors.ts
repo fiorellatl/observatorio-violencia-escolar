@@ -141,6 +141,24 @@ export const ESCALA_SECUENCIAL_HEX = [
   "#234b78",
 ] as const;
 
+/**
+ * Los siete tonos de dato en hexadecimal, para el `canvas`.
+ *
+ * Mismo motivo y misma obligación que `ESCALA_SECUENCIAL_HEX`: un canvas no
+ * resuelve `var(--viz-blue)`, y estos valores tienen que seguir siendo los
+ * de `:root`. Si divergen, la ficha y la imagen que se comparte pintarían la
+ * misma categoría de dos colores distintos.
+ */
+export const VIZ_HEX: Record<TonoViz, string> = {
+  blue: "#2a5f9e",
+  teal: "#18808a",
+  amber: "#b07d14",
+  coral: "#c05a3e",
+  violet: "#6b4e96",
+  green: "#46855a",
+  slate: "#63707c",
+};
+
 export const colorPorTramoHex = (t: TramoDistribucion): string =>
   ESCALA_SECUENCIAL_HEX[TRAMO_A_ESCALON[t]];
 

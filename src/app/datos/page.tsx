@@ -262,8 +262,8 @@ export default function DatosPage() {
           </div>
           <div className="mt-5 max-w-prose">
             <MethodologyNote>
-              Un mismo reporte puede clasificarse en más de un tipo, así que los
-              porcentajes no suman 100.
+              Cada reporte se registra con un tipo de violencia y con un presunto
+              agresor, así que cada desglose reparte el total del año.
             </MethodologyNote>
           </div>
         </Pregunta>

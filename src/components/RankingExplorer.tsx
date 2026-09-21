@@ -4,7 +4,8 @@ import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { ShareButton } from "@/components/ShareButton";
-import { ShareRankingImage } from "@/components/ShareRankingImage";
+import { ShareImage } from "@/components/ShareImage";
+import { dibujarRanking } from "@/lib/share/rankingImage";
 import { dec, nf, slugify } from "@/lib/format";
 import { boton, campo, meta as clsMeta } from "@/lib/ui";
 import {
@@ -586,7 +587,7 @@ export function RankingExplorer() {
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-start gap-2">
           <button
             type="button"
             onClick={() => setPanel((x) => !x)}
@@ -604,30 +605,35 @@ export function RankingExplorer() {
               </span>
             ) : null}
           </button>
-          <ShareRankingImage
-            datos={() => ({
-              titulo,
-              anio,
-              universo: territorio,
-              metrica: metrica === "tasa" ? "Reportes por 1.000 alumnos" : "Reportes registrados",
-              rango: `Puestos ${nf(pagina * POR_PAGINA + 1)}–${nf(
-                Math.min((pagina + 1) * POR_PAGINA, total)
-              )}`,
-              parcial: esParcial,
-              // Exactamente las filas visibles: la imagen es de ESTA página,
-              // no de los primeros veinte resultados de la consulta.
-              filas: visibles.map((p, i) => ({
-                posicion: pagina * POR_PAGINA + i + 1,
-                nombre: p.fila[0],
-                lugar: [idx.dic.d[p.fila[2]], idx.dic.r[p.fila[4]]]
-                  .filter(Boolean)
-                  .filter((v, k, a) => a.indexOf(v) === k)
-                  .join(" · "),
-                valor:
-                  metrica === "tasa" && p.tasa != null ? dec(p.tasa, 1) : nf(p.conteo),
-                tramo: tramoDe(p.conteo),
-              })),
-            })}
+          <ShareImage
+            titulo="Compartir este ranking"
+            microcopy="Pieza para historias"
+            dibujar={() =>
+              dibujarRanking({
+                titulo,
+                anio,
+                universo: territorio,
+                metrica: metrica === "tasa" ? "Reportes por 1.000 alumnos" : "Reportes registrados",
+                etiquetaValor: metrica === "tasa" ? "Por 1.000 alumnos" : "Reportes",
+                rango: `Puestos ${nf(pagina * POR_PAGINA + 1)}–${nf(
+                  Math.min((pagina + 1) * POR_PAGINA, total)
+                )}`,
+                parcial: esParcial,
+                // Exactamente las filas visibles: la imagen es de ESTA página,
+                // no de los primeros veinte resultados de la consulta.
+                filas: visibles.map((p, i) => ({
+                  posicion: pagina * POR_PAGINA + i + 1,
+                  nombre: p.fila[0],
+                  lugar: [idx.dic.d[p.fila[2]], idx.dic.r[p.fila[4]]]
+                    .filter(Boolean)
+                    .filter((v, k, a) => a.indexOf(v) === k)
+                    .join(" · "),
+                  valor:
+                    metrica === "tasa" && p.tasa != null ? dec(p.tasa, 1) : nf(p.conteo),
+                  tramo: tramoDe(p.conteo),
+                })),
+              })
+            }
             archivo={() => [
               "ranking",
               metrica === "tasa" ? "tasa" : "reportes",

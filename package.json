@@ -10,7 +10,8 @@
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
-    "validate": "node scripts/validate-public.mjs"
+    "validate": "node scripts/validate-public.mjs",
+    "validate:distribucion": "node --experimental-strip-types --import ./scripts/registrar-alias.mjs scripts/validate-distribucion.mjs"
   },
   "dependencies": {
     "next": "^15.5.24",

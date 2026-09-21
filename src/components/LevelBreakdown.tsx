@@ -5,9 +5,10 @@ import { useMemo } from "react";
 import { DataSourceBadge } from "@/components/DataSourceBadge";
 import { MethodologyNote } from "@/components/MethodologyNote";
 import { ReportTrend } from "@/components/ReportTrend";
-import { SeriesTrend, type PuntoSerie, type SerieDef } from "@/components/SeriesTrend";
-import { nf, norm } from "@/lib/format";
+import { CategoryBars, type SerieDef } from "@/components/CategoryBars";
+import { nf } from "@/lib/format";
 import { COLOR_ACTOR, COLOR_VIOLENCIA, color } from "@/lib/viz/colors";
+import { conteosDe, puntosPorAnio, resolverNivel } from "@/lib/ficha";
 import type { YearCounts } from "@/lib/types";
 
 /**
@@ -59,12 +60,9 @@ export function LevelBreakdown({
   const router = useRouter();
 
   const unico = servicios.length < 2;
-  const pedido = params.get("ver") ?? "";
-  // Se acepta tanto "primaria" como la etiqueta completa: un enlace escrito a
-  // mano no tiene por qué saber que el nivel se llama "Inicial - Cuna-Jardín".
-  const activo = unico
-    ? ""
-    : (servicios.find((s) => norm(s.nivel) === norm(pedido))?.nivel ?? "");
+  // La misma resolución que usa la imagen que se comparte: si divergieran,
+  // la radiografía podría salir de un nivel distinto del que está en pantalla.
+  const activo = resolverNivel(servicios, params.get("ver"));
 
   const elegir = (nivel: string) => {
     const p = new URLSearchParams(params.toString());
@@ -76,7 +74,7 @@ export function LevelBreakdown({
 
   /** Los conteos que mandan ahora: los del nivel elegido o los de todo. */
   const fuente = useMemo(
-    () => (activo ? (servicios.find((s) => s.nivel === activo)?.anios ?? {}) : institucion),
+    () => conteosDe(servicios, institucion, activo),
     [activo, servicios, institucion]
   );
 
@@ -87,19 +85,8 @@ export function LevelBreakdown({
     parcial: a === parcial,
   }));
 
-  const puntos = (claves: string[]): PuntoSerie[] =>
-    anios.map((a) => {
-      const c = fuente[a];
-      const valores: Record<string, number> = {};
-      for (const k of claves) valores[k] = Number(c?.[k as keyof YearCounts]) || 0;
-      return {
-        anio: a,
-        total: c?.total ?? 0,
-        pandemia: pandemia.includes(a),
-        parcial: a === parcial,
-        valores,
-      };
-    });
+  const puntos = (claves: string[]) =>
+    puntosPorAnio(fuente, anios, claves, pandemia, parcial);
 
   const seriesTipo: SerieDef[] = [
     { clave: "psicologica", label: "Psicológica", color: color(COLOR_VIOLENCIA.psicologica) },
@@ -283,11 +270,11 @@ export function LevelBreakdown({
           <Pestanas />
         </div>
 
-        <SeriesTrend
+        <CategoryBars
           series={seriesTipo}
           puntos={puntos(["psicologica", "fisica", "sexual"])}
-          alto={280}
-          notaPorcentaje="Porcentaje sobre el total de reportes del año. Un mismo reporte puede registrar más de un tipo de violencia, así que las categorías no suman necesariamente 100 %."
+          alto={320}
+          notaPorcentaje="Cada reporte se registra con un tipo de violencia, así que las tres categorías reparten el total del año."
         />
       </section>
 
@@ -309,11 +296,11 @@ export function LevelBreakdown({
           <Pestanas />
         </div>
 
-        <SeriesTrend
+        <CategoryBars
           series={seriesActor}
           puntos={puntos(["entre_escolares", "personal_ie"])}
-          alto={240}
-          notaPorcentaje="Porcentaje sobre el total de reportes del año. No todos los reportes traen clasificado al presunto agresor."
+          alto={280}
+          notaPorcentaje="Cada reporte se clasifica en una de las dos categorías, así que aquí el porcentaje sí describe el reparto del año."
         />
 
         <p className="mt-4 max-w-prose text-[0.8rem] leading-relaxed text-ink-3">

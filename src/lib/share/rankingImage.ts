@@ -1,23 +1,30 @@
 /**
- * La pieza que se comparte: 1080 × 1920, dibujada a mano.
- *
- * POR QUÉ NO ES UNA CAPTURA DEL DOM
- * Una captura hereda el ancho de la ventana, el zoom del navegador y la
- * densidad de la pantalla, así que la misma acción da una imagen distinta en
- * cada teléfono. Dibujando sobre un canvas, el resultado es idéntico venga de
- * donde venga: mismas medidas, mismos saltos de línea, mismo peso de letra.
- *
- * LA REGLA QUE LA GOBIERNA
- * La web explica, la imagen comparte. Aquí no entra la metodología: entra lo
- * imprescindible para que alguien que la recibe por WhatsApp, sin contexto,
- * sepa qué está viendo — qué mide, de qué año, de qué universo y de dónde
- * sale. Nada más.
+ * La pieza del ranking: 1080 × 1920, dibujada a mano sobre `lienzo.ts`.
  *
  * El color de cada fila es el MISMO que el del ranking en pantalla, porque
  * sale de la misma escala (`colorPorTramoHex`). Si divergieran, la captura y
  * la web dirían cosas distintas con el mismo color.
  */
 import { ESCALA_SECUENCIAL_HEX, colorPorTramoHex, type TramoDistribucion } from "@/lib/viz/colors";
+import {
+  ALTO,
+  ANCHO,
+  ACENTO,
+  FILETE_2,
+  M,
+  TINTA,
+  TINTA_2,
+  TINTA_3,
+  aBlob,
+  crearLienzo,
+  filete,
+  lineas,
+  marca,
+  nombreArchivo,
+  pie,
+  recortar,
+  rotulo,
+} from "@/lib/share/lienzo";
 
 export interface FilaImagen {
   posicion: number;
@@ -39,108 +46,30 @@ export interface DatosImagen {
   metrica: string;
   /** "Puestos 1–20". */
   rango: string;
+  /** Cabecera de la columna de cifras: "Reportes", "Por 1.000 alumnos". */
+  etiquetaValor: string;
   filas: FilaImagen[];
   /** Año en curso: se dice, porque no es comparable con uno cerrado. */
   parcial: boolean;
 }
 
-const ANCHO = 1080;
-const ALTO = 1920;
-/** Margen de seguridad: en Stories, la interfaz come los bordes. */
-const M = 84;
-
-const PAPEL = "#f4f5f2";
-const TINTA = "#15171a";
-const TINTA_2 = "#4a5157";
-const TINTA_3 = "#7c848a";
-const FILETE = "#d9dbd5";
-const MENTA = "#57e3ae";
-const ACENTO = "#0a6f55";
-
-/** Nombre real de la familia que `next/font` generó, leído del documento. */
-function familia(variable: string, respaldo: string): string {
-  if (typeof window === "undefined") return respaldo;
-  const v = getComputedStyle(document.documentElement).getPropertyValue(variable).trim();
-  return v ? `${v}, ${respaldo}` : respaldo;
-}
-
-/** Recorta un texto al ancho disponible, con puntos suspensivos. */
-function recortar(ctx: CanvasRenderingContext2D, texto: string, ancho: number): string {
-  if (ctx.measureText(texto).width <= ancho) return texto;
-  let t = texto;
-  while (t.length > 1 && ctx.measureText(`${t}…`).width > ancho) t = t.slice(0, -1);
-  return `${t.trimEnd()}…`;
-}
-
-/** Parte un titular en líneas que quepan, sin cortar palabras. */
-function lineas(ctx: CanvasRenderingContext2D, texto: string, ancho: number, max: number): string[] {
-  const palabras = texto.split(/\s+/);
-  const out: string[] = [];
-  let actual = "";
-  for (const p of palabras) {
-    const prueba = actual ? `${actual} ${p}` : p;
-    if (ctx.measureText(prueba).width <= ancho || !actual) {
-      actual = prueba;
-    } else {
-      out.push(actual);
-      actual = p;
-      if (out.length === max) break;
-    }
-  }
-  if (actual && out.length < max) out.push(actual);
-  if (out.length === max) out[max - 1] = recortar(ctx, out[max - 1], ancho);
-  return out;
-}
-
 export async function dibujarRanking(d: DatosImagen): Promise<Blob> {
-  // Sin esto, el canvas dibuja con la familia de respaldo mientras la web ya
-  // muestra Archivo, y la imagen sale con otra letra que la página.
-  if (typeof document !== "undefined" && document.fonts?.ready) {
-    await document.fonts.ready;
-  }
-
-  const sans = familia("--font-sans", "system-ui, sans-serif");
-  const mono = familia("--font-mono", "ui-monospace, monospace");
-
-  const canvas = document.createElement("canvas");
-  canvas.width = ANCHO;
-  canvas.height = ALTO;
-  const ctx = canvas.getContext("2d");
-  if (!ctx) throw new Error("El navegador no dio contexto 2D");
-
-  ctx.fillStyle = PAPEL;
-  ctx.fillRect(0, 0, ANCHO, ALTO);
-
-  // Filete superior en menta: la firma de la marca, y uso gráfico del color.
-  ctx.fillStyle = MENTA;
-  ctx.fillRect(0, 0, ANCHO, 10);
+  const l = await crearLienzo();
+  const { ctx, sans, mono } = l;
 
   let y = M + 40;
+  marca(l, y);
 
-  // ── Marca ──────────────────────────────────────────────────────────
-  ctx.fillStyle = MENTA;
-  ctx.fillRect(M, y - 16, 18, 18);
-  ctx.font = `500 25px ${mono}`;
-  ctx.fillStyle = TINTA;
-  ctx.letterSpacing = "4px";
-  ctx.fillText("OBSERVATORIO ESCOLAR", M + 34, y);
-  ctx.letterSpacing = "0px";
-
-  // ── Métrica ────────────────────────────────────────────────────────
   y += 74;
-  ctx.font = `500 24px ${mono}`;
-  ctx.fillStyle = ACENTO;
-  ctx.letterSpacing = "3px";
-  ctx.fillText(d.metrica.toUpperCase(), M, y);
-  ctx.letterSpacing = "0px";
+  rotulo(l, d.metrica, y);
 
   // ── Titular ────────────────────────────────────────────────────────
   y += 30;
   ctx.font = `700 78px ${sans}`;
   ctx.fillStyle = TINTA;
-  for (const l of lineas(ctx, d.titulo, ANCHO - M * 2, 3)) {
+  for (const t of lineas(ctx, d.titulo, ANCHO - M * 2, 3)) {
     y += 82;
-    ctx.fillText(l, M, y);
+    ctx.fillText(t, M, y);
   }
 
   // ── Año y universo ─────────────────────────────────────────────────
@@ -164,8 +93,21 @@ export async function dibujarRanking(d: DatosImagen): Promise<Blob> {
   ctx.letterSpacing = "0px";
 
   y += 150;
-  ctx.fillStyle = FILETE;
-  ctx.fillRect(M, y, ANCHO - M * 2, 2);
+  filete(l, y);
+
+  // ── Cabecera de columnas ───────────────────────────────────────────
+  // Sin esto, la columna de la derecha es una cifra sin nombre: quien recibe
+  // la imagen suelta no tiene cómo saber qué se está contando.
+  y += 40;
+  ctx.font = `500 21px ${mono}`;
+  ctx.fillStyle = TINTA_3;
+  ctx.letterSpacing = "2px";
+  ctx.fillText("COLEGIO", M + 90, y);
+  const etiqueta = d.etiquetaValor.toUpperCase();
+  ctx.fillText(etiqueta, ANCHO - M - ctx.measureText(etiqueta).width, y);
+  ctx.letterSpacing = "0px";
+  y += 12;
+  filete(l, y, FILETE_2);
 
   // ── Filas ──────────────────────────────────────────────────────────
   // La altura se reparte entre las que haya: con veinte salen holgadas y con
@@ -214,50 +156,12 @@ export async function dibujarRanking(d: DatosImagen): Promise<Blob> {
     }
 
     ctx.textBaseline = "alphabetic";
-    ctx.fillStyle = "#e2e4df";
+    ctx.fillStyle = FILETE_2;
     ctx.fillRect(M + 90, fy + alto - 1, ANCHO - M * 2 - 90, 1);
   });
 
-  // ── Pie ────────────────────────────────────────────────────────────
-  const py = ALTO - M - 24;
-  ctx.fillStyle = FILETE;
-  ctx.fillRect(M, py - 46, ANCHO - M * 2, 2);
-
-  // El dominio se mide primero y la procedencia se recorta a lo que quede:
-  // con el texto largo y el tracking abierto, los dos se solapaban en medio.
-  ctx.font = `500 22px ${mono}`;
-  ctx.letterSpacing = "2px";
-  const dominio = "observatorioescolar.netlify.app";
-  const anchoDominio = ctx.measureText(dominio).width;
-  ctx.fillStyle = TINTA_2;
-  ctx.fillText(dominio, ANCHO - M - anchoDominio, py);
-  ctx.fillStyle = TINTA_3;
-  ctx.fillText(
-    recortar(ctx, "FUENTE SÍSEVE", ANCHO - M * 2 - anchoDominio - 40),
-    M,
-    py
-  );
-  ctx.letterSpacing = "0px";
-
-  return new Promise((resolve, reject) => {
-    canvas.toBlob(
-      (b) => (b ? resolve(b) : reject(new Error("No se pudo generar el PNG"))),
-      "image/png"
-    );
-  });
+  pie(l, "FUENTE SÍSEVE");
+  return aBlob(l.canvas);
 }
 
-/** Nombre de archivo descriptivo y sin caracteres problemáticos. */
-export function nombreArchivo(partes: (string | null | undefined)[]): string {
-  const limpio = partes
-    .filter(Boolean)
-    .join("-")
-    .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "")
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
-  return `observatorio-escolar-${limpio}.png`;
-}
-
-export { ESCALA_SECUENCIAL_HEX };
+export { ESCALA_SECUENCIAL_HEX, nombreArchivo };

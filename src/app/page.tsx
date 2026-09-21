@@ -70,12 +70,10 @@ export default function Home() {
             <span className="text-accent">?</span>
           </h1>
 
-          <p className="surgir mt-8 max-w-[52ch] text-[1.08rem] leading-relaxed text-ink-2">
-            {nf(meta.reportes)} reportes registrados en {nf(colegios)} colegios. Un
-            reporte es una alerta registrada en SíseVe, no un caso confirmado.
-          </p>
-
-          <div className="surgir mt-12">
+          {/* Aquí iba un subtítulo con las mismas cifras que la franja de
+              abajo: repetirlas a ocho centímetros de distancia no añadía nada
+              y empujaba el buscador fuera de la primera pantalla. */}
+          <div className="surgir mt-10">
             <SearchBox
                 placeholder="nombre del colegio, distrito o código modular"
             />
