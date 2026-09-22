@@ -433,3 +433,11 @@ export function getTerritorio(): Territorio {
   _territorio ??= read<Territorio>("territorio.json");
   return _territorio;
 }
+
+let _limaMapa: import("@/components/MapaLima").DatosMapaLima | null = null;
+
+/** Geometría de Lima Metropolitana con las cifras vivas por UGEL. 7 KB. */
+export function getLimaMapa(): import("@/components/MapaLima").DatosMapaLima {
+  _limaMapa ??= read<import("@/components/MapaLima").DatosMapaLima>("lima_mapa.json");
+  return _limaMapa;
+}

@@ -9,12 +9,14 @@ import { ReportTrend } from "@/components/ReportTrend";
 import { ScatterXY } from "@/components/ScatterXY";
 import { CategoryBars, type SerieDef } from "@/components/CategoryBars";
 import { TerritorioRanking } from "@/components/TerritorioRanking";
+import { MapaLima } from "@/components/MapaLima";
 import {
   getAllInstitutions,
   getCross,
   getMeta,
   getNational,
   getTerritorio,
+  getLimaMapa,
 } from "@/lib/data/provider";
 import { nf } from "@/lib/format";
 import { COLOR_ACTOR, COLOR_VIOLENCIA, color } from "@/lib/viz/colors";
@@ -104,6 +106,7 @@ export default function DatosPage() {
   const nacional = getNational();
   const cross = getCross();
   const territorio = getTerritorio();
+  const limaMapa = getLimaMapa();
 
   const serie = nacional.map((n) => ({
     anio: n.anio,
@@ -356,7 +359,27 @@ export default function DatosPage() {
               cobertura={`${nf(territorio.cobertura.ugeles_con_tasa)} UGEL con denominador suficiente`}
             />
 
-            <div className="mt-4 max-w-prose">
+            {/* El mapa va DESPUÉS de las barras, no en su lugar: cubre una
+                región de las veinticinco y sirve para ver la forma urbana de
+                un dato que ya se comparó en la lista. */}
+            <div className="mt-10 border-t border-rule-2 pt-8">
+              <div className="flex flex-wrap items-baseline justify-between gap-2">
+                <h4 className="font-display text-[1.1rem] font-medium text-ink">
+                  Lima Metropolitana, por UGEL
+                </h4>
+                <DataSourceBadge fuente="SíseVe / Censo · DRELM" anio={limaMapa.anio} />
+              </div>
+              <p className="mt-2 max-w-prose text-[0.86rem] leading-relaxed text-ink-2">
+                Los distritos de una misma UGEL van del mismo color porque comparten el mismo
+                número: SíseVe no publica nada por debajo de la UGEL. Son siete datos, no
+                cuarenta y dos.
+              </p>
+              <div className="mt-6">
+                <MapaLima datos={limaMapa} />
+              </div>
+            </div>
+
+            <div className="mt-6 max-w-prose">
               <MethodologyNote tono="aviso">
                 Registrar más no es sufrir más. Una tasa alta describe un sistema de reporte
                 que funciona —confianza en el canal, personal que registra, protocolo
