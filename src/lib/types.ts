@@ -331,6 +331,10 @@ export interface FilaTerritorio {
   sin_denominador: number;
   cobertura: number;
   tasa: number | null;
+  /** La tasa existe pero su denominador no cubre todo el territorio. */
+  aproximada?: boolean;
+  /** Por qué no hay tasa. Null cuando sí la hay. */
+  motivo?: "territorio_pequeno" | "sin_denominador" | "pocos_reportes" | null;
   serie: Record<string, number>;
 }
 
@@ -341,6 +345,7 @@ export interface Territorio {
   cobertura: {
     minima: number;
     minimo_instituciones: number;
+    reportes_minimos: number;
     regiones_con_tasa: number;
     ugeles_con_tasa: number;
   };

@@ -349,6 +349,7 @@ export default function DatosPage() {
                 regiones={territorio.regiones}
                 ugeles={territorio.ugeles}
                 anio={territorio.anio}
+                minimoReportes={territorio.cobertura.reportes_minimos}
               />
             </div>
 

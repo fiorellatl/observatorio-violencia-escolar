@@ -54,6 +54,18 @@ COBERTURA_MINIMA = 0.75
 # colegio la mueve entera.
 MINIMO_INSTITUCIONES = 10
 
+# Y tampoco la sostiene con muy pocos reportes, que es el fallo que se colo
+# la primera vez. La precision de una tasa la manda el NUMERADOR: con r
+# reportes el error relativo ronda 1/raiz(r). Con 18 reportes son 24 puntos,
+# y la UGEL Candarave —476 alumnos, 13 colegios— encabezaba la lista con 37,8
+# por mil, cuatro veces la region que mas registra. No era un hallazgo: era
+# un colegio.
+#
+# Con 20 reportes el error baja al 22 % y el primer puesto pasa a una UGEL
+# cuya tasa esta en linea con las cifras regionales. Subir mas el listen
+# dejaria fuera a mas de la mitad de las UGEL sin ganar mucha precision.
+REPORTES_MINIMOS = 20
+
 
 def main():
     inst = json.loads((PUB / "institutions.json").read_text(encoding="utf-8"))
@@ -89,8 +101,17 @@ def main():
         d = agregar(clave)
         for nombre, v in d.items():
             cobertura = (v["n"] - v["sin_denominador"]) / v["n"] if v["n"] else 0
-            base = v["n"] >= MINIMO_INSTITUCIONES and v["alumnos"] > 0
-            publicable = base and cobertura >= COBERTURA_MINIMA
+            # El motivo por el que no hay tasa importa: "falta el
+            # denominador" y "hay muy pocos reportes" son cosas distintas y
+            # la interfaz no puede explicarlas con la misma frase.
+            motivo = None
+            if v["alumnos"] <= 0 or v["n"] < MINIMO_INSTITUCIONES:
+                motivo = "territorio_pequeno"
+            elif cobertura < COBERTURA_MINIMA:
+                motivo = "sin_denominador"
+            elif v["reportes"] < REPORTES_MINIMOS:
+                motivo = "pocos_reportes"
+            publicable = motivo is None
             aproximada = publicable and cobertura < COBERTURA_FIABLE
             fila = {
                 "nombre": nombre,
@@ -106,6 +127,7 @@ def main():
                 # entero: es un techo, no una medida exacta.
                 "aproximada": aproximada,
                 "sobreestima_max": round((1 / cobertura - 1) * 100, 1) if publicable else None,
+                "motivo": motivo,
                 "serie": {a: n for a, n in sorted(v["serie"].items())},
             }
             if clave == "ugel":
@@ -120,6 +142,7 @@ def main():
         "fiable": COBERTURA_FIABLE,
         "minima": COBERTURA_MINIMA,
         "minimo_instituciones": MINIMO_INSTITUCIONES,
+        "reportes_minimos": REPORTES_MINIMOS,
         "regiones_con_tasa": sum(1 for r in salida["regiones"] if r["tasa"] is not None),
         "ugeles_con_tasa": sum(1 for u in salida["ugeles"] if u["tasa"] is not None),
     }

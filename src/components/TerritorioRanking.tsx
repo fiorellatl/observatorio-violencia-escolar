@@ -33,10 +33,12 @@ export function TerritorioRanking({
   regiones,
   ugeles,
   anio,
+  minimoReportes,
 }: {
   regiones: FilaTerritorio[];
   ugeles: FilaTerritorio[];
   anio: string;
+  minimoReportes: number;
 }) {
   const [nivel, setNivel] = useState<"region" | "ugel">("region");
   const [todas, setTodas] = useState(false);
@@ -138,15 +140,43 @@ export function TerritorioRanking({
       ) : null}
 
       {sinTasa.length > 0 ? (
-        <p className="mt-5 max-w-prose text-[0.78rem] leading-relaxed text-ink-3">
-          {nf(sinTasa.length)}{" "}
-          {nivel === "region" ? "regiones quedan" : "UGEL quedan"} fuera de esta lista: en{" "}
-          {sinTasa.length === 1 ? "ella" : "ellas"} falta el número de alumnos de demasiadas
-          instituciones y una tasa calculada sobre una parte del territorio se leería como si
-          fuera todo. {sinTasa.map((f) => f.nombre).slice(0, 4).join(", ")}
-          {sinTasa.length > 4 ? " y otras" : ""}.
-        </p>
+        <div className="mt-5 max-w-prose space-y-2 text-[0.78rem] leading-relaxed text-ink-3">
+          {/* Dos motivos distintos, dos frases distintas: decir «faltan datos»
+              para ambos escondería que en un caso el problema es el
+              denominador y en el otro, que hay tan pocos reportes que la tasa
+              la movería un solo colegio. */}
+          {(
+            [
+              [
+                "pocos_reportes",
+                `registran menos de ${nf(minimoReportes)} reportes en el año: con tan pocos, la tasa la movería un solo colegio y no describiría el territorio`,
+              ],
+              [
+                "sin_denominador",
+                "les falta el número de alumnos de demasiadas instituciones, y una tasa calculada sobre una parte se leería como si fuera todo",
+              ],
+              [
+                "territorio_pequeno",
+                "tienen muy pocas instituciones para sostener una tasa",
+              ],
+            ] as const
+          ).map(([motivo, explica]) => {
+            const grupo = sinTasa.filter((f) => f.motivo === motivo);
+            if (!grupo.length) return null;
+            return (
+              <p key={motivo}>
+                <span className="font-medium text-ink-2">
+                  {nf(grupo.length)} {nivel === "region" ? "regiones" : "UGEL"}
+                </span>{" "}
+                {explica}: {grupo.map((f) => f.nombre).slice(0, 3).join(", ")}
+                {grupo.length > 3 ? ` y ${nf(grupo.length - 3)} más` : ""}. Su conteo sí está
+                en los datos.
+              </p>
+            );
+          })}
+        </div>
       ) : null}
+
     </div>
   );
 }
