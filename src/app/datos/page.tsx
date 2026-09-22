@@ -10,6 +10,7 @@ import { ScatterXY } from "@/components/ScatterXY";
 import { CategoryBars, type SerieDef } from "@/components/CategoryBars";
 import { TerritorioRanking } from "@/components/TerritorioRanking";
 import { MapaLima } from "@/components/MapaLima";
+import { CorrelacionActores } from "@/components/CorrelacionActores";
 import {
   getAllInstitutions,
   getCross,
@@ -17,6 +18,7 @@ import {
   getNational,
   getTerritorio,
   getLimaMapa,
+  getCorrelacion,
 } from "@/lib/data/provider";
 import { nf } from "@/lib/format";
 import { COLOR_ACTOR, COLOR_VIOLENCIA, color } from "@/lib/viz/colors";
@@ -98,6 +100,7 @@ const PREGUNTAS = [
   { id: "que-se-registra", texto: "¿Qué se registra?" },
   { id: "donde", texto: "¿Dónde se concentra?" },
   { id: "tamano", texto: "¿Los colegios más grandes registran más reportes?" },
+  { id: "correlacion", texto: "¿Van juntos los dos tipos?" },
   { id: "pension", texto: "¿Y con la pensión?" },
 ];
 
@@ -107,6 +110,7 @@ export default function DatosPage() {
   const cross = getCross();
   const territorio = getTerritorio();
   const limaMapa = getLimaMapa();
+  const correlacion = getCorrelacion();
 
   const serie = nacional.map((n) => ({
     anio: n.anio,
@@ -329,6 +333,39 @@ export default function DatosPage() {
         </Pregunta>
 
         {/* ── ¿Dónde se concentra? ───────────────────────────── */}
+        <Pregunta id="correlacion" pregunta="¿Van juntos los dos tipos de violencia?">
+          <div className={panelPad}>
+            <div className="flex flex-wrap items-baseline justify-between gap-2">
+              <h3 className={h3}>Entre alumnos y de un adulto, colegio por colegio</h3>
+              <DataSourceBadge fuente="SíseVe" anio={correlacion.anios.join("–")} />
+            </div>
+            <p className={entradilla}>
+              Si un colegio registra mucha violencia entre alumnos, ¿registra también más
+              violencia ejercida por un adulto del colegio?
+            </p>
+
+            <div className="mt-6">
+              <CorrelacionActores datos={correlacion} />
+            </div>
+
+            <FichaTecnica
+              n={`${nf(correlacion.datos[correlacion.anios[correlacion.anios.length - 2]].colegios)} colegios`}
+              anio={correlacion.anios.join("–")}
+              variables="Reportes entre alumnos · de un adulto"
+              cobertura="Colegios con al menos un reporte en el año"
+            />
+
+            <div className="mt-4 max-w-prose">
+              <MethodologyNote>
+                Cada reporte se clasifica en una de las dos categorías, así que un colegio puede
+                registrar mucho de una y nada de la otra. Tres de cada cuatro registran solo un
+                tipo, y eso —no un error de medición— es lo que mantiene la correlación cerca de
+                cero.
+              </MethodologyNote>
+            </div>
+          </div>
+        </Pregunta>
+
         <Pregunta id="donde" pregunta="¿Dónde se registra más?">
           <div className={panelPad}>
             <div className="flex flex-wrap items-baseline justify-between gap-2">

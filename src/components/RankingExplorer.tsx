@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { ShareButton } from "@/components/ShareButton";
+import { RankingBuscador } from "@/components/RankingBuscador";
 import { ShareImage } from "@/components/ShareImage";
 import { dibujarRanking } from "@/lib/share/rankingImage";
 import { medir } from "@/lib/analytics";
@@ -190,7 +191,11 @@ export function RankingExplorer() {
       // aquí cubre los selectores, la métrica, el tipo y el año sin repartir
       // llamadas por media docena de manejadores.
       for (const [k, v] of Object.entries(cambios)) {
-        if (k === "anio") medir("select_year", { anio: v || anio, donde: "rankings" });
+        // Buscar no es filtrar, y medirlo como tal inflaría `filter_ranking`
+        // con acciones que no reducen el ranking. Va como `search`, sin el
+        // texto tecleado: el slug es público, lo que alguien escribió no.
+        if (k === "buscado") medir("search", { donde: "rankings", resultados: v ? 1 : 0 });
+        else if (k === "anio") medir("select_year", { anio: v || anio, donde: "rankings" });
         else medir("filter_ranking", { filtro: k, valor: v || "(ninguno)" });
       }
 
@@ -311,6 +316,34 @@ export function RankingExplorer() {
   }, [idx, candidatos, anio, posTipo, metrica, verCeros, hayTasa, anioPrevio, nivelFiltrado]);
 
   const total = puestos.length;
+
+  /**
+   * El colegio buscado, situado dentro del ranking tal como está.
+   *
+   * Vive en la URL para que una búsqueda se pueda compartir, y NO es un
+   * filtro: no toca `filtros` ni cambia la consulta. Si los filtros vigentes
+   * lo dejan fuera, `posicion` es null y la interfaz lo explica en vez de
+   * ensanchar la búsqueda por su cuenta.
+   */
+  const buscado = q("buscado");
+  const hallado = useMemo(() => {
+    if (!buscado || !idx) return null;
+    const i = puestos.findIndex((p) => p.fila[1] === buscado);
+    const enIndice = idx.filas.find((f) => f[1] === buscado);
+    if (!enIndice) return null;
+    return {
+      fila: enIndice,
+      posicion: i >= 0 ? i + 1 : null,
+      pagina: i >= 0 ? Math.floor(i / POR_PAGINA) : null,
+      puesto: i >= 0 ? puestos[i] : null,
+    };
+  }, [buscado, idx, puestos]);
+
+  // Al elegir un colegio la tabla salta a su página: señalarlo en la página
+  // 40 sin llevar al lector hasta allí no serviría de nada.
+  useEffect(() => {
+    if (hallado?.pagina != null) setPagina(hallado.pagina);
+  }, [hallado?.pagina]);
   const visibles = puestos.slice(pagina * POR_PAGINA, (pagina + 1) * POR_PAGINA);
 
 
@@ -456,6 +489,7 @@ export function RankingExplorer() {
 
   /* ── Una fila del ranking ──────────────────────────────────────────── */
   const Fila = ({ p, posicion, destacado }: { p: Puesto; posicion: number; destacado: boolean }) => {
+    const señalado = buscado !== "" && p.fila[1] === buscado;
     const distrito = idx.dic.d[p.fila[2]];
     const provincia = idx.dic.p[p.fila[3]];
     const region = idx.dic.r[p.fila[4]];
@@ -468,7 +502,13 @@ export function RankingExplorer() {
     const tramo = tramoDe(p.conteo);
 
     return (
-      <li className="border-b border-rule-2 last:border-b-0">
+      <li
+        className={`border-b border-rule-2 last:border-b-0 ${
+          // El hallazgo se marca con el acento del producto y un filete
+          // lateral, no con un color de alarma: es «este es», no «cuidado».
+          señalado ? "-mx-3 rounded border-l-4 border-l-accent bg-accent-soft/50 px-3" : ""
+        }`}
+      >
         <Link
           href={href}
           className="group flex items-stretch gap-3 py-4 transition-colors duration-150 ease-suave hover:bg-accent-soft/40 sm:gap-5 sm:py-5"
@@ -721,6 +761,61 @@ export function RankingExplorer() {
       {/* Los tipos van en una tira propia que se desplaza en horizontal: en un
           teléfono, envolverlos en dos filas empuja la pieza fuera de la
           primera pantalla, que es justo lo que hay que ver. */}
+      {/* El buscador va aparte de los filtros, con su propio rótulo: filtrar
+          reduce el ranking y buscar no lo toca. Mezclarlos invitaría a creer
+          que escribir un nombre deja fuera al resto. */}
+      {idx ? (
+        <div className="mt-5 max-w-md">
+          <RankingBuscador
+            filas={idx.filas}
+            dic={idx.dic}
+            elegido={buscado}
+            onElegir={(cm) => poner({ buscado: cm })}
+          />
+        </div>
+      ) : null}
+
+      {hallado ? (
+        <div className="mt-3 max-w-2xl rounded-lg border border-accent/40 bg-accent-soft/40 p-4">
+          {hallado.posicion != null && hallado.puesto ? (
+            <p className="text-[0.95rem] leading-snug text-ink">
+              <strong className="font-semibold">{hallado.fila[0]}</strong> está en el{" "}
+              <strong className="font-semibold">puesto {nf(hallado.posicion)}</strong> de{" "}
+              {nf(total)}
+              {metrica === "tasa"
+                ? ` con ${dec(hallado.puesto.tasa ?? 0, 1)} por 1.000 alumnos`
+                : ` con ${nf(hallado.puesto.conteo)} reportes`}{" "}
+              en {anio}.
+            </p>
+          ) : (
+            <>
+              {/* No se tocan los filtros: se dice qué los deja fuera y se
+                  ofrece la ficha, que siempre tiene el dato completo. */}
+              <p className="text-[0.95rem] leading-snug text-ink">
+                <strong className="font-semibold">{hallado.fila[0]}</strong> no aparece en este
+                ranking con los filtros puestos.
+              </p>
+              <p className="mt-1.5 text-[0.85rem] leading-relaxed text-ink-2">
+                {(hallado.fila[8]?.[anio]?.[0] ?? 0) === 0
+                  ? `No registró reportes en ${anio}.`
+                  : filtrosActivos > 0
+                    ? "Queda fuera de los filtros activos. Quítalos para verlo en la lista."
+                    : metrica === "tasa"
+                      ? "No tiene número de alumnos suficiente para calcular una tasa."
+                      : "Queda fuera de la consulta actual."}
+              </p>
+            </>
+          )}
+          <Link
+            href={`/colegio/${slugify(hallado.fila[0], idx!.dic.d[hallado.fila[2]], hallado.fila[1])}`}
+            className="mt-2.5 inline-flex items-baseline gap-1.5 text-[0.86rem] font-medium text-accent hover:underline"
+          >
+            Ver su ficha
+            <span aria-hidden>→</span>
+          </Link>
+        </div>
+      ) : null}
+
       <fieldset className="-mx-5 mt-3 flex min-w-0 max-w-[100vw] items-center gap-1.5 overflow-x-auto px-5 pb-1 [scrollbar-width:none] sm:mx-0 sm:max-w-none sm:flex-wrap sm:overflow-visible sm:px-0">
           <legend className="sr-only">Tipo de reporte</legend>
           {TIPOS.map((t) => {

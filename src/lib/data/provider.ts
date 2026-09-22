@@ -441,3 +441,13 @@ export function getLimaMapa(): import("@/components/MapaLima").DatosMapaLima {
   _limaMapa ??= read<import("@/components/MapaLima").DatosMapaLima>("lima_mapa.json");
   return _limaMapa;
 }
+
+let _correlacion: import("@/components/CorrelacionActores").DatosCorrelacion | null = null;
+
+/** Dispersión y correlación entre tipos de agresor. 8 KB: va en la página. */
+export function getCorrelacion() {
+  _correlacion ??= read<import("@/components/CorrelacionActores").DatosCorrelacion>(
+    "correlacion.json"
+  );
+  return _correlacion;
+}
