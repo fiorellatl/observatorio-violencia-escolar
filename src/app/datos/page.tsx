@@ -4,12 +4,18 @@ import dynamicImport from "next/dynamic";
 import Link from "next/link";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { DataSourceBadge } from "@/components/DataSourceBadge";
-import { Proximamente } from "@/components/DataState";
 import { MethodologyNote } from "@/components/MethodologyNote";
 import { ReportTrend } from "@/components/ReportTrend";
 import { ScatterXY } from "@/components/ScatterXY";
 import { CategoryBars, type SerieDef } from "@/components/CategoryBars";
-import { getAllInstitutions, getCross, getMeta, getNational } from "@/lib/data/provider";
+import { TerritorioRanking } from "@/components/TerritorioRanking";
+import {
+  getAllInstitutions,
+  getCross,
+  getMeta,
+  getNational,
+  getTerritorio,
+} from "@/lib/data/provider";
 import { nf } from "@/lib/format";
 import { COLOR_ACTOR, COLOR_VIOLENCIA, color } from "@/lib/viz/colors";
 import { entradilla, meta as clsMeta, panelPad, panelEnlace, h3 } from "@/lib/ui";
@@ -97,6 +103,7 @@ export default function DatosPage() {
   const meta = getMeta();
   const nacional = getNational();
   const cross = getCross();
+  const territorio = getTerritorio();
 
   const serie = nacional.map((n) => ({
     anio: n.anio,
@@ -117,10 +124,14 @@ export default function DatosPage() {
    * —no se escribe a mano— para que deje de ser cierto el día que la
    * cobertura cambie.
    */
+  let conMatricula = 0;
+  let totalInstituciones = 0;
   const conPensionSlugs = new Set(conPension.map((c) => c.slug));
   const regionesPension = new Set<string>();
   let privadosTotal = 0;
   for (const i of Object.values(getAllInstitutions())) {
+    totalInstituciones++;
+    if (i.matricula != null) conMatricula++;
     for (const sv of i.servicios) {
       if (i.gestion?.startsWith("Priv")) privadosTotal++;
       if (conPensionSlugs.has(sv.slug)) regionesPension.add(i.departamento);
@@ -315,15 +326,46 @@ export default function DatosPage() {
         </Pregunta>
 
         {/* ── ¿Dónde se concentra? ───────────────────────────── */}
-        <Pregunta id="donde" pregunta="¿Dónde se concentra?">
-          <Proximamente titulo="La distribución territorial necesita un denominador">
-            Podríamos sumar los reportes de cada región hoy mismo, pero ese mapa mostraría
-            sobre todo dónde vive más gente: Lima tiene más reportes que Madre de Dios
-            porque tiene muchísimos más estudiantes. Para decir algo sobre el territorio
-            hace falta el número de alumnos de cada región, que se está descargando del padrón de
-            ESCALE. Hasta entonces preferimos el hueco antes que un mapa que se lea al
-            revés.
-          </Proximamente>
+        <Pregunta id="donde" pregunta="¿Dónde se registra más?">
+          <div className={panelPad}>
+            <div className="flex flex-wrap items-baseline justify-between gap-2">
+              <h3 className={h3}>Reportes por cada 1.000 alumnos</h3>
+              <DataSourceBadge
+                fuente="SíseVe / Censo"
+                anio={`rep. ${territorio.anio} · alum. ${meta.fuentes.matricula?.anio ?? "—"}`}
+              />
+            </div>
+            <p className={entradilla}>
+              Esta sección decía que faltaba un denominador. Ya no falta: el Censo Educativo
+              cubre {nf(conMatricula)} de {nf(totalInstituciones)} instituciones, y con eso se
+              puede dividir por territorio sin que el mapa muestre dónde vive más gente.
+            </p>
+
+            <div className="mt-6">
+              <TerritorioRanking
+                regiones={territorio.regiones}
+                ugeles={territorio.ugeles}
+                anio={territorio.anio}
+              />
+            </div>
+
+            <FichaTecnica
+              n={`${nf(territorio.regiones.length)} regiones · ${nf(territorio.ugeles.length)} UGEL`}
+              anio={territorio.anio}
+              variables="Reportes · # alumnos"
+              cobertura={`${nf(territorio.cobertura.ugeles_con_tasa)} UGEL con denominador suficiente`}
+            />
+
+            <div className="mt-4 max-w-prose">
+              <MethodologyNote tono="aviso">
+                Registrar más no es sufrir más. Una tasa alta describe un sistema de reporte
+                que funciona —confianza en el canal, personal que registra, protocolo
+                aplicado—, no un territorio más violento. La diferencia entre el primero y el
+                último de esta lista dice mucho más sobre quién denuncia que sobre dónde
+                ocurre.
+              </MethodologyNote>
+            </div>
+          </div>
         </Pregunta>
 
         {/* ── ¿Cambia con el tamaño? ─────────────────────────── */}

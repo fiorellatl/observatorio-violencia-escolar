@@ -21,6 +21,7 @@ import type {
   CrossRow,
   Meta,
   NationalYear,
+  Territorio,
   SchoolDetail,
   SearchRow,
 } from "@/lib/types";
@@ -423,4 +424,12 @@ export function getSenalDeColegio(cms: string | string[]): SenalFicha | null {
     if (s) return s;
   }
   return null;
+}
+
+let _territorio: Territorio | null = null;
+
+/** Agregados por región y por UGEL. 66 KB: cabe en memoria sin ceremonia. */
+export function getTerritorio(): Territorio {
+  _territorio ??= read<Territorio>("territorio.json");
+  return _territorio;
 }

@@ -314,3 +314,34 @@ export interface Signals {
   pares: SignalPar[];
   meta: { q_fdr: number; min_n: number; min_composicion: number; anios: string[] };
 }
+
+/**
+ * Un territorio agregado: una región o una UGEL.
+ *
+ * `tasa` es null cuando el denominador no cubre el territorio entero. No es
+ * cero: un cero se ordenaría como si fuera el sitio que menos registra,
+ * cuando lo que ocurre es que no lo sabemos.
+ */
+export interface FilaTerritorio {
+  nombre: string;
+  region?: string | null;
+  reportes: number;
+  alumnos: number;
+  instituciones: number;
+  sin_denominador: number;
+  cobertura: number;
+  tasa: number | null;
+  serie: Record<string, number>;
+}
+
+export interface Territorio {
+  anio: string;
+  regiones: FilaTerritorio[];
+  ugeles: FilaTerritorio[];
+  cobertura: {
+    minima: number;
+    minimo_instituciones: number;
+    regiones_con_tasa: number;
+    ugeles_con_tasa: number;
+  };
+}
