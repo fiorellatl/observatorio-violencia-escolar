@@ -6,7 +6,19 @@ import type { Pensiones } from "@/lib/hallazgos";
 
 /** Botones de historia de las dos piezas de pensión. Van aparte porque las
     piezas son de servidor y `dibujar` tiene que vivir en el cliente. */
-export function CompartirPension({ anio, datos, pieza }: { anio: string; datos: Pensiones; pieza: "tramos" | "composicion" }) {
+export function CompartirPension({
+  anio,
+  parcial,
+  anioAlumnos,
+  datos,
+  pieza,
+}: {
+  anio: string;
+  parcial: boolean;
+  anioAlumnos: string;
+  datos: Pensiones;
+  pieza: "tramos" | "composicion";
+}) {
   return (
     <ShareImage
       titulo={pieza === "tramos" ? "Pensión y reportes, para historias" : "Qué se reporta según la pensión, para historias"}
@@ -16,9 +28,10 @@ export function CompartirPension({ anio, datos, pieza }: { anio: string; datos: 
       alineacion="izquierda"
       dibujar={() =>
         pieza === "tramos"
-          ? dibujarPensionTramos({ anio, tramos: datos.tramos, publicos: datos.publicos.tasa, colegios: datos.conPension })
+          ? dibujarPensionTramos({ anio, parcial, anioAlumnos, tramos: datos.tramos, publicos: datos.publicos.tasa, colegios: datos.conPension })
           : dibujarPensionComposicion({
               anio,
+              parcial,
               filas: datos.composicion.map((c) => ({ nombre: c.nombre, bajo: c.bajo, alto: c.alto, claro: c.claro })),
               colegiosAlto: datos.alto.colegios,
               colegiosBajo: datos.bajo.colegios,

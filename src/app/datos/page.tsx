@@ -16,6 +16,7 @@ import { distritosLima, pensiones, silencioPorTamano } from "@/lib/hallazgos";
 import { DistritosLima } from "@/components/DistritosLima";
 import { CompartirSilencio } from "@/components/CompartirSilencio";
 import { CompartirPension } from "@/components/CompartirPension";
+import { SelectorAnio } from "@/components/SelectorAnio";
 
 import {
   getAllInstitutions,
@@ -202,6 +203,11 @@ export default function DatosPage() {
   // Espacio duro: en un teléfono «68 %» se partía en dos líneas.
   const pct = (v: number) => `${Math.round(v)} %`;
   const pen = pensiones(t);
+  // El mismo trío que distritos: el año del Censo, el último completo y el
+  // año en curso. La pensión es una sola (la más reciente de cada colegio).
+  const aniosPension = [...new Set([t, getAnioPrincipal(), meta.anio_parcial])].sort();
+  const anioAlumnos = meta.fuentes.matricula?.anio ?? t;
+  const periodo = (a: string) => (a === meta.anio_parcial ? `enero–agosto ${a}` : a);
   const dec1 = (v: number) => v.toFixed(1).replace(".", ",");
   // Los tres años con reportes y denominador: 2024 (censo), el último
   // completo y el año en curso. Se calcula aquí; el filtro solo elige.
@@ -641,80 +647,111 @@ export default function DatosPage() {
           </div>
 
           {pen.cobertura >= COBERTURA_PENSION_MINIMA ? (
-            <div className="mt-6 space-y-6">
-              <PiezaNoche
-                antetitulo={`Pensiones y reportes · Lima · ${t}`}
-                titulo={
-                  <>
-                    ¿Los colegios más caros registran más{" "}
-                    <span className="text-menta">reportes de violencia</span>?
-                  </>
-                }
-                respuesta={
-                  <>
-                    {dec1(pen.tramos[3].tasa)} reportes por cada 1.000 alumnos en el tramo de
-                    pensión más alta, {dec1(pen.tramos[0].tasa)} en el más bajo. Los públicos de los
-                    mismos distritos: {dec1(pen.publicos.tasa)}.
-                  </>
-                }
-                nota={
-                  <>
-                    {nf(pen.conPension)} de {nf(pen.privadosLima)} colegios privados de Lima con al menos{" "}
-                    {nf(meta.matricula_minima)} alumnos, en cuatro tramos con el mismo número de colegios.
-                    La pensión es la más reciente que declara cada colegio en Identicole: cambia poco de
-                    un año a otro y se usa como referencia. Más reportes no prueba más violencia; la
-                    pensión va junto con el distrito y las familias.
-                  </>
-                }
-              >
-                <BarrasAgrupadas
-                  series={[{ nombre: "Reportes por cada 1.000 alumnos", clase: "bg-menta" }]}
-                  grupos={pen.tramos.map((x) => ({
-                    etiqueta: x.etiqueta,
-                    detalle: `${nf(x.reportes)} rep. · ${nf(x.alumnos)} alum.`,
-                    valores: [x.tasa],
-                  }))}
-                  maximo={Math.max(...pen.tramos.map((x) => x.tasa))}
-                  formato={dec1}
-                  pie="Pensión mensual"
-                />
-                <div className="mt-6">
-                  <CompartirPension anio={t} datos={pen} pieza="tramos" />
-                </div>
-              </PiezaNoche>
-
-              <PiezaNoche
-                antetitulo={`Pensiones y reportes · Lima · ${t}`}
-                titulo={
-                  <>
-                    ¿Qué se reporta en los colegios de <span className="text-menta">pensión más alta</span>?
-                  </>
-                }
-                respuesta="Lo que más cambia es quién ejerce la violencia reportada: más entre estudiantes, menos de adultos del colegio."
-                nota={
-                  <>
-                    {pen.alto.colegios} colegios con pensión de S/ 1.500 o más ({nf(pen.alto.reportes)}{" "}
-                    reportes) frente a {pen.bajo.colegios} con menos de S/ 1.000 ({nf(pen.bajo.reportes)}{" "}
-                    reportes). En gris claro, las diferencias que no superan una prueba de proporciones:
-                    pueden ser azar. Un reporte puede tener más de un tipo.
-                  </>
-                }
-              >
-                <ParesHorizontales
-                  series={[
-                    { nombre: "Menos de S/ 1.000", clase: "bg-noche-ink-4" },
-                    { nombre: "S/ 1.500 o más", clase: "bg-menta" },
-                  ]}
-                  bloques={[
-                    { titulo: "Quién la ejerce", filas: pen.composicion.slice(0, 2).map((c) => ({ nombre: c.nombre, a: c.bajo, b: c.alto, claro: c.claro })) },
-                    { titulo: "Qué tipo", filas: pen.composicion.slice(2).map((c) => ({ nombre: c.nombre, a: c.bajo, b: c.alto, claro: c.claro })) },
-                  ]}
-                  formato={pct}
-                />
-                <div className="mt-6">
-                  <CompartirPension anio={t} datos={pen} pieza="composicion" />
-                </div>
-              </PiezaNoche>
+            <div className="mt-6">
+              {/* Los tres años se calculan y pintan en el servidor; el selector
+                  solo elige cuál se ve, y cada panel comparte su propio año. */}
+              <SelectorAnio
+                bloque="pension"
+                inicial={getAnioPrincipal()}
+                anios={aniosPension.map((a) => ({
+                  anio: a,
+                  etiqueta: a === meta.anio_parcial ? `${a} (ene–ago)` : a,
+                }))}
+                paneles={Object.fromEntries(
+                  aniosPension.map((a) => {
+                    const p = pensiones(a);
+                    return [
+                      a,
+                      <div className="space-y-6">
+                    <PiezaNoche
+                      antetitulo={`Pensiones y reportes · Lima · ${periodo(a)}`}
+                      titulo={
+                        <>
+                          ¿Los colegios más caros registran más{" "}
+                          <span className="text-menta">reportes de violencia</span>?
+                        </>
+                      }
+                      respuesta={
+                        <>
+                          {dec1(p.tramos[3].tasa)} reportes por cada 1.000 alumnos en el tramo de
+                          pensión más alta, {dec1(p.tramos[0].tasa)} en el más bajo. Los públicos de los
+                          mismos distritos: {dec1(p.publicos.tasa)}.
+                        </>
+                      }
+                      nota={
+                        <>
+                          {nf(p.conPension)} de {nf(p.privadosLima)} colegios privados de Lima con al menos{" "}
+                          {nf(meta.matricula_minima)} alumnos, en cuatro tramos con el mismo número de colegios.
+                          La pensión es la más reciente que declara cada colegio en Identicole: cambia poco de
+                          un año a otro y se usa como referencia. Más reportes no prueba más violencia; la
+                          pensión va junto con el distrito y las familias.
+                          {a !== anioAlumnos ? (
+                            <>
+                              {" "}Los alumnos son del Censo {anioAlumnos}, el último publicado: compara los
+                              tramos entre sí dentro de un año, no las tasas de un año con las de otro.
+                            </>
+                          ) : null}
+                          {a === meta.anio_parcial ? (
+                            <>
+                              {" "}{a} cubre solo hasta agosto, por eso todas sus tasas son más bajas.
+                            </>
+                          ) : null}
+                        </>
+                      }
+                    >
+                      <BarrasAgrupadas
+                        series={[{ nombre: "Reportes por cada 1.000 alumnos", clase: "bg-menta" }]}
+                        grupos={p.tramos.map((x) => ({
+                          etiqueta: x.etiqueta,
+                          detalle: `${nf(x.reportes)} rep. · ${nf(x.alumnos)} alum.`,
+                          valores: [x.tasa],
+                        }))}
+                        maximo={Math.max(...p.tramos.map((x) => x.tasa))}
+                        formato={dec1}
+                        pie="Pensión mensual"
+                      />
+                      <div className="mt-6">
+                        <CompartirPension anio={a} parcial={a === meta.anio_parcial} anioAlumnos={anioAlumnos} datos={p} pieza="tramos" />
+                      </div>
+                    </PiezaNoche>
+      
+                    <PiezaNoche
+                      antetitulo={`Pensiones y reportes · Lima · ${periodo(a)}`}
+                      titulo={
+                        <>
+                          ¿Qué se reporta en los colegios de <span className="text-menta">pensión más alta</span>?
+                        </>
+                      }
+                      respuesta="Lo que más cambia es quién ejerce la violencia reportada: más entre estudiantes, menos de adultos del colegio."
+                      nota={
+                        <>
+                          {p.alto.colegios} colegios con pensión de S/ 1.500 o más ({nf(p.alto.reportes)}{" "}
+                          reportes) frente a {p.bajo.colegios} con menos de S/ 1.000 ({nf(p.bajo.reportes)}{" "}
+                          reportes). En gris claro, las diferencias que no superan una prueba de proporciones:
+                          pueden ser azar. Un reporte puede tener más de un tipo.
+                        </>
+                      }
+                    >
+                      <ParesHorizontales
+                        series={[
+                          { nombre: "Menos de S/ 1.000", clase: "bg-noche-ink-4" },
+                          { nombre: "S/ 1.500 o más", clase: "bg-menta" },
+                        ]}
+                        bloques={[
+                          { titulo: "Quién la ejerce", filas: p.composicion.slice(0, 2).map((c) => ({ nombre: c.nombre, a: c.bajo, b: c.alto, claro: c.claro })) },
+                          { titulo: "Qué tipo", filas: p.composicion.slice(2).map((c) => ({ nombre: c.nombre, a: c.bajo, b: c.alto, claro: c.claro })) },
+                        ]}
+                        formato={pct}
+                      />
+                      <div className="mt-6">
+                        <CompartirPension anio={a} parcial={a === meta.anio_parcial} anioAlumnos={anioAlumnos} datos={p} pieza="composicion" />
+                      </div>
+                    </PiezaNoche>
+                  </div>,
+                    ];
+                  })
+                )}
+              />
             </div>
           ) : null}
         </Pregunta>

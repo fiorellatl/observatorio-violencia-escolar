@@ -418,13 +418,16 @@ export async function dibujarSilencio(p: {
 /* ── 5 · Pensión por tramos ───────────────────────────────────────────── */
 export async function dibujarPensionTramos(p: {
   anio: string;
+  parcial: boolean;
+  /** Año del Censo del que salen los alumnos. */
+  anioAlumnos: string;
   tramos: { etiqueta: string; tasa: number; reportes: number; alumnos: number }[];
   publicos: number;
   colegios: number;
 }): Promise<Blob> {
   const l = await crearNoche();
   const { ctx, sans, mono } = l;
-  let y = cabecera(l, `Pensiones y reportes · Lima · ${p.anio}`);
+  let y = cabecera(l, `Pensiones y reportes · Lima · ${periodo(p.anio, p.parcial)}`);
   y = titular(l, [
     { partes: [["¿", MENTA], ["LOS COLEGIOS MÁS CAROS", TINTA]], grande: true, tope: 140 },
     { partes: [["registran más", TINTA]], grande: false },
@@ -483,20 +486,23 @@ export async function dibujarPensionTramos(p: {
   ctx.fillText("REPORTES POR CADA 1.000 ALUMNOS, SEGÚN LA PENSIÓN", M, base + 146);
   ctx.letterSpacing = "0px";
   cierre(l, ["Más reportes no prueba más violencia.", "Donde más se paga, más se denuncia."],
-    `${miles(p.colegios)} colegios privados de Lima · pensión en Identicole · reportes SíseVe ${p.anio} · no indica causa`);
+    // Una sola línea de 912 px: con el periodo y el año del Censo, la versión
+    // larga se cortaba. «No indica causa» ya lo dice el giro de arriba.
+    `${miles(p.colegios)} privados de Lima · pensión: Identicole · SíseVe ${periodo(p.anio, p.parcial)} · alumnos: Censo ${p.anioAlumnos}`);
   return aBlob(l.canvas);
 }
 
 /* ── 6 · Qué se reporta según la pensión ──────────────────────────────── */
 export async function dibujarPensionComposicion(p: {
   anio: string;
+  parcial: boolean;
   filas: { nombre: string; bajo: number; alto: number; claro: boolean }[];
   colegiosAlto: number;
   colegiosBajo: number;
 }): Promise<Blob> {
   const l = await crearNoche();
   const { ctx, sans, mono } = l;
-  let y = cabecera(l, `Pensiones y reportes · Lima · ${p.anio}`);
+  let y = cabecera(l, `Pensiones y reportes · Lima · ${periodo(p.anio, p.parcial)}`);
   y = titular(l, [
     { partes: [["¿", MENTA], ["QUÉ SE REPORTA", TINTA]], grande: true, tope: 150 },
     { partes: [["en los colegios de", TINTA]], grande: false },
@@ -522,7 +528,7 @@ export async function dibujarPensionComposicion(p: {
     });
   });
   cierre(l, ["Más reportes no prueba más violencia.", "En gris: diferencias que pueden ser azar."],
-    `${miles(p.colegiosAlto)} colegios de S/ 1.500 o más y ${miles(p.colegiosBajo)} de menos de S/ 1.000 · SíseVe ${p.anio}`);
+    `${miles(p.colegiosAlto)} colegios de S/ 1.500 o más y ${miles(p.colegiosBajo)} de menos de S/ 1.000 · SíseVe ${periodo(p.anio, p.parcial)}`);
   return aBlob(l.canvas);
 }
 
