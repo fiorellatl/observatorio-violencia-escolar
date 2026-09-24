@@ -77,10 +77,18 @@ export async function dibujarRanking(d: DatosImagen): Promise<Blob> {
 
   // ── Titular ────────────────────────────────────────────────────────
   y += 30;
-  ctx.font = `700 78px ${sans}`;
+  // El titular lleva el lugar y los filtros, y es lo último que puede
+  // perderse: se achica la letra hasta que quepa entero en tres líneas en
+  // vez de recortarlo con puntos suspensivos.
+  let tam = 78;
+  for (; tam > 50; tam -= 4) {
+    ctx.font = `700 ${tam}px ${sans}`;
+    if (lineas(ctx, d.titulo, ANCHO - M * 2, 9).length <= 3) break;
+  }
+  ctx.font = `700 ${tam}px ${sans}`;
   ctx.fillStyle = TINTA;
   for (const t of lineas(ctx, d.titulo, ANCHO - M * 2, 3)) {
-    y += 82;
+    y += tam * 1.05;
     ctx.fillText(t, M, y);
   }
 

@@ -11,6 +11,11 @@ import { CategoryBars, type SerieDef } from "@/components/CategoryBars";
 import { TerritorioRanking } from "@/components/TerritorioRanking";
 import { MapaLima } from "@/components/MapaLima";
 import { CorrelacionActores } from "@/components/CorrelacionActores";
+import { BarrasAgrupadas, PiezaNoche, ParesHorizontales } from "@/components/PiezaNoche";
+import { distritosLima, pensiones, silencioPorTamano } from "@/lib/hallazgos";
+import { DistritosLima } from "@/components/DistritosLima";
+import { CompartirSilencio } from "@/components/CompartirSilencio";
+
 import {
   getAllInstitutions,
   getCross,
@@ -19,10 +24,19 @@ import {
   getTerritorio,
   getLimaMapa,
   getCorrelacion,
+  getAnioPrincipal,
 } from "@/lib/data/provider";
 import { nf } from "@/lib/format";
 import { COLOR_ACTOR, COLOR_VIOLENCIA, color } from "@/lib/viz/colors";
 import { entradilla, meta as clsMeta, panelPad, panelEnlace, h3 } from "@/lib/ui";
+
+/**
+ * Por debajo de esta cobertura la pensión no se resume por tramos: la
+ * descarga de Identicole llegó a estar sesgada hacia los colegios que
+ * reportan (323 de 324 tenían reportes en 2026), y un tramo construido sobre
+ * esa lista describe la lista, no Lima.
+ */
+const COBERTURA_PENSION_MINIMA = 80;
 
 /**
  * Recharts son ~90 KB de JavaScript. La dispersión vive bien abajo de la
@@ -99,6 +113,7 @@ const PREGUNTAS = [
   { id: "como-cambio", texto: "¿Cómo ha cambiado?" },
   { id: "que-se-registra", texto: "¿Qué se registra?" },
   { id: "donde", texto: "¿Dónde se concentra?" },
+  { id: "distritos", texto: "¿Qué distrito de Lima registra más?" },
   { id: "tamano", texto: "¿Los colegios más grandes registran más reportes?" },
   { id: "correlacion", texto: "¿Van juntos los dos tipos?" },
   { id: "pension", texto: "¿Y con la pensión?" },
@@ -181,6 +196,16 @@ export default function DatosPage() {
   ];
 
   const privadosDelCorte = cross.filter((c) => c.gestion.startsWith("Priv")).length;
+  const silencio = silencioPorTamano(t);
+  const grandes = silencio.tramos[silencio.tramos.length - 1];
+  // Espacio duro: en un teléfono «68 %» se partía en dos líneas.
+  const pct = (v: number) => `${Math.round(v)} %`;
+  const pen = pensiones(t);
+  const dec1 = (v: number) => v.toFixed(1).replace(".", ",");
+  // Los tres años con reportes y denominador: 2024 (censo), el último
+  // completo y el año en curso. Se calcula aquí; el filtro solo elige.
+  const aniosDistritos = [...new Set([t, getAnioPrincipal(), meta.anio_parcial])].sort();
+  const distritos = distritosLima(aniosDistritos);
 
   return (
     <div className="mx-auto max-w-shell px-5 py-8 sm:py-10">
@@ -429,6 +454,17 @@ export default function DatosPage() {
           </div>
         </Pregunta>
 
+        {/* ── ¿Qué distrito de Lima registra más? ─────────────────
+            La misma pregunta de las piezas de redes, con su respuesta y un
+            filtro de año. Cada gráfico se descarga como historia. */}
+        <Pregunta id="distritos" pregunta="¿Qué distrito de Lima registra más?">
+          <DistritosLima
+            datos={distritos}
+            anioInicial={getAnioPrincipal()}
+            anioParcial={meta.anio_parcial}
+          />
+        </Pregunta>
+
         {/* ── ¿Cambia con el tamaño? ─────────────────────────── */}
         <Pregunta id="tamano" pregunta="¿Los colegios más grandes registran más reportes?">
           <div className={panelPad}>
@@ -457,7 +493,9 @@ export default function DatosPage() {
                   n={`${nf(cross.length)} colegios`}
                   anio={t}
                   variables={`reportes ${t} · alumnos ${meta.fuentes.matricula?.anio}`}
-                  cobertura="Lima Metropolitana"
+                  // Decía «Lima Metropolitana», pero el corte trae colegios de
+                  // todo el país; Lima es menos de un tercio.
+                  cobertura={`${silencio.regiones} regiones`}
                 />
                 <div className="mt-4 space-y-3">
                   <MethodologyNote tono="aviso">
@@ -483,6 +521,57 @@ export default function DatosPage() {
               </div>
             )}
           </div>
+
+          {/* El hallazgo del tamaño no está en la tasa sino en el silencio. */}
+          {silencio.tramos.every((x) => x.colegios > 0) ? (
+            <div className="mt-6">
+              <PiezaNoche
+                antetitulo={`Tamaño del colegio · ${silencio.regiones} regiones · ${t}`}
+                titulo={
+                  <>
+                    <span className="text-menta">1 de cada {Math.round(100 / grandes.sinReportes)}</span>{" "}
+                    colegios grandes no registró nada
+                  </>
+                }
+                respuesta={
+                  <>
+                    Ni un reporte en todo {t} en {pct(grandes.sinReportes)} de los colegios con{" "}
+                    {grandes.etiqueta} alumnos. Si registraran al ritmo del resto, serían apenas el{" "}
+                    <span className="text-noche-ink">{pct(grandes.esperado)}</span>.
+                  </>
+                }
+                nota={
+                  <>
+                    Por alumno, colegios chicos y grandes registran casi lo mismo (entre{" "}
+                    {Math.min(...silencio.tramos.map((x) => x.tasa)).toFixed(1).replace(".", ",")} y{" "}
+                    {Math.max(...silencio.tramos.map((x) => x.tasa)).toFixed(1).replace(".", ",")} por
+                    cada 1.000). «Esperable»: la parte de colegios que quedaría en cero solo por azar si
+                    cada uno registrara al ritmo promedio de su tamaño. Que no haya reportes no significa
+                    que no haya violencia. {nf(silencio.tramos.reduce((a, x) => a + x.colegios, 0))}{" "}
+                    colegios con al menos {nf(meta.matricula_minima)} alumnos · reportes y alumnos {t}.
+                  </>
+                }
+              >
+                <BarrasAgrupadas
+                  series={[
+                    { nombre: "Sin ningún reporte", clase: "bg-menta" },
+                    { nombre: "Lo esperable por azar", clase: "", referencia: true },
+                  ]}
+                  grupos={silencio.tramos.map((x) => ({
+                    etiqueta: x.etiqueta,
+                    detalle: `${nf(x.colegios)} colegios`,
+                    valores: [x.sinReportes, x.esperado],
+                  }))}
+                  maximo={100}
+                  formato={pct}
+                  pie="Alumnos por colegio"
+                />
+                <div className="mt-6">
+                  <CompartirSilencio anio={t} regiones={silencio.regiones} tramos={silencio.tramos} />
+                </div>
+              </PiezaNoche>
+            </div>
+          ) : null}
         </Pregunta>
 
         {/* ── ¿Y con la pensión? ─────────────────────────────── */}
@@ -527,6 +616,14 @@ export default function DatosPage() {
                     distrito, la composición socioeconómica de las familias y su capacidad
                     de escalar un caso hasta que quede registrado.
                   </MethodologyNote>
+                  {pen.cobertura < COBERTURA_PENSION_MINIMA ? (
+                    <MethodologyNote tono="aviso">
+                      Hoy conocemos la pensión de {nf(pen.conPension)} de {nf(pen.privadosLima)}{" "}
+                      colegios privados de Lima ({Math.round(pen.cobertura)} %), y esa lista no se
+                      eligió al azar: casi todos registraron reportes. Por eso no resumimos la
+                      pensión por tramos hasta completar la descarga.
+                    </MethodologyNote>
+                  ) : null}
                 </div>
               </>
             ) : (
@@ -541,6 +638,78 @@ export default function DatosPage() {
               </div>
             )}
           </div>
+
+          {pen.cobertura >= COBERTURA_PENSION_MINIMA ? (
+            <div className="mt-6 space-y-6">
+              <PiezaNoche
+                antetitulo={`Pensiones y reportes · Lima · ${t}`}
+                titulo={
+                  <>
+                    ¿Los colegios más caros registran más{" "}
+                    <span className="text-menta">reportes de violencia</span>?
+                  </>
+                }
+                respuesta={
+                  <>
+                    {dec1(pen.tramos[3].tasa)} reportes por cada 1.000 alumnos en el tramo de
+                    pensión más alta, {dec1(pen.tramos[0].tasa)} en el más bajo. Los públicos de los
+                    mismos distritos: {dec1(pen.publicos.tasa)}.
+                  </>
+                }
+                nota={
+                  <>
+                    {nf(pen.conPension)} de {nf(pen.privadosLima)} colegios privados de Lima con al menos{" "}
+                    {nf(meta.matricula_minima)} alumnos, en cuatro tramos con el mismo número de colegios.
+                    La pensión es la más reciente que declara cada colegio en Identicole: cambia poco de
+                    un año a otro y se usa como referencia. Más reportes no prueba más violencia; la
+                    pensión va junto con el distrito y las familias.
+                  </>
+                }
+              >
+                <BarrasAgrupadas
+                  series={[{ nombre: "Reportes por cada 1.000 alumnos", clase: "bg-menta" }]}
+                  grupos={pen.tramos.map((x) => ({
+                    etiqueta: x.etiqueta,
+                    detalle: `${nf(x.reportes)} rep. · ${nf(x.alumnos)} alum.`,
+                    valores: [x.tasa],
+                  }))}
+                  maximo={Math.max(...pen.tramos.map((x) => x.tasa))}
+                  formato={dec1}
+                  pie="Pensión mensual"
+                />
+              </PiezaNoche>
+
+              <PiezaNoche
+                antetitulo={`Pensiones y reportes · Lima · ${t}`}
+                titulo={
+                  <>
+                    ¿Qué se reporta en los colegios de <span className="text-menta">pensión más alta</span>?
+                  </>
+                }
+                respuesta="Lo que cambia con claridad es quién ejerce la violencia reportada, más que su tipo."
+                nota={
+                  <>
+                    {pen.alto.colegios} colegios con pensión de S/ 1.500 o más ({nf(pen.alto.reportes)}{" "}
+                    reportes) frente a {pen.bajo.colegios} con menos de S/ 1.000 ({nf(pen.bajo.reportes)}{" "}
+                    reportes). En gris claro, las diferencias que no superan una prueba de proporciones:
+                    pueden ser azar. Un reporte puede tener más de un tipo.
+                  </>
+                }
+              >
+                <ParesHorizontales
+                  series={[
+                    { nombre: "Menos de S/ 1.000", clase: "bg-noche-ink-4" },
+                    { nombre: "S/ 1.500 o más", clase: "bg-menta" },
+                  ]}
+                  bloques={[
+                    { titulo: "Quién la ejerce", filas: pen.composicion.slice(0, 2).map((c) => ({ nombre: c.nombre, a: c.bajo, b: c.alto, claro: c.claro })) },
+                    { titulo: "Qué tipo", filas: pen.composicion.slice(2).map((c) => ({ nombre: c.nombre, a: c.bajo, b: c.alto, claro: c.claro })) },
+                  ]}
+                  formato={pct}
+                />
+              </PiezaNoche>
+            </div>
+          ) : null}
         </Pregunta>
 
         {/* ── Salidas ────────────────────────────────────────── */}

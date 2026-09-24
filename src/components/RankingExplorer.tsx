@@ -29,6 +29,8 @@ import {
   type TramoDistribucion,
 } from "@/lib/viz/colors";
 import type { RankingIndex, RankingRow } from "@/lib/types";
+import { tituloRanking } from "@/lib/rankingTitulo";
+import { SelectorBuscable } from "@/components/SelectorBuscable";
 
 /**
  * Explorador de rankings descriptivos.
@@ -572,38 +574,40 @@ export function RankingExplorer() {
       const [pr, r] = padresDistrito(idx)[i];
       poner({ distrito: idx.dic.d[i], provincia: idx.dic.p[pr], region: idx.dic.r[r] });
     };
+    // Buscador en vez de <select>: con cientos de distritos, desplazarse por
+    // la lista era la única forma de encontrar uno, y en un teléfono no se podía.
+    const opciones = opts.map((o) => ({ valor: o.valor, etiqueta: o.label }));
+    if (valor === "varios" && f) opciones.unshift({ valor: "varios", etiqueta: `${f.valor} (${f.ids.size} distritos)` });
     return (
-      <div key={k} className="min-w-0">
-        <label htmlFor={`r-${k}`} className={`${clsMeta} block`}>
-          {label}
-        </label>
-        <select
-          id={`r-${k}`}
-          value={valor}
-          onChange={(e) => elegir(e.target.value)}
-          className={`${campo} mt-1.5 ${f ? "border-ink-3" : ""}`}
-        >
-          <option value="">{todos}</option>
-          {valor === "varios" && f ? (
-            <option value="varios" disabled>
-              {f.valor} ({f.ids.size} distritos)
-            </option>
-          ) : null}
-          {opts.map((o) => (
-            <option key={o.valor} value={o.valor}>
-              {o.label}
-            </option>
-          ))}
-        </select>
-      </div>
+      <SelectorBuscable
+        key={k}
+        etiqueta={label}
+        todos={todos}
+        valor={valor}
+        opciones={opciones}
+        onCambio={(v) => (v === "varios" ? undefined : elegir(v))}
+      />
     );
   };
 
   const suf = TIPOS.find((t) => t.v === tipo)!.corto;
-  const titulo =
-    metrica === "tasa"
-      ? `Colegios con mayor tasa de reportes de violencia${suf}`
-      : `Colegios con más reportes de violencia${suf} registrados`;
+  // El titular lleva los filtros que cambian el universo: una captura de
+  // Miraflores tiene que decir Miraflores. Solo lo que se aplicó de verdad.
+  const aplicado = (k: string) =>
+    [...filtros.out, ...filtros.geo.filtros].find((f) => f.clave === k)?.valor ?? "";
+  const distritoAplicado = aplicado("distrito");
+  const repetido = distritoAplicado && idx.dic.d.filter((n) => n === distritoAplicado).length > 1;
+  const titulo = tituloRanking({
+    metrica,
+    tipo: suf,
+    gestion: aplicado("gestion"),
+    nivel: aplicado("nivel"),
+    region: aplicado("region"),
+    provincia: aplicado("provincia"),
+    ugel: aplicado("ugel"),
+    distrito: distritoAplicado,
+    distritoRegion: repetido ? aplicado("region") : undefined,
+  });
 
   /**
    * Tope de la página, para el largo del indicador.

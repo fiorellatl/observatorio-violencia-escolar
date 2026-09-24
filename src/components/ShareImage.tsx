@@ -45,7 +45,7 @@ export function ShareImage({
   etiqueta?: string;
   alineacion?: "derecha" | "izquierda";
   /** Qué pieza se está generando, para medir la descarga. */
-  eventoDescarga: Extract<Evento, "download_radiografia" | "download_ranking">;
+  eventoDescarga: Extract<Evento, "download_radiografia" | "download_ranking" | "download_dato">;
   /** Identificadores públicos de lo que se comparte. */
   contexto?: Record<string, string | number | boolean | undefined>;
 }) {

@@ -51,6 +51,8 @@ export type Evento =
   | "share"
   | "download_radiografia"
   | "download_ranking"
+  /** Una pieza de /datos descargada en formato historia. */
+  | "download_dato"
   | "view_map";
 
 /**

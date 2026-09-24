@@ -8,6 +8,7 @@ import { RankingExplorer } from "@/components/RankingExplorer";
 import { facetaValida, getAnioPrincipal, getMeta } from "@/lib/data/provider";
 import { fechaLegible, nf } from "@/lib/format";
 import { shell } from "@/lib/ui";
+import { tituloRanking } from "@/lib/rankingTitulo";
 
 type Busqueda = Promise<Record<string, string | string[] | undefined>>;
 
@@ -63,10 +64,19 @@ export async function generateMetadata({
     facetaValida("n", uno(p.nivel)),
   ].filter(Boolean);
 
-  const base = tasa
-    ? `Colegios con mayor tasa de reportes de violencia${TIPO[tipo] ?? ""}`
-    : `Colegios con más reportes de violencia${TIPO[tipo] ?? ""} registrados`;
-  const titulo = [base, anio, lugar, ...rasgos].join(" · ");
+  // El mismo titular que la tabla y la imagen: lugar, gestión y nivel van
+  // dentro de la frase, no como etiquetas sueltas al final.
+  const base = tituloRanking({
+    metrica: tasa ? "tasa" : "reportes",
+    tipo: TIPO[tipo] ?? "",
+    gestion: facetaValida("g", uno(p.gestion)),
+    nivel: facetaValida("n", uno(p.nivel)),
+    region: facetaValida("r", uno(p.region)),
+    provincia: facetaValida("p", uno(p.provincia)),
+    ugel,
+    distrito: facetaValida("d", uno(p.distrito)),
+  });
+  const titulo = [base, anio].join(" · ");
 
   const desc =
     `Reportes registrados en SíseVe por colegio en ${lugar}, ${anio}. ` +
