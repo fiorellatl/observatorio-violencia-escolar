@@ -414,3 +414,114 @@ export async function dibujarSilencio(p: {
   cierre(l, ["Que no haya reportes", "no significa que no haya violencia."], `Colegios con 100 alumnos o más · reportes SíseVe y alumnos ${p.anio}`);
   return aBlob(l.canvas);
 }
+
+/* ── 5 · Pensión por tramos ───────────────────────────────────────────── */
+export async function dibujarPensionTramos(p: {
+  anio: string;
+  tramos: { etiqueta: string; tasa: number; reportes: number; alumnos: number }[];
+  publicos: number;
+  colegios: number;
+}): Promise<Blob> {
+  const l = await crearNoche();
+  const { ctx, sans, mono } = l;
+  let y = cabecera(l, `Pensiones y reportes · Lima · ${p.anio}`);
+  y = titular(l, [
+    { partes: [["¿", MENTA], ["LOS COLEGIOS MÁS CAROS", TINTA]], grande: true, tope: 140 },
+    { partes: [["registran más", TINTA]], grande: false },
+    { partes: [["REPORTES DE VIOLENCIA?", MENTA]], grande: true, tope: 130 },
+  ], y);
+  const razon = p.tramos[3].tasa / p.tramos[0].tasa;
+  const multiplo: Record<number, string> = { 2: "más del doble", 3: "más del triple", 4: "más del cuádruple" };
+  const frase = razon >= 1.5 ? `Sí: ${multiplo[Math.floor(razon)] ?? `${dec(razon)} veces más`} por alumno.` : "No: casi lo mismo por alumno.";
+  y = parrafo(l, frase, y + 10, 46, TINTA, 700, 2);
+
+  const base = 1260;
+  const alto = base - y - 110;
+  const maximo = Math.max(...p.tramos.map((t) => t.tasa));
+  const paso = (ANCHO - 2 * M) / 4;
+  const barra = paso * 0.62;
+  const yp = base - (p.publicos / maximo) * alto;
+  ctx.strokeStyle = TINTA_2;
+  ctx.setLineDash([12, 10]);
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(M, yp);
+  ctx.lineTo(ANCHO - M, yp);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  p.tramos.forEach((t, i) => {
+    const cx = M + paso * i + paso / 2;
+    const h = (t.tasa / maximo) * alto;
+    ctx.fillStyle = RAMPA[i];
+    ctx.fillRect(cx - barra / 2, base - h, barra, h);
+    ctx.textAlign = "center";
+    ctx.textBaseline = "bottom";
+    ctx.font = `700 46px ${sans}`;
+    const txt = dec(t.tasa);
+    const w = ctx.measureText(txt).width;
+    ctx.fillStyle = NOCHE;
+    ctx.fillRect(cx - w / 2 - 8, base - h - 60, w + 16, 52);
+    ctx.fillStyle = TINTA;
+    ctx.fillText(txt, cx, base - h - 10);
+    ctx.textBaseline = "top";
+    ctx.font = `600 24px ${sans}`;
+    ctx.fillStyle = TINTA_2;
+    ctx.fillText(t.etiqueta, cx, base + 16);
+    ctx.font = `500 15px ${mono}`;
+    ctx.fillStyle = TINTA_3;
+    // Dos líneas: en una sola, la cuenta de una barra pisaba la de la siguiente.
+    ctx.fillText(`${miles(t.reportes)} reportes`, cx, base + 50);
+    ctx.fillText(`${miles(t.alumnos)} alumnos`, cx, base + 72);
+    ctx.textAlign = "left";
+  });
+  ctx.font = `500 18px ${mono}`;
+  ctx.letterSpacing = "2px";
+  ctx.fillStyle = TINTA_2;
+  ctx.textBaseline = "top";
+  ctx.fillText(`- - -  PÚBLICOS DE LOS MISMOS DISTRITOS: ${dec(p.publicos)}`, M, base + 114);
+  ctx.fillStyle = TINTA_3;
+  ctx.fillText("REPORTES POR CADA 1.000 ALUMNOS, SEGÚN LA PENSIÓN", M, base + 146);
+  ctx.letterSpacing = "0px";
+  cierre(l, ["Más reportes no prueba más violencia.", "Donde más se paga, más se denuncia."],
+    `${miles(p.colegios)} colegios privados de Lima · pensión en Identicole · reportes SíseVe ${p.anio} · no indica causa`);
+  return aBlob(l.canvas);
+}
+
+/* ── 6 · Qué se reporta según la pensión ──────────────────────────────── */
+export async function dibujarPensionComposicion(p: {
+  anio: string;
+  filas: { nombre: string; bajo: number; alto: number; claro: boolean }[];
+  colegiosAlto: number;
+  colegiosBajo: number;
+}): Promise<Blob> {
+  const l = await crearNoche();
+  const { ctx, sans, mono } = l;
+  let y = cabecera(l, `Pensiones y reportes · Lima · ${p.anio}`);
+  y = titular(l, [
+    { partes: [["¿", MENTA], ["QUÉ SE REPORTA", TINTA]], grande: true, tope: 150 },
+    { partes: [["en los colegios de", TINTA]], grande: false },
+    { partes: [["PENSIÓN MÁS ALTA?", MENTA]], grande: true, tope: 140 },
+  ], y);
+  y = parrafo(l, "Más violencia entre estudiantes. Menos de adultos del colegio.", y + 10, 40, TINTA, 700, 2);
+  y = leyendaCuadros(l, [[GRIS, "Menos de S/ 1.000"], [MENTA, "S/ 1.500 o más"]], y + 20);
+  const alto = (1480 - y) / p.filas.length;
+  p.filas.forEach((f, k) => {
+    const yy = y + k * alto;
+    ctx.textBaseline = "top";
+    ctx.font = `600 28px ${sans}`;
+    ctx.fillStyle = f.claro ? TINTA : TINTA_3;
+    ctx.fillText(f.nombre, M, yy + 6);
+    [[f.bajo, GRIS], [f.alto, MENTA]].forEach(([v, c], j) => {
+      const by = yy + j * 26;
+      const largo = ((ANCHO - 2 * M - 400) * (v as number)) / 100;
+      ctx.fillStyle = c as string;
+      ctx.fillRect(M + 330, by, Math.max(3, largo), 18);
+      ctx.font = `700 20px ${sans}`;
+      ctx.fillStyle = j ? TINTA : TINTA_3;
+      ctx.fillText(`${Math.round(v as number)} %`, M + 342 + largo, by - 2);
+    });
+  });
+  cierre(l, ["Más reportes no prueba más violencia.", "En gris: diferencias que pueden ser azar."],
+    `${miles(p.colegiosAlto)} colegios de S/ 1.500 o más y ${miles(p.colegiosBajo)} de menos de S/ 1.000 · SíseVe ${p.anio}`);
+  return aBlob(l.canvas);
+}

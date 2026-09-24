@@ -89,6 +89,22 @@ PASOS = [
         salidas=[PUB / "institutions.json", PUB / "service-redirects.json", PUB / "facetas.json"],
     ),
     Paso(
+        "codlocal_sin_codinst",
+        "Local y nombre oficial (ESCALE) de los servicios sin codinst.",
+        [sys.executable, "scripts/bajar_codlocal_sin_codinst.py"],
+        # Depende de los servicios, no de institutions.json: el paso
+        # siguiente reescribe ese fichero y lo marcaria siempre obsoleto.
+        entradas=[PUB / "schools_detail.json"],
+        salidas=[PROC / "servicios_sin_codinst.json"],
+    ),
+    Paso(
+        "unificar_sin_codinst",
+        "Une los colegios partidos: por codinst nuevo, o por local y nombre oficial.",
+        [sys.executable, "scripts/unificar_sin_codinst.py", "--aplicar"],
+        entradas=[PUB / "institutions.json", PROC / "servicios_sin_codinst.json"],
+        salidas=[PUB / "institutions.json", PUB / "service-redirects.json"],
+    ),
+    Paso(
         "senales",
         "Detector de cambios en el registro de reportes.",
         [sys.executable, "scripts/build_signals.py"],

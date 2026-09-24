@@ -15,6 +15,7 @@ import { BarrasAgrupadas, PiezaNoche, ParesHorizontales } from "@/components/Pie
 import { distritosLima, pensiones, silencioPorTamano } from "@/lib/hallazgos";
 import { DistritosLima } from "@/components/DistritosLima";
 import { CompartirSilencio } from "@/components/CompartirSilencio";
+import { CompartirPension } from "@/components/CompartirPension";
 
 import {
   getAllInstitutions,
@@ -677,6 +678,9 @@ export default function DatosPage() {
                   formato={dec1}
                   pie="Pensión mensual"
                 />
+                <div className="mt-6">
+                  <CompartirPension anio={t} datos={pen} pieza="tramos" />
+                </div>
               </PiezaNoche>
 
               <PiezaNoche
@@ -686,7 +690,7 @@ export default function DatosPage() {
                     ¿Qué se reporta en los colegios de <span className="text-menta">pensión más alta</span>?
                   </>
                 }
-                respuesta="Lo que cambia con claridad es quién ejerce la violencia reportada, más que su tipo."
+                respuesta="Lo que más cambia es quién ejerce la violencia reportada: más entre estudiantes, menos de adultos del colegio."
                 nota={
                   <>
                     {pen.alto.colegios} colegios con pensión de S/ 1.500 o más ({nf(pen.alto.reportes)}{" "}
@@ -707,6 +711,9 @@ export default function DatosPage() {
                   ]}
                   formato={pct}
                 />
+                <div className="mt-6">
+                  <CompartirPension anio={t} datos={pen} pieza="composicion" />
+                </div>
               </PiezaNoche>
             </div>
           ) : null}

@@ -51,6 +51,29 @@ Dos métodos que **no** se usan, y por qué:
 **Un servicio sin `codinst` se queda solo.** No se le busca acomodo. Preferimos
 un colegio sin vista institucional antes que una institución inventada.
 
+### La única excepción (`scripts/unificar_sin_codinst.py`)
+
+858 servicios no tienen `codinst` ni siquiera en el padrón de ESCALE, y en
+decenas de casos eso partía un colegio en dos en el ranking: la primaria y la
+secundaria de «Padre Iluminato» salían como dos colegios. Se unen solo si se
+cumplen **todas** estas condiciones a la vez:
+
+1. ninguno tiene `codinst`, ni en la capa ni en ESCALE;
+2. mismo `codlocal` (mismo local) **y** mismo nombre oficial de ESCALE —ni el
+   local solo ni el nombre solo, que siguen sin agrupar—;
+3. mismo distrito y misma gestión;
+4. solo niveles de la básica regular: nunca un CEBA, un CEBE ni un CETPRO,
+   que son otras instituciones aunque compartan edificio;
+5. ningún nivel repetido.
+
+La institución resultante lleva `"agrupacion": "codlocal_y_nombre"`: se sabe
+que no la agrupó un código oficial. Antes, el mismo script agrupa por
+`codinst` los servicios que en el padrón de hoy **sí** tienen código y en la
+capa no lo tenían —eso es la regla general, no una excepción—.
+
+Resultado del corte actual: 44 uniones por `codinst` y 143 por local y nombre;
+17.399 → 17.185 instituciones, sin cambiar un solo reporte ni alumno.
+
 ## Reglas de agregación
 
 Cuando la ficha muestra «Institución completa», estos son los cálculos:
