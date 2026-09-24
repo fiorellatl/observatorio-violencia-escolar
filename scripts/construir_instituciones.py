@@ -187,12 +187,25 @@ def main():
     # el servidor pueda comprobar los parametros de una URL sin cargar los 14 MB
     # de instituciones: sin esto, /rankings?gestion=Privada anunciaba en el
     # titulo un filtro que no se habia aplicado.
+    # La UGEL se identifica por DRE + nombre: cuando un nombre existe en dos
+    # DRE ("UGEL La Unión", Piura y Arequipa) se muestra con la DRE entre
+    # paréntesis. Misma regla que etiquetasUgel() en src/lib/data/provider.ts.
+    dres_por_ugel = defaultdict(set)
+    for i in instituciones.values():
+        dres_por_ugel[i["ugel"]].add(i["dre"])
+
+    def etiqueta_ugel(i):
+        if len(dres_por_ugel[i["ugel"]]) > 1:
+            return f'{i["ugel"]} ({i["dre"].removeprefix("DRE ")})'
+        return i["ugel"]
+
     facetas = {
         "r": sorted({i["departamento"] for i in instituciones.values()}),
         "p": sorted({i["provincia"] for i in instituciones.values()}),
         "d": sorted({i["distrito"] for i in instituciones.values()}),
         "g": sorted({i["gestion"] for i in instituciones.values()}),
         "n": sorted({n for i in instituciones.values() for n in i["niveles"]}),
+        "u": sorted({etiqueta_ugel(i) for i in instituciones.values()}),
     }
     (PUB / "facetas.json").write_text(
         json.dumps(facetas, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")

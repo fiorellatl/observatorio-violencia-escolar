@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { nf, norm, slugify } from "@/lib/format";
+import { cumpleGeo, resolverGeo } from "@/lib/rankingGeo";
 import type { BrowseIndex, BrowseRow, RankingIndex, RankingRow } from "@/lib/types";
 
 /**
@@ -100,7 +101,7 @@ export function SchoolNav({
     const trozos = (anio: string | null) => {
       const t: string[] = [];
       if (anio) t.push(anio);
-      for (const k of ["region", "provincia", "distrito", "gestion", "nivel"]) {
+      for (const k of ["region", "ugel", "provincia", "distrito", "gestion", "nivel"]) {
         const v = params.get(k);
         if (v) t.push(v);
       }
@@ -117,9 +118,7 @@ export function SchoolNav({
       const hayTasa = anio === rank.anio_tasa;
 
       const id = (dic: string[], v: string | null) => (v ? dic.indexOf(v) : -1);
-      const r = id(rank.dic.r, params.get("region"));
-      const pr = id(rank.dic.p, params.get("provincia"));
-      const d = id(rank.dic.d, params.get("distrito"));
+      const geo = resolverGeo(rank, (k) => params.get(k) ?? "").filtros;
       const g = id(rank.dic.g, params.get("gestion"));
       const n = id(rank.dic.n, params.get("nivel"));
 
@@ -128,9 +127,7 @@ export function SchoolNav({
       // con la fila 21 de la tabla.
       const out: { f: RankingRow; v: number }[] = [];
       for (const f of rank.filas) {
-        if (r >= 0 && f[4] !== r) continue;
-        if (pr >= 0 && f[3] !== pr) continue;
-        if (d >= 0 && f[2] !== d) continue;
+        if (!cumpleGeo(f, geo)) continue;
         if (g >= 0 && f[5] !== g) continue;
         if (n >= 0 && !f[6].includes(n)) continue;
         const c = f[8][anio];

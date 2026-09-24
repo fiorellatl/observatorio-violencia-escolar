@@ -109,6 +109,8 @@ export interface Facetas {
   d: string[];
   g: string[];
   n: string[];
+  /** UGEL con el mismo nombre visible que en el ranking (ver etiquetasUgel). */
+  u: string[];
 }
 let _facetas: Facetas | null = null;
 
@@ -219,6 +221,26 @@ export function getBrowseIndex(): BrowseIndex {
 }
 
 /**
+ * Nombre visible de la UGEL de cada institución.
+ *
+ * La capa pública no trae el código de la UGEL, así que se identifica por
+ * DRE + nombre. Casi siempre el nombre basta; cuando dos DRE tienen una UGEL
+ * con el mismo nombre —hoy, «UGEL La Unión» en Piura y en Arequipa— se añade
+ * la DRE, para que el selector y la URL no las fundan en una.
+ *
+ * `construir_instituciones.py` aplica la misma regla al escribir las facetas.
+ */
+function etiquetasUgel(insts: Institution[]): (s: Institution) => string {
+  const dres = new Map<string, Set<string>>();
+  for (const s of insts) {
+    if (!dres.has(s.ugel)) dres.set(s.ugel, new Set());
+    dres.get(s.ugel)!.add(s.dre);
+  }
+  return (s) =>
+    (dres.get(s.ugel)?.size ?? 0) > 1 ? `${s.ugel} (${s.dre.replace(/^DRE /, "")})` : s.ugel;
+}
+
+/**
  * Índice para el explorador de rankings.
  *
  * Contiene, por colegio, los conteos por año y por tipo de violencia, más la
@@ -238,18 +260,22 @@ export function getRankingIndex(): RankingIndex {
   const pandemia = new Set(meta.anios_pandemia);
   const anios = ["2022", "2023", "2024", "2025", "2026"].filter((a) => !pandemia.has(a));
 
-  const dic = { r: [] as string[], p: [] as string[], d: [] as string[], g: [] as string[], n: [] as string[] };
-  const mapas = { r: new Map<string, number>(), p: new Map<string, number>(), d: new Map<string, number>(), g: new Map<string, number>(), n: new Map<string, number>() };
-  const id = (clave: keyof typeof dic, valor: string): number => {
-    const m = mapas[clave];
-    let i = m.get(valor);
+  const dic = { r: [] as string[], p: [] as string[], d: [] as string[], g: [] as string[], n: [] as string[], u: [] as string[] };
+  const mapas = { r: new Map<string, number>(), p: new Map<string, number>(), d: new Map<string, number>(), g: new Map<string, number>(), n: new Map<string, number>(), u: new Map<string, number>() };
+  /** `clave` identifica; `valor` es lo que se muestra. Solo difieren en
+      distrito y UGEL, cuyos nombres no son únicos en el país. */
+  const id = (campo: keyof typeof dic, valor: string, clave = valor): number => {
+    const m = mapas[campo];
+    let i = m.get(clave);
     if (i === undefined) {
-      i = dic[clave].length;
-      dic[clave].push(valor);
-      m.set(valor, i);
+      i = dic[campo].length;
+      dic[campo].push(valor);
+      m.set(clave, i);
     }
     return i;
   };
+  const insts = Object.values(allInstitutions());
+  const ugel = etiquetasUgel(insts);
 
   type Conteos = Record<string, [number, number, number, number]>;
   const conteosDe = (fuente: { anios: Record<string, import("@/lib/types").YearCounts> }): Conteos => {
@@ -263,7 +289,7 @@ export function getRankingIndex(): RankingIndex {
   };
 
   const filas: RankingRow[] = [];
-  for (const s of Object.values(allInstitutions())) {
+  for (const s of insts) {
     const mat = s.matricula ?? 0;
     const activo = anios.some((a) => (s.anios[a]?.total ?? 0) > 0);
     if (!activo && mat < meta.matricula_minima) continue;
@@ -282,14 +308,15 @@ export function getRankingIndex(): RankingIndex {
     filas.push([
       s.nombre,
       s.cm,
-      id("d", s.distrito),
+      id("d", s.distrito, `${s.departamento}|${s.provincia}|${s.distrito}`),
       id("p", s.provincia),
       id("r", s.departamento),
       id("g", s.gestion),
       s.niveles.map((n) => id("n", n)),
       mat,
       conteosDe(s),
-      porNivel,
+      porNivel ?? null,
+      id("u", ugel(s), `${s.dre}|${s.ugel}`),
     ]);
   }
 

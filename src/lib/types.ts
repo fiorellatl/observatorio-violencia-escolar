@@ -198,7 +198,11 @@ export interface Provenance {
 /**
  * Fila del índice de rankings:
  * [nombre, codMod cabecera, distritoId, provinciaId, regiónId, gestiónId,
- *  nivelIds, matrícula (0 si no se conoce), conteos por año, porNivel?]
+ *  nivelIds, matrícula (0 si no se conoce), conteos por año, porNivel?, ugelId]
+ *
+ * `distritoId` identifica el distrito por departamento + provincia + nombre, y
+ * `ugelId` la UGEL por DRE + nombre: hay 92 nombres de distrito repetidos en
+ * el país y dos «UGEL La Unión». Ninguno de los dos es único por sí solo.
  *
  * `conteos[año] = [total, física, psicológica, sexual]`. Solo los años con
  * algún reporte: la mayoría de colegios no tiene actividad todos los años y
@@ -215,8 +219,10 @@ export type RankingRow = [
   number,
   Record<string, [number, number, number, number]>,
   /** Desglose por nivel: nivelId -> [matrícula, conteos]. Solo en
-      instituciones con más de un servicio; en las demás sería una copia. */
-  Record<string, [number, Record<string, [number, number, number, number]>]>?,
+      instituciones con más de un servicio; en las demás sería una copia
+      (y viaja como null). */
+  Record<string, [number, Record<string, [number, number, number, number]>]> | null | undefined,
+  number,
 ];
 
 /** Cuantiles nacionales de un año. Van en el índice para que el mapa de
@@ -245,7 +251,10 @@ export interface RankingIndex {
   /** Último año completo: el que la interfaz muestra por defecto. */
   anio_principal: string;
   matricula_minima: number;
-  dic: { r: string[]; p: string[]; d: string[]; g: string[]; n: string[] };
+  /** `d` puede repetir nombres: cada entrada es un distrito distinto.
+      `u` no los repite: la UGEL cuyo nombre existe en dos DRE lleva la región
+      entre paréntesis, porque es lo que se muestra y lo que viaja en la URL. */
+  dic: { r: string[]; p: string[]; d: string[]; g: string[]; n: string[]; u: string[] };
   filas: RankingRow[];
 }
 

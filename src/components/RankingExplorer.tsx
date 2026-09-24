@@ -9,6 +9,17 @@ import { ShareImage } from "@/components/ShareImage";
 import { dibujarRanking } from "@/lib/share/rankingImage";
 import { medir } from "@/lib/analytics";
 import { dec, nf, slugify } from "@/lib/format";
+import {
+  CLAVES_GEO,
+  DEPENDIENTES,
+  POS_GEO,
+  cumpleGeo,
+  depurarGeo,
+  dicGeo,
+  padresDistrito,
+  resolverGeo,
+  type ClaveGeo,
+} from "@/lib/rankingGeo";
 import { boton, campo, meta as clsMeta } from "@/lib/ui";
 import {
   COLOR_SERIE,
@@ -61,6 +72,15 @@ const TIPOS: { v: Tipo; label: string; corto: string; pos: number }[] = [
 /** Un cuantil interpolado puede no ser entero; no se finge que lo sea. */
 const numeroCorto = (n: number) =>
   Number.isInteger(n) ? nf(n) : n.toFixed(1).replace(".", ",");
+
+/** Rótulo y opción «todos» de cada selector territorial. `region` guarda el
+    departamento: el parámetro conserva su nombre para no romper enlaces. */
+const GEO_LABEL: Record<ClaveGeo, [string, string]> = {
+  region: ["Departamento", "Todos los departamentos"],
+  ugel: ["UGEL", "Todas las UGEL"],
+  provincia: ["Provincia", "Todas las provincias"],
+  distrito: ["Distrito", "Todos los distritos"],
+};
 
 const POR_PAGINA = 20;
 const DESTACADOS = 3;
@@ -181,11 +201,10 @@ export function RankingExplorer() {
         if (v) p.set(k, v);
         else p.delete(k);
       }
-      if ("region" in cambios) {
-        p.delete("provincia");
-        p.delete("distrito");
-      }
-      if ("provincia" in cambios) p.delete("distrito");
+      // Un cambio territorial limpia solo lo que deja de tener sentido: pasar
+      // de Lima a «Todas» conserva la UGEL elegida; pasar a Cusco, no.
+      const geoCambiadas = CLAVES_GEO.filter((k) => k in cambios);
+      if (geoCambiadas.length && idx) depurarGeo(idx, p, geoCambiadas);
 
       // `poner` es el paso obligado de TODO cambio de filtro, así que medir
       // aquí cubre los selectores, la métrica, el tipo y el año sin repartir
@@ -203,7 +222,7 @@ export function RankingExplorer() {
       const qs = p.toString();
       router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
     },
-    [params, pathname, router, anio]
+    [params, pathname, router, anio, idx]
   );
 
   // Pedir tasa obliga a ponerse en el único año que la tiene.
@@ -221,13 +240,14 @@ export function RankingExplorer() {
    * una captura que miente. Lo que no se pudo aplicar no se nombra, y se avisa.
    */
   const filtros = useMemo(() => {
+    // `out` son los rasgos del colegio; el territorio va en `geo`, que se
+    // resuelve a ids porque un nombre de distrito no identifica un distrito.
     const out: { clave: string; valor: string; id: number; pos: number }[] = [];
     const ignorados: string[] = [];
-    if (!idx) return { out, ignorados };
+    if (!idx) return { out, ignorados, geo: { filtros: [], ignorados: [], ambiguos: [] } };
+    const geo = resolverGeo(idx, q);
+    ignorados.push(...geo.ignorados);
     const campos: [string, string[], number][] = [
-      ["region", idx.dic.r, 4],
-      ["provincia", idx.dic.p, 3],
-      ["distrito", idx.dic.d, 2],
       ["gestion", idx.dic.g, 5],
       ["nivel", idx.dic.n, 6],
     ];
@@ -238,18 +258,70 @@ export function RankingExplorer() {
       if (id >= 0) out.push({ clave, valor: v, id, pos });
       else ignorados.push(v);
     }
-    return { out, ignorados };
+    return { out, ignorados, geo };
   }, [idx, q]);
 
-  const candidatos = useMemo(() => {
-    if (!idx) return [];
-    return idx.filas.filter((f) =>
+  const cumpleRasgos = useCallback(
+    (f: RankingRow) =>
       filtros.out.every(({ id, pos }) => {
         const v = f[pos];
         return Array.isArray(v) ? v.includes(id) : v === id;
-      })
-    );
-  }, [idx, filtros]);
+      }),
+    [filtros]
+  );
+
+  const candidatos = useMemo(() => {
+    if (!idx) return [];
+    return idx.filas.filter((f) => cumpleGeo(f, filtros.geo.filtros) && cumpleRasgos(f));
+  }, [idx, filtros, cumpleRasgos]);
+
+  /**
+   * Opciones de cada selector territorial.
+   *
+   * Las de un filtro salen de los colegios que cumplen todo lo demás MENOS ese
+   * filtro y los que dependen de él: con Lima elegida, la UGEL ofrece las de
+   * Lima, y con una UGEL elegida el selector de UGEL sigue ofreciendo las
+   * otras de la región, para poder cambiar sin pasar por «Todas». Se calcula
+   * al cambiar un filtro, no al abrir un selector.
+   */
+  const opcionesGeo = useMemo(() => {
+    const out = {} as Record<ClaveGeo, { valor: string; label: string }[]>;
+    if (!idx || !panel) return out;
+    const padres = padresDistrito(idx);
+    for (const k of CLAVES_GEO) {
+      const fuera = new Set<ClaveGeo>([k, ...DEPENDIENTES[k]]);
+      const resto = filtros.geo.filtros.filter((f) => !fuera.has(f.clave));
+      const pos = POS_GEO[k];
+      const vistos = new Set<number>();
+      for (const f of idx.filas) {
+        if (cumpleGeo(f, resto) && cumpleRasgos(f)) vistos.add(f[pos] as number);
+      }
+      const dic = dicGeo(idx, k);
+      if (k !== "distrito") {
+        out[k] = [...vistos]
+          .map((i) => dic[i])
+          .filter(Boolean)
+          .sort((a, b) => a.localeCompare(b, "es"))
+          .map((v) => ({ valor: v, label: v }));
+        continue;
+      }
+      // Un distrito se elige por id. El nombre solo se completa con su
+      // provincia y región cuando se repite entre las opciones ofrecidas.
+      const veces = new Map<string, number>();
+      for (const i of vistos) veces.set(dic[i], (veces.get(dic[i]) ?? 0) + 1);
+      out[k] = [...vistos]
+        .filter((i) => dic[i])
+        .map((i) => ({
+          valor: String(i),
+          label:
+            (veces.get(dic[i]) ?? 0) > 1
+              ? `${dic[i]} (${idx.dic.p[padres[i][0]]}, ${idx.dic.r[padres[i][1]]})`
+              : dic[i],
+        }))
+        .sort((a, b) => a.label.localeCompare(b.label, "es"));
+    }
+    return out;
+  }, [idx, panel, filtros, cumpleRasgos]);
 
   /** Id del nivel filtrado, o -1. Decide si se leen los conteos de la
       institución o los del servicio de ese nivel. */
@@ -348,7 +420,7 @@ export function RankingExplorer() {
 
 
   const paginas = Math.ceil(total / POR_PAGINA);
-  const filtrosActivos = filtros.out.length;
+  const filtrosActivos = filtros.out.length + filtros.geo.filtros.length;
 
   /**
    * La vista del ranking, ya resuelta.
@@ -402,21 +474,24 @@ export function RankingExplorer() {
 
   /** El territorio, dicho en una línea. Es el subtítulo de la pieza. */
   const territorio = (() => {
-    const de = (k: string) => filtros.out.find((f) => f.clave === k)?.valor ?? "";
+    const de = (k: string) =>
+      [...filtros.out, ...filtros.geo.filtros].find((f) => f.clave === k)?.valor ?? "";
     const t = [de("distrito"), de("provincia"), de("region")].filter(Boolean);
-    const lugar = t.length ? t.join(", ") : "Perú";
-    const rasgos = [de("gestion"), de("nivel")].filter(Boolean);
+    // Sola, la UGEL es el territorio: «Perú · UGEL Ilo» sugeriría el país.
+    const lugar = t.length ? t.join(", ") : de("ugel") || "Perú";
+    const rasgos = [t.length ? de("ugel") : "", de("gestion"), de("nivel")].filter(Boolean);
     return rasgos.length ? `${lugar} · ${rasgos.join(" · ")}` : `${lugar} · todos los colegios`;
   })();
 
   const descargar = () => {
     if (!idx) return;
     const cab = ["posicion", "colegio", "codigo_modular", "distrito", "provincia", "region",
-                 "gestion", "nivel", "anio", "reportes_del_tipo", "reportes_totales",
+                 "ugel", "gestion", "nivel", "anio", "reportes_del_tipo", "reportes_totales",
                  "num_alumnos", "tasa_por_1000"];
     const filas = puestos.map((p, i) => [
       i + 1, `"${p.fila[0].replace(/"/g, '""')}"`, p.fila[1],
       `"${idx.dic.d[p.fila[2]]}"`, `"${idx.dic.p[p.fila[3]]}"`, `"${idx.dic.r[p.fila[4]]}"`,
+      `"${idx.dic.u?.[p.fila[10]] ?? ""}"`,
       `"${idx.dic.g[p.fila[5]]}"`, `"${p.fila[6].map((k) => idx.dic.n[k]).join(" · ")}"`,
       anio, p.conteo, p.total, p.alumnos || "", p.tasa != null ? p.tasa.toFixed(2) : "",
     ]);
@@ -448,7 +523,7 @@ export function RankingExplorer() {
     }
     const opts = q(k) ? dic.filter(Boolean) : [...vistos].map((i) => dic[i]).filter(Boolean);
     return (
-      <div>
+      <div className="min-w-0">
         <label htmlFor={`r-${k}`} className={`${clsMeta} block`}>
           {label}
         </label>
@@ -462,6 +537,61 @@ export function RankingExplorer() {
           {[...opts].sort((a, b) => a.localeCompare(b, "es")).map((v) => (
             <option key={v} value={v}>
               {v}
+            </option>
+          ))}
+        </select>
+      </div>
+    );
+  };
+
+  /**
+   * Selector territorial. Una función y no un componente: sus opciones ya
+   * vienen calculadas en `opcionesGeo`, y remontarlo en cada render cerraría
+   * el desplegable en algunos navegadores móviles.
+   */
+  const selGeo = (k: ClaveGeo) => {
+    const [label, todos] = GEO_LABEL[k];
+    const f = filtros.geo.filtros.find((x) => x.clave === k);
+    const opts = [...(opcionesGeo[k] ?? [])];
+    let valor = "";
+    if (f) {
+      if (k !== "distrito") valor = f.valor;
+      else if (f.ids.size === 1) valor = String([...f.ids][0]);
+      else valor = "varios";
+      // La elección vigente siempre se ve, aunque la gestión o el nivel la
+      // hayan dejado sin colegios: si no, el selector diría «Todos» mintiendo.
+      if (valor !== "varios" && !opts.some((o) => o.valor === valor)) {
+        opts.unshift({ valor, label: f.valor });
+      }
+    }
+    const elegir = (v: string) => {
+      if (k !== "distrito" || !v) return poner({ [k]: v });
+      // El distrito arrastra su provincia y su región: son las que lo hacen
+      // inequívoco en la URL.
+      const i = Number(v);
+      const [pr, r] = padresDistrito(idx)[i];
+      poner({ distrito: idx.dic.d[i], provincia: idx.dic.p[pr], region: idx.dic.r[r] });
+    };
+    return (
+      <div key={k} className="min-w-0">
+        <label htmlFor={`r-${k}`} className={`${clsMeta} block`}>
+          {label}
+        </label>
+        <select
+          id={`r-${k}`}
+          value={valor}
+          onChange={(e) => elegir(e.target.value)}
+          className={`${campo} mt-1.5 ${f ? "border-ink-3" : ""}`}
+        >
+          <option value="">{todos}</option>
+          {valor === "varios" && f ? (
+            <option value="varios" disabled>
+              {f.valor} ({f.ids.size} distritos)
+            </option>
+          ) : null}
+          {opts.map((o) => (
+            <option key={o.valor} value={o.valor}>
+              {o.label}
             </option>
           ))}
         </select>
@@ -744,6 +874,7 @@ export function RankingExplorer() {
               tipo === "todos" ? "" : tipo,
               anio,
               q("region"),
+              q("ugel"),
               q("distrito"),
               q("gestion"),
               q("nivel"),
@@ -848,10 +979,11 @@ export function RankingExplorer() {
 
       {panel ? (
         <div id="panel-filtros" className="mt-3 rounded-lg border border-rule bg-surface p-4 sm:p-5">
-          <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-5">
-            <Sel k="region" label="Región" pos={4} dic={idx.dic.r} />
-            <Sel k="provincia" label="Provincia" pos={3} dic={idx.dic.p} />
-            <Sel k="distrito" label="Distrito" pos={2} dic={idx.dic.d} />
+          <fieldset className="grid min-w-0 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <legend className="sr-only">Territorio</legend>
+            {CLAVES_GEO.map(selGeo)}
+          </fieldset>
+          <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             <Sel k="gestion" label="Gestión" pos={5} dic={idx.dic.g} />
             <Sel k="nivel" label="Nivel" pos={6} dic={idx.dic.n} />
           </div>
@@ -979,6 +1111,12 @@ export function RankingExplorer() {
               valor de estos datos. La tabla muestra el universo sin ese filtro.
             </p>
           ) : null}
+          {filtros.geo.ambiguos.map((a) => (
+            <p key={a.valor} className="mt-2 max-w-prose text-[0.82rem] leading-relaxed text-accent">
+              Hay {nf(a.n)} distritos llamados «{a.valor}» y la tabla incluye los {nf(a.n)}.
+              Elige el departamento o la provincia para quedarte con uno.
+            </p>
+          ))}
           {metrica === "tasa" ? (
             <p className="mt-2 max-w-prose text-[0.82rem] leading-relaxed text-ink-3">
               Métrica secundaria. Solo existe en {idx.anio_tasa}, el año con censo de

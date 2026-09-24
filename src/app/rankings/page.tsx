@@ -49,17 +49,19 @@ export async function generateMetadata({
   // Solo se nombra lo que la tabla va a aplicar de verdad: un valor que no
   // existe en los datos no filtra nada, y anunciarlo en el título haría que
   // el enlace compartido prometiera un universo que nadie va a ver.
-  const lugar =
-    [
-      facetaValida("d", uno(p.distrito)),
-      facetaValida("p", uno(p.provincia)),
-      facetaValida("r", uno(p.region)),
-    ]
-      .filter(Boolean)
-      .join(", ") || "Perú";
-  const rasgos = [facetaValida("g", uno(p.gestion)), facetaValida("n", uno(p.nivel))].filter(
-    Boolean
-  );
+  const partes = [
+    facetaValida("d", uno(p.distrito)),
+    facetaValida("p", uno(p.provincia)),
+    facetaValida("r", uno(p.region)),
+  ].filter(Boolean);
+  const ugel = facetaValida("u", uno(p.ugel));
+  // Sola, la UGEL es el territorio; con región o distrito, un rasgo más.
+  const lugar = partes.join(", ") || ugel || "Perú";
+  const rasgos = [
+    partes.length ? ugel : "",
+    facetaValida("g", uno(p.gestion)),
+    facetaValida("n", uno(p.nivel)),
+  ].filter(Boolean);
 
   const base = tasa
     ? `Colegios con mayor tasa de reportes de violencia${TIPO[tipo] ?? ""}`
