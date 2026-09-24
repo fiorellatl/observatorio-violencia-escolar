@@ -14,6 +14,8 @@ import {
 import { dec, nf } from "@/lib/format";
 import { COLOR_ACTOR, color } from "@/lib/viz/colors";
 import { useEsMovil } from "@/lib/useEsMovil";
+import { ShareImage } from "@/components/ShareImage";
+import { dibujarCorrelacion } from "@/lib/share/datos";
 
 export interface DatosCorrelacion {
   anios: string[];
@@ -82,10 +84,33 @@ export function CorrelacionActores({ datos }: { datos: DatosCorrelacion }) {
             </button>
           ))}
         </div>
-        <p className="text-[0.8rem] text-ink-3">
-          {nf(d.colegios)} colegios con al menos un reporte
-          {anio === datos.anio_parcial ? " · año en curso" : ""}
-        </p>
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+          <p className="text-[0.8rem] text-ink-3">
+            {nf(d.colegios)} colegios con al menos un reporte
+            {anio === datos.anio_parcial ? " · año en curso" : ""}
+          </p>
+          {/* La pieza se arma al pulsar, con el año que esté elegido en ese
+              momento: no puede quedarse con uno viejo. */}
+          <ShareImage
+            titulo="Compartir esta visualización"
+            etiqueta="Compartir"
+            eventoDescarga="download_dato"
+            contexto={{ grafico: "correlacion_actores", anio }}
+            dibujar={() =>
+              // Los MISMOS puntos y las mismas cifras que hay en pantalla:
+              // se arma al pulsar, con el año que esté elegido entonces.
+              dibujarCorrelacion({
+                anio,
+                parcial: anio === datos.anio_parcial,
+                r: d.r ?? 0,
+                colegios: d.colegios,
+                unSoloTipo: 100 - (d.ambos / d.colegios) * 100,
+                puntos: filas,
+              })
+            }
+            archivo={() => ["correlacion-violencia", anio]}
+          />
+        </div>
       </div>
 
       {/* La cifra que responde la pregunta, antes del gráfico: r cercano a

@@ -525,3 +525,126 @@ export async function dibujarPensionComposicion(p: {
     `${miles(p.colegiosAlto)} colegios de S/ 1.500 o más y ${miles(p.colegiosBajo)} de menos de S/ 1.000 · SíseVe ${p.anio}`);
   return aBlob(l.canvas);
 }
+
+/**
+ * Violencia entre alumnos frente a violencia de un adulto.
+ *
+ * EL HALLAZGO ES NEGATIVO y por eso el titular no es la nube, es lo que la
+ * nube significa: tres de cada cuatro colegios registran un solo tipo. La
+ * correlación queda cerca de cero porque los dos fenómenos casi no coinciden
+ * en el mismo colegio, no porque la medición falle.
+ *
+ * CADA CÍRCULO ES UN PAR DE VALORES, NO UN COLEGIO, igual que en pantalla:
+ * los conteos son enteros pequeños y miles de colegios comparten posición.
+ * El área dice cuántos hay ahí; dibujar un punto por colegio escondería al
+ * 97 % debajo del de encima. Recibe los mismos puntos que pinta la web, así
+ * que la pieza no puede decir algo distinto.
+ */
+export async function dibujarCorrelacion(p: {
+  anio: string;
+  parcial: boolean;
+  r: number;
+  colegios: number;
+  unSoloTipo: number;
+  puntos: { x: number; y: number; n: number }[];
+}): Promise<Blob> {
+  const l = await crearNoche();
+  const { ctx, sans, mono } = l;
+
+  let y = cabecera(l, `Quién ejerce la violencia · ${periodo(p.anio, p.parcial)}`);
+  y = titular(
+    l,
+    [
+      { partes: [[`${Math.round(p.unSoloTipo)} DE CADA 100`, MENTA]], grande: true, tope: 150 },
+      { partes: [["colegios registran", TINTA]], grande: false },
+      { partes: [["UN SOLO TIPO", TINTA]], grande: true, tope: 150 },
+    ],
+    y
+  );
+  y = parrafo(
+    l,
+    `O violencia entre alumnos, o de un adulto del colegio: casi nunca las dos. ` +
+      `Por eso saber cuánto registra un colegio de una no dice casi nada de la otra.`,
+    y + 12,
+    34,
+    TINTA_2,
+    600,
+    3
+  );
+
+  // ── La nube ────────────────────────────────────────────────────────
+  const base = 1440;
+  const izq = M + 70;
+  const der = ANCHO - M;
+  const arriba = y + 54;
+  const alto = base - arriba;
+
+  const maxX = Math.max(...p.puntos.map((q) => q.x), 1);
+  const maxY = Math.max(...p.puntos.map((q) => q.y), 1);
+  const maxN = Math.max(...p.puntos.map((q) => q.n), 1);
+  const px = (v: number) => izq + (v / maxX) * (der - izq);
+  const py = (v: number) => base - (v / maxY) * alto;
+
+  // Rejilla mínima: dos líneas y sus valores, lo justo para dar escala.
+  ctx.textBaseline = "middle";
+  ctx.font = `500 18px ${mono}`;
+  for (const f of [0.5, 1]) {
+    const yy = py(maxY * f);
+    ctx.fillStyle = FILETE;
+    ctx.fillRect(izq, yy, der - izq, 1);
+    ctx.fillStyle = TINTA_3;
+    ctx.textAlign = "right";
+    ctx.fillText(String(Math.round(maxY * f)), izq - 14, yy);
+  }
+  ctx.textAlign = "left";
+
+  // De mayor a menor: las manchas grandes no tapan a las pequeñas.
+  ctx.fillStyle = MENTA;
+  ctx.globalAlpha = 0.4;
+  for (const q of [...p.puntos].sort((a, b) => b.n - a.n)) {
+    // Área proporcional al número de colegios: doblar el radio lo
+    // cuadruplicaría y exageraría el peso de ese valor.
+    const r = Math.max(3, Math.sqrt(q.n / maxN) * 30);
+    ctx.beginPath();
+    ctx.arc(px(q.x), py(q.y), r, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+
+  ctx.fillStyle = FILETE;
+  ctx.fillRect(izq, base, der - izq, 2);
+
+  ctx.textBaseline = "top";
+  ctx.font = `500 20px ${mono}`;
+  ctx.fillStyle = TINTA_3;
+  ctx.letterSpacing = "2px";
+  ctx.fillText("REPORTES ENTRE ALUMNOS →", izq, base + 18);
+  ctx.letterSpacing = "0px";
+
+  ctx.save();
+  ctx.translate(M + 6, base - alto / 2);
+  ctx.rotate(-Math.PI / 2);
+  ctx.textAlign = "center";
+  ctx.font = `500 20px ${mono}`;
+  ctx.fillStyle = TINTA_3;
+  ctx.letterSpacing = "2px";
+  ctx.fillText("DE UN ADULTO →", 0, 0);
+  ctx.restore();
+  ctx.letterSpacing = "0px";
+  ctx.textAlign = "left";
+
+  // La correlación, en pequeño: es el respaldo del titular, no el titular.
+  ctx.font = `700 30px ${sans}`;
+  ctx.fillStyle = MENTA;
+  ctx.fillText(`r = ${dec(p.r)}`, izq, base + 54);
+  ctx.font = `500 22px ${mono}`;
+  ctx.fillStyle = TINTA_3;
+  ctx.fillText(`${miles(p.colegios)} COLEGIOS`, izq + 130, base + 60);
+
+  cierre(
+    l,
+    ["Que un colegio registre una,", "no dice nada de la otra."],
+    `Colegios con al menos un reporte · SíseVe ${p.anio}`
+  );
+  return aBlob(l.canvas);
+}
