@@ -74,6 +74,28 @@ capa no lo tenían —eso es la regla general, no una excepción—.
 Resultado del corte actual: 44 uniones por `codinst` y 143 por local y nombre;
 17.399 → 17.185 instituciones, sin cambiar un solo reporte ni alumno.
 
+## Los niveles sin reportes (`scripts/completar_niveles_sin_reportes.py`)
+
+La capa pública nace de los reportes de SíseVe, y un servicio sin reportes no
+aparece en ellos. En un colegio con varios niveles eso borraba justo los
+niveles donde no se registró nada: «Santa Margarita» (Surco) salía como un
+jardín de 103 alumnos aunque tiene también primaria y secundaria, sin un
+solo reporte.
+
+El paso los recupera del Censo Educativo 2024 con **las mismas reglas de
+agrupación de arriba** —por `codinst`; sin `codinst`, por local y nombre
+oficial con las cinco condiciones— y los marca `"sin_reportes": true`. Nunca
+añade un nivel que el colegio ya tenga, uno repetido en el censo ni uno que
+reclamen dos colegios.
+
+Efecto en el corte actual: 6.281 niveles en 4.825 colegios. Ningún reporte
+cambia y ninguna URL tampoco. Sí cambian la matrícula y la tasa
+institucionales, ahora con todos los niveles: antes el denominador omitía a
+los alumnos de los niveles sin reportes y la tasa salía inflada.
+
+Los colegios sin **ningún** reporte en ningún nivel siguen fuera de la capa:
+este paso completa colegios que ya están, no añade colegios nuevos.
+
 ## Reglas de agregación
 
 Cuando la ficha muestra «Institución completa», estos son los cálculos:

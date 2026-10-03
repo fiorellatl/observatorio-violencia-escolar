@@ -93,6 +93,9 @@ export interface InstitutionService {
   anio_pension?: string | null;
   pension_estado?: EstadoPension;
   tasa_2024?: number | null;
+  /** Está en el Censo Educativo pero SíseVe no le registra ningún reporte,
+      en ningún año. Sin esta marca la ficha lo omitía. */
+  sin_reportes?: boolean;
 }
 
 /**

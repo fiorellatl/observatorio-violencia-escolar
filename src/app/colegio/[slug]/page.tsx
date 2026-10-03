@@ -533,6 +533,7 @@ export default async function ColegioPage({
             pension: x.pension ?? null,
             anio_pension: x.anio_pension ?? null,
             pension_estado: x.pension_estado,
+            sin_reportes: x.sin_reportes,
           }))}
           institucion={s.anios}
           anios={anios}

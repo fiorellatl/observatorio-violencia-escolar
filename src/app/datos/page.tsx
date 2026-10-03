@@ -157,7 +157,9 @@ export default function DatosPage() {
     totalInstituciones++;
     if (i.matricula != null) conMatricula++;
     for (const sv of i.servicios) {
-      if (i.gestion?.startsWith("Priv")) privadosTotal++;
+      // Los niveles sin reportes no están en el cruce de pensión: contarlos
+      // aquí bajaría la cobertura sin que el gráfico cambiara.
+      if (i.gestion?.startsWith("Priv") && !sv.sin_reportes) privadosTotal++;
       if (conPensionSlugs.has(sv.slug)) regionesPension.add(i.departamento);
     }
   }

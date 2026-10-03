@@ -39,6 +39,9 @@ CAMPOS = {
     "ANEXO": "anexo",
     "CODINST": "codinst",
     "CODLOCAL": "codlocal",
+    # El nombre del colegio es publico. Sirve para reconocer, en un local sin
+    # codinst, los niveles del mismo colegio (completar_niveles_sin_reportes.py).
+    "CEN_EDU": "nombre",
     "NIV_MOD": "nivel_cod",
     "D_NIV_MOD": "nivel",
     "D_GESTION": "gestion",
@@ -80,7 +83,9 @@ def leer_dbf(raw: bytes):
             if origen not in pos:
                 continue
             a, l = pos[origen]
-            fila[destino] = r[a:a + l].decode("latin-1").strip()
+            # El DBF del censo viene en la pagina de codigos de DOS: en latin-1
+            # «Jardín» salia como «Jardn».
+            fila[destino] = r[a:a + l].decode("cp850").strip()
         yield fila
 
 
