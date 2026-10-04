@@ -110,7 +110,7 @@ PASOS = [
         [sys.executable, "scripts/completar_niveles_sin_reportes.py", "--aplicar"],
         # Como en el paso anterior, institutions.json es entrada y salida: se
         # declara solo el censo para que el paso no salga siempre obsoleto.
-        entradas=[PROC / "padron_censo_2024.json"],
+        entradas=[PROC / "padron_censo_2024.json", PROC / "identicole.json"],
         salidas=[PUB / "institutions.json"],
     ),
     Paso(
