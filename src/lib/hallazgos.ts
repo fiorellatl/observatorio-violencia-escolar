@@ -105,10 +105,18 @@ export interface Pensiones {
   alto: { colegios: number; reportes: number };
 }
 
+/** Límites (lo, hi] de cada tramo de pensión, en soles. */
+const TRAMOS_PENSION: [number, number][] = [
+  [0, 500],
+  [500, 1000],
+  [1000, 1500],
+  [1500, Infinity],
+];
+
 const soles = (n: number) => `S/ ${n.toLocaleString("es-PE").replace(/,/g, ".")}`;
 
 /**
- * Pensión y reportes, por tramos de igual número de colegios.
+ * Pensión y reportes, por tramos fijos de pensión.
  *
  * La pensión es una referencia de nivel —cambia poco de un año a otro— y se
  * usa la más reciente que declare el colegio para cualquier año de reportes.
@@ -143,11 +151,13 @@ export function pensiones(anio: string): Pensiones {
   };
 
   const n = con.length;
-  const tramos = [0, 1, 2, 3].map((k) => {
-    const g = con.slice(Math.floor((k * n) / 4), Math.floor(((k + 1) * n) / 4));
-    const min = g[0]?.pension ?? 0;
-    const max = g[g.length - 1]?.pension ?? 0;
-    const etiqueta = k === 0 ? `hasta ${soles(max)}` : k === 3 ? `más de ${soles(min)}` : `${soles(min)} a ${soles(max)}`;
+  // Cortes fijos en soles, no cuartiles: el cuartil de arriba empezaba en
+  // S/ 715 y metía en una sola barra todo lo que cobra más, que es justo
+  // donde la tasa deja de subir (se estanca pasados los S/ 1.000–1.500).
+  const tramos = TRAMOS_PENSION.map(([lo, hi], k) => {
+    const g = con.filter((c) => (c.pension ?? 0) > lo && (c.pension ?? 0) <= hi);
+    const etiqueta =
+      k === 0 ? `hasta ${soles(hi)}` : k === TRAMOS_PENSION.length - 1 ? `más de ${soles(lo)}` : `${soles(lo)} a ${soles(hi)}`;
     return resumir(g, etiqueta);
   });
 

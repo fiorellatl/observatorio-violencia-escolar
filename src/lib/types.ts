@@ -16,6 +16,13 @@ export interface YearCounts {
   ciberacoso?: number;
   personal_ie?: number;
   entre_escolares?: number;
+  /**
+   * Clasificación de ACOSO ESCOLAR del MINEDU (anexo aparte, solo 2024–2026).
+   * NO es `bullying`/`ciberacoso`, que salen del subtipo de violencia: es otra
+   * clasificación, marca muchos más reportes y no deben sumarse ni compararse.
+   */
+  acoso_escolar?: number;
+  ciberbullying?: number;
 }
 
 /**

@@ -230,6 +230,13 @@ export default async function ColegioPage({
   const azul = color(COLOR_SERIE.reportes);
   const navProps = { cm: s.cm, distrito: s.distrito, departamento: s.departamento };
   const seccion = "scroll-mt-24 border-t border-rule py-10 sm:py-14";
+  const acosoFilas = ["2024", "2025", "2026"]
+    .map((anio) => {
+      const c = s.anios[anio];
+      return { anio, acoso: c?.acoso_escolar ?? 0, ciber: c?.ciberbullying ?? 0, total: c?.total ?? 0 };
+    })
+    .filter((f) => f.total > 0);
+  const hayAcoso = acosoFilas.some((f) => f.acoso + f.ciber > 0);
 
   return (
     <article className="pb-20">
@@ -543,6 +550,54 @@ export default async function ColegioPage({
           anioMatricula={s.anio_matricula}
         />
       </Suspense>
+
+      {/* ── Acoso escolar (clasificación MINEDU) ────────────────
+          Dato aparte: no es el subtipo «bullying» de los gráficos de arriba,
+          sino otra clasificación del MINEDU, solo para 2024–2026. Se muestra
+          solo si el colegio tiene algún reporte marcado. */}
+      {hayAcoso ? (
+        <section id="acoso" className={seccion}>
+          <div className="flex flex-wrap items-baseline justify-between gap-2">
+            <h2 className="font-display text-display-m font-medium">
+              Reportes marcados como acoso escolar
+            </h2>
+            <DataSourceBadge fuente="SíseVe · MINEDU" anio="2024–2026" />
+          </div>
+          <div className="mt-6 overflow-hidden rounded-lg border border-rule">
+            <table className="w-full text-left text-[0.9rem]">
+              <thead className="bg-surface text-[0.78rem] text-ink-3">
+                <tr>
+                  <th scope="col" className="px-4 py-2.5 font-medium">Año</th>
+                  <th scope="col" className="px-4 py-2.5 text-right font-medium">Acoso escolar</th>
+                  <th scope="col" className="px-4 py-2.5 text-right font-medium">Ciberbullying</th>
+                  <th scope="col" className="px-4 py-2.5 text-right font-medium">De todos sus reportes</th>
+                </tr>
+              </thead>
+              <tbody>
+                {acosoFilas.map((f) => (
+                  <tr key={f.anio} className="border-t border-rule">
+                    <td className="tabular px-4 py-2.5 text-ink-2">
+                      {f.anio}
+                      {f.anio === meta.anio_parcial ? " (ene–ago)" : ""}
+                    </td>
+                    <td className="tabular px-4 py-2.5 text-right text-ink">{nf(f.acoso)}</td>
+                    <td className="tabular px-4 py-2.5 text-right text-ink">{nf(f.ciber)}</td>
+                    <td className="tabular px-4 py-2.5 text-right text-ink-2">
+                      {nf(f.acoso + f.ciber)} de {nf(f.total)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <p className="mt-4 max-w-prose text-[0.78rem] leading-relaxed text-ink-3">
+            Es una clasificación del MINEDU que marca algunos reportes de violencia entre
+            estudiantes como acoso escolar (bullying) o ciberbullying. Es distinta del subtipo de
+            violencia que usan los gráficos de arriba y no se suma a él. Un reporte no es un caso
+            probado, y puede haber más de un reporte sobre un mismo hecho.
+          </p>
+        </section>
+      ) : null}
 
       {/* ── Contexto ───────────────────────────────────────────── */}
       <section id="contexto" className={seccion}>

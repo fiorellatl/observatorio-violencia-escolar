@@ -16,6 +16,8 @@ import { distritosLima, pensiones, silencioPorTamano } from "@/lib/hallazgos";
 import { DistritosLima } from "@/components/DistritosLima";
 import { CompartirSilencio } from "@/components/CompartirSilencio";
 import { CompartirPension } from "@/components/CompartirPension";
+import { CompartirCiberbullying } from "@/components/CompartirCiberbullying";
+import { lecturaPension } from "@/lib/share/datos";
 import { SelectorAnio } from "@/components/SelectorAnio";
 
 import {
@@ -114,6 +116,7 @@ const PREGUNTAS = [
   { id: "que-pasa", texto: "¿Qué está pasando?" },
   { id: "como-cambio", texto: "¿Cómo ha cambiado?" },
   { id: "que-se-registra", texto: "¿Qué se registra?" },
+  { id: "acoso", texto: "¿Cuánto es acoso escolar?" },
   { id: "donde", texto: "¿Dónde se concentra?" },
   { id: "distritos", texto: "¿Qué distrito de Lima registra más?" },
   { id: "tamano", texto: "¿Los colegios más grandes registran más reportes?" },
@@ -211,6 +214,16 @@ export default function DatosPage() {
   const anioAlumnos = meta.fuentes.matricula?.anio ?? t;
   const periodo = (a: string) => (a === meta.anio_parcial ? `enero–agosto ${a}` : a);
   const dec1 = (v: number) => v.toFixed(1).replace(".", ",");
+  // Clasificación de acoso escolar del MINEDU: solo existe para 2024–2026.
+  const acoso = nacional
+    .filter((n) => n.acoso_escolar !== undefined)
+    .map((n) => ({
+      anio: n.anio,
+      parcial: n.anio === meta.anio_parcial,
+      acoso: n.acoso_escolar ?? 0,
+      ciber: n.ciberbullying ?? 0,
+      total: n.total,
+    }));
   // Los tres años con reportes y denominador: 2024 (censo), el último
   // completo y el año en curso. Se calcula aquí; el filtro solo elige.
   const aniosDistritos = [...new Set([t, getAnioPrincipal(), meta.anio_parcial])].sort();
@@ -362,6 +375,79 @@ export default function DatosPage() {
             <MethodologyNote>
               Cada reporte se registra con un tipo de violencia y con un presunto
               agresor, así que cada desglose reparte el total del año.
+            </MethodologyNote>
+          </div>
+        </Pregunta>
+
+        {/* ── Acoso escolar (clasificación MINEDU, dato aparte) ─── */}
+        <Pregunta id="acoso" pregunta="¿Cuánto se marca como acoso escolar?">
+          <div className={panelPad}>
+            <div className="flex flex-wrap items-baseline justify-between gap-2">
+              <h3 className={h3}>Acoso escolar y ciberbullying, según el MINEDU</h3>
+              <DataSourceBadge fuente="SíseVe · MINEDU" anio="2024–2026" />
+            </div>
+            <p className={entradilla}>
+              El MINEDU marca parte de los reportes de violencia entre estudiantes como acoso
+              escolar (bullying) o ciberbullying. Lo publicamos tal como llega, aparte de los tipos
+              de violencia de arriba.
+            </p>
+            <div className="mt-6 overflow-x-auto">
+              <table className="w-full min-w-[30rem] text-left text-[0.9rem]">
+                <thead className="text-[0.78rem] text-ink-3">
+                  <tr className="border-b border-rule">
+                    <th scope="col" className="py-2.5 pr-4 font-medium">Año</th>
+                    <th scope="col" className="py-2.5 pr-4 text-right font-medium">Reportes</th>
+                    <th scope="col" className="py-2.5 pr-4 text-right font-medium">Acoso escolar</th>
+                    <th scope="col" className="py-2.5 text-right font-medium">Ciberbullying</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {acoso.map((a) => (
+                    <tr key={a.anio} className="border-b border-rule last:border-0">
+                      <td className="tabular py-2.5 pr-4 text-ink-2">
+                        {a.anio}
+                        {a.parcial ? " (ene–ago)" : ""}
+                      </td>
+                      <td className="tabular py-2.5 pr-4 text-right text-ink-2">{nf(a.total)}</td>
+                      <td className="tabular py-2.5 pr-4 text-right text-ink">
+                        {nf(a.acoso)}{" "}
+                        <span className="text-ink-3">({pct((100 * a.acoso) / a.total)})</span>
+                      </td>
+                      <td className="tabular py-2.5 text-right text-ink">
+                        {nf(a.ciber)}{" "}
+                        <span className="text-ink-3">({dec1((100 * a.ciber) / a.total)} %)</span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <p className="mt-5 max-w-prose text-[0.92rem] leading-relaxed text-ink-2">
+              El ciberbullying pasa de{" "}
+              <strong className="font-semibold text-ink">
+                {dec1((100 * acoso[0].ciber) / acoso[0].total)} %
+              </strong>{" "}
+              de los reportes en {acoso[0].anio} a{" "}
+              <strong className="font-semibold text-ink">
+                {dec1((100 * acoso[acoso.length - 1].ciber) / acoso[acoso.length - 1].total)} %
+              </strong>{" "}
+              entre enero y agosto de {acoso[acoso.length - 1].anio}. Se compara en porcentaje
+              porque {acoso[acoso.length - 1].anio} todavía no está completo.
+            </p>
+            <div className="mt-6">
+              <CompartirCiberbullying anios={acoso} />
+            </div>
+          </div>
+          <div className="mt-5 max-w-prose space-y-3">
+            <MethodologyNote>
+              Es una clasificación distinta del subtipo «bullying» que trae la base completa del
+              SíseVe, y marca muchos más reportes. Por eso no se suma ni se compara con él. Solo existe
+              para 2024–2026, en un anexo que nos envió el MINEDU con corte al 31 de agosto de 2026.
+            </MethodologyNote>
+            <MethodologyNote>
+              Son reportes registrados, no casos probados, y puede haber más de un reporte sobre un
+              mismo hecho. Más reportes de ciberbullying puede significar que ocurre más o que se
+              denuncia más.
             </MethodologyNote>
           </div>
         </Pregunta>
@@ -675,15 +761,15 @@ export default function DatosPage() {
                       }
                       respuesta={
                         <>
-                          {dec1(p.tramos[3].tasa)} reportes por cada 1.000 alumnos en el tramo de
-                          pensión más alta, {dec1(p.tramos[0].tasa)} en el más bajo. Los públicos de los
-                          mismos distritos: {dec1(p.publicos.tasa)}.
+                          {lecturaPension(p.tramos)} Por cada 1.000 alumnos:{" "}
+                          {p.tramos.map((x) => `${dec1(x.tasa)} (${x.etiqueta})`).join(", ")}. Los públicos de
+                          los mismos distritos: {dec1(p.publicos.tasa)}.
                         </>
                       }
                       nota={
                         <>
                           {nf(p.conPension)} de {nf(p.privadosLima)} colegios privados de Lima con al menos{" "}
-                          {nf(meta.matricula_minima)} alumnos, en cuatro tramos con el mismo número de colegios.
+                          {nf(meta.matricula_minima)} alumnos, en cuatro tramos de pensión mensual.
                           La pensión es la más reciente que declara cada colegio en Identicole: cambia poco de
                           un año a otro y se usa como referencia. Más reportes no prueba más violencia; la
                           pensión va junto con el distrito y las familias.

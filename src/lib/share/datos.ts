@@ -415,6 +415,22 @@ export async function dibujarSilencio(p: {
   return aBlob(l.canvas);
 }
 
+/**
+ * La respuesta del titular, leída de los tramos. Si la tasa más alta no está
+ * en el tramo más caro, lo dice: la subida se corta ahí, y una frase que solo
+ * comparara los extremos escondería justo eso.
+ */
+export function lecturaPension(tramos: { etiqueta: string; tasa: number }[]): string {
+  const multiplo: Record<number, string> = { 2: "más del doble", 3: "más del triple", 4: "más del cuádruple" };
+  const pico = tramos.reduce((m, t, i) => (t.tasa > tramos[m].tasa ? i : m), 0);
+  const razon = tramos[pico].tasa / tramos[0].tasa;
+  if (razon < 1.5) return "No: casi lo mismo por alumno.";
+  const cuanto = multiplo[Math.floor(razon)] ?? `${dec(razon)} veces más`;
+  if (pico === tramos.length - 1) return `Sí: ${cuanto} por alumno.`;
+  const techo = tramos[pico].etiqueta.split(" a ").pop();
+  return `Hasta ${techo}, sí: ${cuanto} por alumno.`;
+}
+
 /* ── 5 · Pensión por tramos ───────────────────────────────────────────── */
 export async function dibujarPensionTramos(p: {
   anio: string;
@@ -433,9 +449,7 @@ export async function dibujarPensionTramos(p: {
     { partes: [["registran más", TINTA]], grande: false },
     { partes: [["REPORTES DE VIOLENCIA?", MENTA]], grande: true, tope: 130 },
   ], y);
-  const razon = p.tramos[3].tasa / p.tramos[0].tasa;
-  const multiplo: Record<number, string> = { 2: "más del doble", 3: "más del triple", 4: "más del cuádruple" };
-  const frase = razon >= 1.5 ? `Sí: ${multiplo[Math.floor(razon)] ?? `${dec(razon)} veces más`} por alumno.` : "No: casi lo mismo por alumno.";
+  const frase = lecturaPension(p.tramos);
   y = parrafo(l, frase, y + 10, 46, TINTA, 700, 2);
 
   const base = 1260;
@@ -485,7 +499,8 @@ export async function dibujarPensionTramos(p: {
   ctx.fillStyle = TINTA_3;
   ctx.fillText("REPORTES POR CADA 1.000 ALUMNOS, SEGÚN LA PENSIÓN", M, base + 146);
   ctx.letterSpacing = "0px";
-  cierre(l, ["Más reportes no prueba más violencia.", "Donde más se paga, más se denuncia."],
+  // No «donde más se paga, más se denuncia»: pasados los S/ 1.500 ya no es cierto.
+  cierre(l, ["Más reportes no prueba más violencia.", "Muestra dónde se denuncia más."],
     // Una sola línea de 912 px: con el periodo y el año del Censo, la versión
     // larga se cortaba. «No indica causa» ya lo dice el giro de arriba.
     `${miles(p.colegios)} privados de Lima · pensión: Identicole · SíseVe ${periodo(p.anio, p.parcial)} · alumnos: Censo ${p.anioAlumnos}`);
@@ -652,5 +667,70 @@ export async function dibujarCorrelacion(p: {
     ["Que un colegio registre una,", "no dice nada de la otra."],
     `Colegios con al menos un reporte · SíseVe ${p.anio}`
   );
+  return aBlob(l.canvas);
+}
+
+/* ── 8 · Ciberbullying en los reportes ────────────────────────────────── */
+/**
+ * La parte de los reportes que el MINEDU marca como ciberbullying, por año.
+ * Se dibuja como PARTE del total y no como conteo: 2026 cubre solo hasta
+ * agosto, y una proporción sí se puede comparar con un año completo.
+ */
+export async function dibujarCiberbullying(p: {
+  anios: { anio: string; parcial: boolean; ciber: number; acoso: number; total: number }[];
+}): Promise<Blob> {
+  const l = await crearNoche();
+  const { ctx, sans, mono } = l;
+  const pct = p.anios.map((a) => (100 * a.ciber) / a.total);
+  const primero = p.anios[0];
+  const ultimo = p.anios[p.anios.length - 1];
+  let y = cabecera(l, `Acoso escolar · Perú · ${primero.anio}–${ultimo.anio}`);
+  y = titular(l, [
+    { partes: [["¿PESA MÁS EL", TINTA]], grande: true, tope: 150 },
+    { partes: [["CIBERBULLYING", MENTA]], grande: true, tope: 150 },
+    { partes: [["en los reportes de violencia escolar?", TINTA]], grande: false },
+  ], y);
+  const sube = pct.every((v, i) => i === 0 || v > pct[i - 1]);
+  const frase = sube
+    ? `Sí: de ${dec(pct[0])} % de los reportes en ${primero.anio} a ${dec(pct[pct.length - 1])} % en ${periodo(ultimo.anio, ultimo.parcial)}.`
+    : `${dec(pct[0])} % de los reportes en ${primero.anio}; ${dec(pct[pct.length - 1])} % en ${periodo(ultimo.anio, ultimo.parcial)}.`;
+  y = parrafo(l, frase, y + 10, 40, TINTA, 700, 3);
+
+  const base = 1280;
+  const alto = base - y - 120;
+  const maximo = Math.max(...pct);
+  const paso = (ANCHO - 2 * M) / p.anios.length;
+  const barra = paso * 0.56;
+  p.anios.forEach((a, i) => {
+    const cx = M + paso * i + paso / 2;
+    const h = (pct[i] / maximo) * alto;
+    ctx.fillStyle = i === p.anios.length - 1 ? MENTA : RAMPA[i];
+    ctx.fillRect(cx - barra / 2, base - h, barra, h);
+    ctx.textAlign = "center";
+    ctx.textBaseline = "bottom";
+    ctx.font = `700 52px ${sans}`;
+    ctx.fillStyle = TINTA;
+    ctx.fillText(`${dec(pct[i])} %`, cx, base - h - 12);
+    ctx.textBaseline = "top";
+    ctx.font = `600 28px ${sans}`;
+    ctx.fillStyle = TINTA_2;
+    ctx.fillText(a.parcial ? `${a.anio}*` : a.anio, cx, base + 16);
+    ctx.font = `500 16px ${mono}`;
+    ctx.fillStyle = TINTA_3;
+    ctx.fillText(`${miles(a.ciber)} de`, cx, base + 56);
+    ctx.fillText(`${miles(a.total)} reportes`, cx, base + 78);
+    ctx.textAlign = "left";
+  });
+  ctx.fillStyle = FILETE;
+  ctx.fillRect(M, base, ANCHO - 2 * M, 2);
+  ctx.font = `500 18px ${mono}`;
+  ctx.letterSpacing = "2px";
+  ctx.textBaseline = "top";
+  ctx.fillStyle = TINTA_3;
+  ctx.fillText("PARTE DE LOS REPORTES MARCADA COMO CIBERBULLYING", M, base + 122);
+  if (ultimo.parcial) ctx.fillText(`* ${periodo(ultimo.anio, true).toUpperCase()}`, M, base + 152);
+  ctx.letterSpacing = "0px";
+  cierre(l, ["Más reportes no prueba más violencia.", "Muestra qué se denuncia más."],
+    `Clasificación de acoso escolar del MINEDU · SíseVe · corte al 31 de agosto de 2026`);
   return aBlob(l.canvas);
 }
